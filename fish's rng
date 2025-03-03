@@ -575,7 +575,7 @@ settingsButton.Parent = mainFrame
 
 local playersButton = Instance.new("TextButton")
 playersButton.Size = UDim2.new(0.225, 0, 0, 30)
-playersButton.Position = UDim2.new(0.1, 0, 0, 365)
+playersButton.Position = UDim2.new(0.025, 0, 0, 365)
 playersButton.Text = "Players"
 playersButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
 playersButton.TextColor3 = Color3.new(1, 1, 1) -- White text
