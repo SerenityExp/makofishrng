@@ -3,6 +3,63 @@ local player = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
 gui.Parent = player.PlayerGui
 
+-- Intro Screen
+local introFrame = Instance.new("Frame")
+introFrame.Size = UDim2.new(0, 200, 0, 200) -- Small box for intro
+introFrame.Position = UDim2.new(0.5, -100, 0.5, -100) -- Centered
+introFrame.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+introFrame.Parent = gui
+
+-- Add glowing blue border to intro frame
+local introBorder = Instance.new("UIStroke")
+introBorder.Thickness = 3
+introBorder.Color = Color3.new(0, 0.5, 1) -- Blue color
+introBorder.Parent = introFrame
+
+-- Add glow effect to the border
+local introGlow = Instance.new("UIGradient")
+introGlow.Rotation = 90
+introGlow.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.new(0, 0.5, 1)), -- Blue
+    ColorSequenceKeypoint.new(1, Color3.new(0, 1, 1)) -- Cyan
+})
+introBorder.Transparency = NumberSequence.new(0.5) -- Slight transparency for glow effect
+
+-- Add intro text
+local introText = Instance.new("TextLabel")
+introText.Size = UDim2.new(1, 0, 0, 50)
+introText.Position = UDim2.new(0, 0, 0.2, 0)
+introText.Text = "MakoWare"
+introText.TextColor3 = Color3.new(1, 1, 1) -- White text
+introText.BackgroundTransparency = 1
+introText.Font = Enum.Font.SciFi
+introText.TextSize = 24
+introText.Parent = introFrame
+
+-- Add loading circle
+local loadingCircle = Instance.new("Frame")
+loadingCircle.Size = UDim2.new(0, 50, 0, 50)
+loadingCircle.Position = UDim2.new(0.5, -25, 0.6, -25)
+loadingCircle.BackgroundColor3 = Color3.new(0, 0.5, 1) -- Blue circle
+loadingCircle.Parent = introFrame
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(1, 0) -- Fully rounded circle
+uiCorner.Parent = loadingCircle
+
+-- Animate the loading circle
+local rotationSpeed = 360 -- Degrees per second
+local startTime = tick()
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    local elapsedTime = tick() - startTime
+    loadingCircle.Rotation = elapsedTime * rotationSpeed
+end)
+
+-- Wait 5 seconds and remove the intro screen
+wait(5)
+introFrame:Destroy()
+
 -- Create the main frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 400) -- Increased width for Teleports Section
@@ -94,11 +151,21 @@ teleportsTitle.Font = Enum.Font.SciFi
 teleportsTitle.TextSize = 14
 teleportsTitle.Parent = teleportsSection
 
--- Add teleport buttons
+-- Teleport positions
+local teleportPositions = {
+    Vector3.new(-1674, 787, 72), -- Replace with your desired positions
+    Vector3.new(-915, 1126, 760), -- Replace with your desired positions
+    Vector3.new(-1524, 1118, 307), -- Replace with your desired positions
+    Vector3.new(-1397, 491, 877), -- Replace with your desired positions
+    Vector3.new(-841, 565, 117), -- Replace with your desired positions
+    Vector3.new(-896, 815, -133) -- Replace with your desired positions
+}
+
+-- Create teleport buttons (separated for easy text modification)
 local teleportButton1 = Instance.new("TextButton")
 teleportButton1.Size = UDim2.new(0.9, 0, 0, 30)
 teleportButton1.Position = UDim2.new(0.05, 0, 0, 30)
-teleportButton1.Text = "Teleport 1"
+teleportButton1.Text = "Grand Ledge" -- Change this text
 teleportButton1.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
 teleportButton1.TextColor3 = Color3.new(1, 1, 1) -- White text
 teleportButton1.Font = Enum.Font.SciFi
@@ -108,7 +175,7 @@ teleportButton1.Parent = teleportsSection
 local teleportButton2 = Instance.new("TextButton")
 teleportButton2.Size = UDim2.new(0.9, 0, 0, 30)
 teleportButton2.Position = UDim2.new(0.05, 0, 0, 70)
-teleportButton2.Text = "Teleport 2"
+teleportButton2.Text = "Hyper Peak" -- Change this text
 teleportButton2.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
 teleportButton2.TextColor3 = Color3.new(1, 1, 1) -- White text
 teleportButton2.Font = Enum.Font.SciFi
@@ -118,12 +185,69 @@ teleportButton2.Parent = teleportsSection
 local teleportButton3 = Instance.new("TextButton")
 teleportButton3.Size = UDim2.new(0.9, 0, 0, 30)
 teleportButton3.Position = UDim2.new(0.05, 0, 0, 110)
-teleportButton3.Text = "Grand Ledge"
+teleportButton3.Text = "Tallest Tree" -- Change this text
 teleportButton3.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
 teleportButton3.TextColor3 = Color3.new(1, 1, 1) -- White text
 teleportButton3.Font = Enum.Font.SciFi
 teleportButton3.TextSize = 14
 teleportButton3.Parent = teleportsSection
+
+local teleportButton4 = Instance.new("TextButton")
+teleportButton4.Size = UDim2.new(0.9, 0, 0, 30)
+teleportButton4.Position = UDim2.new(0.05, 0, 0, 150)
+teleportButton4.Text = "Lucky Cave" -- Change this text
+teleportButton4.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+teleportButton4.TextColor3 = Color3.new(1, 1, 1) -- White text
+teleportButton4.Font = Enum.Font.SciFi
+teleportButton4.TextSize = 14
+teleportButton4.Parent = teleportsSection
+
+local teleportButton5 = Instance.new("TextButton")
+teleportButton5.Size = UDim2.new(0.9, 0, 0, 30)
+teleportButton5.Position = UDim2.new(0.05, 0, 0, 190)
+teleportButton5.Text = "Climbers Plain" -- Change this text
+teleportButton5.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+teleportButton5.TextColor3 = Color3.new(1, 1, 1) -- White text
+teleportButton5.Font = Enum.Font.SciFi
+teleportButton5.TextSize = 14
+teleportButton5.Parent = teleportsSection
+
+local teleportButton6 = Instance.new("TextButton")
+teleportButton6.Size = UDim2.new(0.9, 0, 0, 30)
+teleportButton6.Position = UDim2.new(0.05, 0, 0, 230)
+teleportButton6.Text = "Skyfall Hole" -- Change this text
+teleportButton6.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+teleportButton6.TextColor3 = Color3.new(1, 1, 1) -- White text
+teleportButton6.Font = Enum.Font.SciFi
+teleportButton6.TextSize = 14
+teleportButton6.Parent = teleportsSection
+
+-- Teleport button functionality
+teleportButton1.MouseButton1Click:Connect(function()
+    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[1])
+end)
+
+teleportButton2.MouseButton1Click:Connect(function()
+    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[2])
+end)
+
+teleportButton3.MouseButton1Click:Connect(function()
+    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[3])
+end)
+
+teleportButton4.MouseButton1Click:Connect(function()
+    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[4])
+end)
+
+teleportButton5.MouseButton1Click:Connect(function()
+    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[5])
+end)
+
+teleportButton6.MouseButton1Click:Connect(function()
+    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[6])
+end)
+
+
 
 -- Create the main section
 local mainSection = Instance.new("Frame")
@@ -518,21 +642,54 @@ flySpeedAdjustButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Teleport functionality
-local teleportPositions = {
-    Vector3.new(0, 5, 0), -- Replace with your desired positions
-    Vector3.new(50, 5, 50), -- Replace with your desired positions
-    Vector3.new(-1675, 787, 78) -- Replace with your desired positions
-}
+-- Remove corner rounding from all frames
+for _, frame in pairs(gui:GetDescendants()) do
+    if frame:IsA("Frame") then
+        local corner = frame:FindFirstChild("UICorner")
+        if corner then
+            corner:Destroy()
+        end
+    end
+end
 
-teleportButton1.MouseButton1Click:Connect(function()
-    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[1])
+-- Add notifications after loading screen
+local function createNotification(text, position)
+    local notification = Instance.new("TextLabel")
+    notification.Size = UDim2.new(0, 400, 0, 100) -- Larger size
+    notification.Position = position
+    notification.Text = text
+    notification.TextColor3 = Color3.new(1, 1, 1) -- White text
+    notification.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    notification.Font = Enum.Font.SciFi
+    notification.TextSize = 18
+    notification.Parent = gui
+
+    -- Slide in animation
+    notification.Position = UDim2.new(1, 0, position.Y.Scale, position.Y.Offset)
+    local tweenIn = game:GetService("TweenService"):Create(notification, TweenInfo.new(0.5), {Position = position})
+    tweenIn:Play()
+
+    -- Slide out animation after 3 seconds
+    task.delay(3, function()
+        local tweenOut = game:GetService("TweenService"):Create(notification, TweenInfo.new(0.5), {Position = UDim2.new(1, 0, position.Y.Scale, position.Y.Offset)})
+        tweenOut:Play()
+        tweenOut.Completed:Wait()
+        notification:Destroy()
+    end)
+
+    return notification
+end
+
+-- Create notifications after loading screen
+task.spawn(function()
+    wait(5) -- Wait for loading screen to finish
+    createNotification("Script Loaded", UDim2.new(0.7, 0, 0.1, 0))
+    createNotification("Z To Close UI", UDim2.new(0.7, 0, 0.2, 0))
 end)
 
-teleportButton2.MouseButton1Click:Connect(function()
-    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[2])
-end)
-
-teleportButton3.MouseButton1Click:Connect(function()
-    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[3])
+-- Toggle UI visibility with Z key
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Z then
+        mainFrame.Visible = not mainFrame.Visible
+    end
 end)
