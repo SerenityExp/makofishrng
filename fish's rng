@@ -1,0 +1,244 @@
+-- Create the main GUI
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Parent = player.PlayerGui
+
+-- Create the main frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 350) -- Increased height for more buttons
+mainFrame.Position = UDim2.new(1, -260, 0.5, -175) -- Positioned on the right side
+mainFrame.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = gui
+
+-- Add glowing blue border
+local border = Instance.new("UIStroke")
+border.Thickness = 3
+border.Color = Color3.new(0, 0.5, 1) -- Blue color
+border.Parent = mainFrame
+
+-- Add glow effect to the border
+local glow = Instance.new("UIGradient")
+glow.Rotation = 90
+glow.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.new(0, 0.5, 1)), -- Blue
+    ColorSequenceKeypoint.new(1, Color3.new(0, 1, 1)) -- Cyan
+})
+border.Transparency = NumberSequence.new(0.5) -- Slight transparency for glow effect
+
+-- Make the frame draggable
+local UserInputService = game:GetService("UserInputService")
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Create the title label
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 30)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.Text = "Main Menu"
+titleLabel.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+titleLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+titleLabel.Font = Enum.Font.SciFi
+titleLabel.TextSize = 18
+titleLabel.Parent = mainFrame
+
+-- Create the main section
+local mainSection = Instance.new("Frame")
+mainSection.Size = UDim2.new(1, 0, 1, -100) -- Adjusted height for buttons
+mainSection.Position = UDim2.new(0, 0, 0, 30)
+mainSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+mainSection.Visible = true
+mainSection.Parent = mainFrame
+
+-- Create the credits section
+local creditsSection = Instance.new("Frame")
+creditsSection.Size = UDim2.new(1, 0, 1, -100) -- Adjusted height for buttons
+creditsSection.Position = UDim2.new(0, 0, 0, 30)
+creditsSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+creditsSection.Visible = false
+creditsSection.Parent = mainFrame
+
+-- Create the misc section
+local miscSection = Instance.new("Frame")
+miscSection.Size = UDim2.new(1, 0, 1, -100) -- Adjusted height for buttons
+miscSection.Position = UDim2.new(0, 0, 0, 30)
+miscSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+miscSection.Visible = false
+miscSection.Parent = mainFrame
+
+-- Add content to the main section
+local mainText = Instance.new("TextLabel")
+mainText.Size = UDim2.new(1, 0, 1, -40) -- Adjusted height for Auto Gold button
+mainText.Position = UDim2.new(0, 0, 0, 0)
+mainText.Text = "Welcome to the Main Section!"
+mainText.TextColor3 = Color3.new(1, 1, 1) -- White text
+mainText.BackgroundTransparency = 1
+mainText.Font = Enum.Font.SciFi
+mainText.TextSize = 14
+mainText.Parent = mainSection
+
+-- Add Auto Gold button
+local autoGoldButton = Instance.new("TextButton")
+autoGoldButton.Size = UDim2.new(0.9, 0, 0, 30)
+autoGoldButton.Position = UDim2.new(0.05, 0, 1, -40)
+autoGoldButton.Text = "Auto Gold: OFF"
+autoGoldButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+autoGoldButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+autoGoldButton.Font = Enum.Font.SciFi
+autoGoldButton.TextSize = 14
+autoGoldButton.Parent = mainSection
+
+-- Add content to the credits section
+local creditsText = Instance.new("TextLabel")
+creditsText.Size = UDim2.new(1, 0, 1, 0)
+creditsText.Position = UDim2.new(0, 0, 0, 0)
+creditsText.Text = "Credits:\nDeveloper: Mako\nDesigner: Mako"
+creditsText.TextColor3 = Color3.new(1, 1, 1) -- White text
+creditsText.BackgroundTransparency = 1
+creditsText.Font = Enum.Font.SciFi
+creditsText.TextSize = 14
+creditsText.Parent = creditsSection
+
+-- Add content to the misc section
+local miscText = Instance.new("TextLabel")
+miscText.Size = UDim2.new(1, 0, 0, 20)
+miscText.Position = UDim2.new(0, 0, 0, 0)
+miscText.Text = "Misc Section"
+miscText.TextColor3 = Color3.new(1, 1, 1) -- White text
+miscText.BackgroundTransparency = 1
+miscText.Font = Enum.Font.SciFi
+miscText.TextSize = 14
+miscText.Parent = miscSection
+
+-- Add Reset Button to Misc Section
+local resetButton = Instance.new("TextButton")
+resetButton.Size = UDim2.new(0.9, 0, 0, 30)
+resetButton.Position = UDim2.new(0.05, 0, 0, 30)
+resetButton.Text = "Reset"
+resetButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+resetButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+resetButton.Font = Enum.Font.SciFi
+resetButton.TextSize = 14
+resetButton.Parent = miscSection
+
+
+
+
+
+-- Add "MakoWare" text at the bottom
+local makoWareText = Instance.new("TextLabel")
+makoWareText.Size = UDim2.new(1, 0, 0, 20)
+makoWareText.Position = UDim2.new(0, 0, 1, -20)
+makoWareText.Text = "MakoWare"
+makoWareText.TextColor3 = Color3.new(0, 0.5, 1) -- Blue text
+makoWareText.BackgroundTransparency = 1
+makoWareText.Font = Enum.Font.SciFi
+makoWareText.TextSize = 14
+makoWareText.TextXAlignment = Enum.TextXAlignment.Center -- Center the text
+makoWareText.Parent = mainFrame
+
+-- Create the buttons
+local mainButton = Instance.new("TextButton")
+mainButton.Size = UDim2.new(0.3, 0, 0, 30)
+mainButton.Position = UDim2.new(0.025, 0, 1, -70)
+mainButton.Text = "Main"
+mainButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+mainButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+mainButton.Font = Enum.Font.SciFi
+mainButton.TextSize = 14
+mainButton.Parent = mainFrame
+
+local creditsButton = Instance.new("TextButton")
+creditsButton.Size = UDim2.new(0.3, 0, 0, 30)
+creditsButton.Position = UDim2.new(0.35, 0, 1, -70)
+creditsButton.Text = "Credits"
+creditsButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+creditsButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+creditsButton.Font = Enum.Font.SciFi
+creditsButton.TextSize = 14
+creditsButton.Parent = mainFrame
+
+local miscButton = Instance.new("TextButton")
+miscButton.Size = UDim2.new(0.3, 0, 0, 30)
+miscButton.Position = UDim2.new(0.675, 0, 1, -70)
+miscButton.Text = "Misc"
+miscButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+miscButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+miscButton.Font = Enum.Font.SciFi
+miscButton.TextSize = 14
+miscButton.Parent = mainFrame
+
+-- Button functionality
+mainButton.MouseButton1Click:Connect(function()
+    mainSection.Visible = true
+    creditsSection.Visible = false
+    miscSection.Visible = false
+    titleLabel.Text = "Main Menu"
+end)
+
+creditsButton.MouseButton1Click:Connect(function()
+    mainSection.Visible = false
+    creditsSection.Visible = true
+    miscSection.Visible = false
+    titleLabel.Text = "Credits"
+end)
+
+miscButton.MouseButton1Click:Connect(function()
+    mainSection.Visible = false
+    creditsSection.Visible = false
+    miscSection.Visible = true
+    titleLabel.Text = "Misc"
+end)
+
+-- Auto Gold functionality
+local autoGoldEnabled = false
+local targetPosition = Vector3.new(-1686, 460, 146) -- Define the target position here
+
+autoGoldButton.MouseButton1Click:Connect(function()
+    autoGoldEnabled = not autoGoldEnabled
+    autoGoldButton.Text = autoGoldEnabled and "Auto Gold: ON" or "Auto Gold: OFF"
+
+    while autoGoldEnabled do
+        -- Move the player to the target position
+        player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetPosition)
+        wait(1) -- Adjust the delay as needed
+    end
+end)
+
+-- Reset functionality
+resetButton.MouseButton1Click:Connect(function()
+    player.Character:BreakJoints() -- Resets the player
+end)
