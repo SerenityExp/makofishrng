@@ -62,8 +62,8 @@ introFrame:Destroy()
 
 -- Create the main frame
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 400) -- Increased width for Teleports Section
-mainFrame.Position = UDim2.new(1, -410, 0.5, -200) -- Positioned on the right side
+mainFrame.Size = UDim2.new(0, 600, 0, 400) -- Wider GUI
+mainFrame.Position = UDim2.new(1, -610, 0.5, -200) -- Positioned on the right side
 mainFrame.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = gui
@@ -247,8 +247,6 @@ teleportButton6.MouseButton1Click:Connect(function()
     player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[6])
 end)
 
-
-
 -- Create the main section
 local mainSection = Instance.new("Frame")
 mainSection.Size = UDim2.new(0.75, 0, 1, -100) -- 75% width for main section
@@ -280,6 +278,117 @@ settingsSection.Position = UDim2.new(0.25, 0, 0, 30)
 settingsSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
 settingsSection.Visible = false
 settingsSection.Parent = mainFrame
+
+-- Create the players section
+local playersSection = Instance.new("Frame")
+playersSection.Size = UDim2.new(0.75, 0, 1, -100) -- Adjusted height for buttons
+playersSection.Position = UDim2.new(0.25, 0, 0, 30)
+playersSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+playersSection.Visible = false
+playersSection.Parent = mainFrame
+
+-- Add players title
+local playersTitle = Instance.new("TextLabel")
+playersTitle.Size = UDim2.new(1, 0, 0, 20)
+playersTitle.Position = UDim2.new(0, 0, 0, 0)
+playersTitle.Text = "Players"
+playersTitle.TextColor3 = Color3.new(1, 1, 1) -- White text
+playersTitle.BackgroundTransparency = 1
+playersTitle.Font = Enum.Font.SciFi
+playersTitle.TextSize = 14
+playersTitle.Parent = playersSection
+
+-- Create a scrolling frame for players
+local playersScrollFrame = Instance.new("ScrollingFrame")
+playersScrollFrame.Size = UDim2.new(1, 0, 1, -30) -- Adjusted height for title
+playersScrollFrame.Position = UDim2.new(0, 0, 0, 30)
+playersScrollFrame.BackgroundTransparency = 1
+playersScrollFrame.ScrollBarThickness = 5
+playersScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Will be updated dynamically
+playersScrollFrame.Parent = playersSection
+
+-- Function to create player buttons
+local function createPlayerButton(playerName, position)
+    local playerButton = Instance.new("Frame")
+    playerButton.Size = UDim2.new(0.9, 0, 0, 30)
+    playerButton.Position = position
+    playerButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    playerButton.Parent = playersScrollFrame
+
+    local playerNameLabel = Instance.new("TextLabel")
+    playerNameLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    playerNameLabel.Position = UDim2.new(0, 0, 0, 0)
+    playerNameLabel.Text = playerName
+    playerNameLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+    playerNameLabel.BackgroundTransparency = 1
+    playerNameLabel.Font = Enum.Font.SciFi
+    playerNameLabel.TextSize = 14
+    playerNameLabel.Parent = playerButton
+
+    local teleportButton = Instance.new("TextButton")
+    teleportButton.Size = UDim2.new(0.2, 0, 1, 0)
+    teleportButton.Position = UDim2.new(0.5, 0, 0, 0)
+    teleportButton.Text = "Teleport"
+    teleportButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2) -- Dark gray background
+    teleportButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    teleportButton.Font = Enum.Font.SciFi
+    teleportButton.TextSize = 14
+    teleportButton.Parent = playerButton
+
+    local flingButton = Instance.new("TextButton")
+    flingButton.Size = UDim2.new(0.2, 0, 1, 0)
+    flingButton.Position = UDim2.new(0.7, 0, 0, 0)
+    flingButton.Text = "Fling"
+    flingButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2) -- Dark gray background
+    flingButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    flingButton.Font = Enum.Font.SciFi
+    flingButton.TextSize = 14
+    flingButton.Parent = playerButton
+
+    teleportButton.MouseButton1Click:Connect(function()
+        local targetPlayer = game.Players:FindFirstChild(playerName)
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character:WaitForChild("HumanoidRootPart").CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+        end
+    end)
+
+    flingButton.MouseButton1Click:Connect(function()
+        local targetPlayer = game.Players:FindFirstChild(playerName)
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local rootPart = targetPlayer.Character.HumanoidRootPart
+            rootPart.Velocity = Vector3.new(0, 1000, 0) -- Fling the player upwards
+        end
+    end)
+end
+
+-- Populate players section with buttons
+local function updatePlayersSection()
+    -- Clear existing buttons
+    for _, child in pairs(playersScrollFrame:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
+        end
+    end
+
+    -- Add buttons for each player
+    local yOffset = 0
+    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= player then
+            createPlayerButton(otherPlayer.Name, UDim2.new(0.05, 0, 0, yOffset))
+            yOffset = yOffset + 40
+        end
+    end
+
+    -- Update scrolling frame canvas size
+    playersScrollFrame.CanvasSize = UDim2.new(0, 0, 0, yOffset)
+end
+
+-- Update players section when the section is opened
+playersSection:GetPropertyChangedSignal("Visible"):Connect(function()
+    if playersSection.Visible then
+        updatePlayersSection()
+    end
+end)
 
 -- Add content to the main section
 local mainText = Instance.new("TextLabel")
@@ -464,12 +573,23 @@ settingsButton.Font = Enum.Font.SciFi
 settingsButton.TextSize = 14
 settingsButton.Parent = mainFrame
 
+local playersButton = Instance.new("TextButton")
+playersButton.Size = UDim2.new(0.225, 0, 0, 30)
+playersButton.Position = UDim2.new(0.1, 0, 0, 365)
+playersButton.Text = "Players"
+playersButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+playersButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+playersButton.Font = Enum.Font.SciFi
+playersButton.TextSize = 14
+playersButton.Parent = mainFrame
+
 -- Button functionality
 mainButton.MouseButton1Click:Connect(function()
     mainSection.Visible = true
     creditsSection.Visible = false
     miscSection.Visible = false
     settingsSection.Visible = false
+    playersSection.Visible = false
     titleLabel.Text = "Main Menu"
 end)
 
@@ -478,6 +598,7 @@ creditsButton.MouseButton1Click:Connect(function()
     creditsSection.Visible = true
     miscSection.Visible = false
     settingsSection.Visible = false
+    playersSection.Visible = false
     titleLabel.Text = "Credits"
 end)
 
@@ -486,6 +607,7 @@ miscButton.MouseButton1Click:Connect(function()
     creditsSection.Visible = false
     miscSection.Visible = true
     settingsSection.Visible = false
+    playersSection.Visible = false
     titleLabel.Text = "Misc"
 end)
 
@@ -494,7 +616,18 @@ settingsButton.MouseButton1Click:Connect(function()
     creditsSection.Visible = false
     miscSection.Visible = false
     settingsSection.Visible = true
+    playersSection.Visible = false
     titleLabel.Text = "Settings"
+end)
+
+playersButton.MouseButton1Click:Connect(function()
+    mainSection.Visible = false
+    creditsSection.Visible = false
+    miscSection.Visible = false
+    settingsSection.Visible = false
+    playersSection.Visible = true
+    titleLabel.Text = "Players"
+    updatePlayersSection() -- Update the players list when the section is opened
 end)
 
 -- Auto Gold functionality
@@ -655,7 +788,7 @@ end
 -- Add notifications after loading screen
 local function createNotification(text, position)
     local notification = Instance.new("TextLabel")
-    notification.Size = UDim2.new(0, 800, 0, 100) -- Larger size
+    notification.Size = UDim2.new(0, 400, 0, 100) -- Larger size
     notification.Position = position
     notification.Text = text
     notification.TextColor3 = Color3.new(1, 1, 1) -- White text
