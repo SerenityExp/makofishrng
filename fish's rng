@@ -1,828 +1,882 @@
 -- Create the main GUI
 local player = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
-gui.Parent = player.PlayerGui
+gui.Name = "MakoWareGUI" -- Give it a unique name
+gui.Parent = player.PlayerGui -- Move it to PlayerGui (persistent location)
 
--- Intro Screen
-local introFrame = Instance.new("Frame")
-introFrame.Size = UDim2.new(0, 200, 0, 200) -- Small box for intro
-introFrame.Position = UDim2.new(0.5, -100, 0.5, -100) -- Centered
-introFrame.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
-introFrame.Parent = gui
+-- Function to initialize the GUI
+local function initializeGUI()
+    -- Intro Screen
+    local introFrame = Instance.new("Frame")
+    introFrame.Size = UDim2.new(0, 200, 0, 200) -- Small box for intro
+    introFrame.Position = UDim2.new(0.5, -100, 0.5, -100) -- Centered
+    introFrame.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    introFrame.Parent = gui
 
--- Add glowing blue border to intro frame
-local introBorder = Instance.new("UIStroke")
-introBorder.Thickness = 3
-introBorder.Color = Color3.new(0, 0.5, 1) -- Blue color
-introBorder.Parent = introFrame
+    -- Add glowing blue border to intro frame
+    local introBorder = Instance.new("UIStroke")
+    introBorder.Thickness = 3
+    introBorder.Color = Color3.new(0, 0.5, 1) -- Blue color
+    introBorder.Parent = introFrame
 
--- Add glow effect to the border
-local introGlow = Instance.new("UIGradient")
-introGlow.Rotation = 90
-introGlow.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.new(0, 0.5, 1)), -- Blue
-    ColorSequenceKeypoint.new(1, Color3.new(0, 1, 1)) -- Cyan
-})
-introBorder.Transparency = NumberSequence.new(0.5) -- Slight transparency for glow effect
+    -- Add glow effect to the border
+    local introGlow = Instance.new("UIGradient")
+    introGlow.Rotation = 90
+    introGlow.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(0, 0.5, 1)), -- Blue
+        ColorSequenceKeypoint.new(1, Color3.new(0, 1, 1)) -- Cyan
+    })
+    introBorder.Transparency = NumberSequence.new(0.5) -- Slight transparency for glow effect
 
--- Add intro text
-local introText = Instance.new("TextLabel")
-introText.Size = UDim2.new(1, 0, 0, 50)
-introText.Position = UDim2.new(0, 0, 0.2, 0)
-introText.Text = "MakoWare"
-introText.TextColor3 = Color3.new(1, 1, 1) -- White text
-introText.BackgroundTransparency = 1
-introText.Font = Enum.Font.SciFi
-introText.TextSize = 24
-introText.Parent = introFrame
+    -- Add intro text
+    local introText = Instance.new("TextLabel")
+    introText.Size = UDim2.new(1, 0, 0, 50)
+    introText.Position = UDim2.new(0, 0, 0.2, 0)
+    introText.Text = "MakoWare"
+    introText.TextColor3 = Color3.new(1, 1, 1) -- White text
+    introText.BackgroundTransparency = 1
+    introText.Font = Enum.Font.SciFi
+    introText.TextSize = 24
+    introText.Parent = introFrame
 
--- Add loading circle
-local loadingCircle = Instance.new("Frame")
-loadingCircle.Size = UDim2.new(0, 50, 0, 50)
-loadingCircle.Position = UDim2.new(0.5, -25, 0.6, -25)
-loadingCircle.BackgroundColor3 = Color3.new(0, 0.5, 1) -- Blue circle
-loadingCircle.Parent = introFrame
+    -- Add loading circle
+    local loadingCircle = Instance.new("Frame")
+    loadingCircle.Size = UDim2.new(0, 50, 0, 50)
+    loadingCircle.Position = UDim2.new(0.5, -25, 0.6, -25)
+    loadingCircle.BackgroundColor3 = Color3.new(0, 0.5, 1) -- Blue circle
+    loadingCircle.Parent = introFrame
 
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(1, 0) -- Fully rounded circle
-uiCorner.Parent = loadingCircle
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(1, 0) -- Fully rounded circle
+    uiCorner.Parent = loadingCircle
 
--- Animate the loading circle
-local rotationSpeed = 360 -- Degrees per second
-local startTime = tick()
+    -- Animate the loading circle
+    local rotationSpeed = 360 -- Degrees per second
+    local startTime = tick()
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    local elapsedTime = tick() - startTime
-    loadingCircle.Rotation = elapsedTime * rotationSpeed
-end)
-
--- Wait 5 seconds and remove the intro screen
-wait(5)
-introFrame:Destroy()
-
--- Create the main frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 600, 0, 400) -- Wider GUI
-mainFrame.Position = UDim2.new(1, -610, 0.5, -200) -- Positioned on the right side
-mainFrame.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = gui
-
--- Add glowing blue border
-local border = Instance.new("UIStroke")
-border.Thickness = 3
-border.Color = Color3.new(0, 0.5, 1) -- Blue color
-border.Parent = mainFrame
-
--- Add glow effect to the border
-local glow = Instance.new("UIGradient")
-glow.Rotation = 90
-glow.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.new(0, 0.5, 1)), -- Blue
-    ColorSequenceKeypoint.new(1, Color3.new(0, 1, 1)) -- Cyan
-})
-border.Transparency = NumberSequence.new(0.5) -- Slight transparency for glow effect
-
--- Make the frame draggable
-local UserInputService = game:GetService("UserInputService")
-local dragging
-local dragInput
-local dragStart
-local startPos
-
-local function update(input)
-    local delta = input.Position - dragStart
-    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
-end)
-
--- Create the title label
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 0, 30)
-titleLabel.Position = UDim2.new(0, 0, 0, 0)
-titleLabel.Text = "Main Menu"
-titleLabel.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-titleLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
-titleLabel.Font = Enum.Font.SciFi
-titleLabel.TextSize = 18
-titleLabel.Parent = mainFrame
-
--- Create the teleports section
-local teleportsSection = Instance.new("Frame")
-teleportsSection.Size = UDim2.new(0.25, 0, 1, -100) -- 25% width for teleports
-teleportsSection.Position = UDim2.new(0, 0, 0, 30)
-teleportsSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
-teleportsSection.Visible = true
-teleportsSection.Parent = mainFrame
-
--- Add teleports title
-local teleportsTitle = Instance.new("TextLabel")
-teleportsTitle.Size = UDim2.new(1, 0, 0, 20)
-teleportsTitle.Position = UDim2.new(0, 0, 0, 0)
-teleportsTitle.Text = "Teleports"
-teleportsTitle.TextColor3 = Color3.new(1, 1, 1) -- White text
-teleportsTitle.BackgroundTransparency = 1
-teleportsTitle.Font = Enum.Font.SciFi
-teleportsTitle.TextSize = 14
-teleportsTitle.Parent = teleportsSection
-
--- Teleport positions
-local teleportPositions = {
-    Vector3.new(-1674, 787, 72), -- Replace with your desired positions
-    Vector3.new(-915, 1126, 760), -- Replace with your desired positions
-    Vector3.new(-1524, 1118, 307), -- Replace with your desired positions
-    Vector3.new(-1397, 491, 877), -- Replace with your desired positions
-    Vector3.new(-841, 565, 117), -- Replace with your desired positions
-    Vector3.new(-896, 815, -133) -- Replace with your desired positions
-}
-
--- Create teleport buttons (separated for easy text modification)
-local teleportButton1 = Instance.new("TextButton")
-teleportButton1.Size = UDim2.new(0.9, 0, 0, 30)
-teleportButton1.Position = UDim2.new(0.05, 0, 0, 30)
-teleportButton1.Text = "Grand Ledge" -- Change this text
-teleportButton1.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-teleportButton1.TextColor3 = Color3.new(1, 1, 1) -- White text
-teleportButton1.Font = Enum.Font.SciFi
-teleportButton1.TextSize = 14
-teleportButton1.Parent = teleportsSection
-
-local teleportButton2 = Instance.new("TextButton")
-teleportButton2.Size = UDim2.new(0.9, 0, 0, 30)
-teleportButton2.Position = UDim2.new(0.05, 0, 0, 70)
-teleportButton2.Text = "Hyper Peak" -- Change this text
-teleportButton2.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-teleportButton2.TextColor3 = Color3.new(1, 1, 1) -- White text
-teleportButton2.Font = Enum.Font.SciFi
-teleportButton2.TextSize = 14
-teleportButton2.Parent = teleportsSection
-
-local teleportButton3 = Instance.new("TextButton")
-teleportButton3.Size = UDim2.new(0.9, 0, 0, 30)
-teleportButton3.Position = UDim2.new(0.05, 0, 0, 110)
-teleportButton3.Text = "Tallest Tree" -- Change this text
-teleportButton3.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-teleportButton3.TextColor3 = Color3.new(1, 1, 1) -- White text
-teleportButton3.Font = Enum.Font.SciFi
-teleportButton3.TextSize = 14
-teleportButton3.Parent = teleportsSection
-
-local teleportButton4 = Instance.new("TextButton")
-teleportButton4.Size = UDim2.new(0.9, 0, 0, 30)
-teleportButton4.Position = UDim2.new(0.05, 0, 0, 150)
-teleportButton4.Text = "Lucky Cave" -- Change this text
-teleportButton4.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-teleportButton4.TextColor3 = Color3.new(1, 1, 1) -- White text
-teleportButton4.Font = Enum.Font.SciFi
-teleportButton4.TextSize = 14
-teleportButton4.Parent = teleportsSection
-
-local teleportButton5 = Instance.new("TextButton")
-teleportButton5.Size = UDim2.new(0.9, 0, 0, 30)
-teleportButton5.Position = UDim2.new(0.05, 0, 0, 190)
-teleportButton5.Text = "Climbers Plain" -- Change this text
-teleportButton5.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-teleportButton5.TextColor3 = Color3.new(1, 1, 1) -- White text
-teleportButton5.Font = Enum.Font.SciFi
-teleportButton5.TextSize = 14
-teleportButton5.Parent = teleportsSection
-
-local teleportButton6 = Instance.new("TextButton")
-teleportButton6.Size = UDim2.new(0.9, 0, 0, 30)
-teleportButton6.Position = UDim2.new(0.05, 0, 0, 230)
-teleportButton6.Text = "Skyfall Hole" -- Change this text
-teleportButton6.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-teleportButton6.TextColor3 = Color3.new(1, 1, 1) -- White text
-teleportButton6.Font = Enum.Font.SciFi
-teleportButton6.TextSize = 14
-teleportButton6.Parent = teleportsSection
-
--- Teleport button functionality
-teleportButton1.MouseButton1Click:Connect(function()
-    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[1])
-end)
-
-teleportButton2.MouseButton1Click:Connect(function()
-    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[2])
-end)
-
-teleportButton3.MouseButton1Click:Connect(function()
-    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[3])
-end)
-
-teleportButton4.MouseButton1Click:Connect(function()
-    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[4])
-end)
-
-teleportButton5.MouseButton1Click:Connect(function()
-    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[5])
-end)
-
-teleportButton6.MouseButton1Click:Connect(function()
-    player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[6])
-end)
-
--- Create the main section
-local mainSection = Instance.new("Frame")
-mainSection.Size = UDim2.new(0.75, 0, 1, -100) -- 75% width for main section
-mainSection.Position = UDim2.new(0.25, 0, 0, 30)
-mainSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
-mainSection.Visible = true
-mainSection.Parent = mainFrame
-
--- Create the credits section
-local creditsSection = Instance.new("Frame")
-creditsSection.Size = UDim2.new(0.75, 0, 1, -100) -- Adjusted height for buttons
-creditsSection.Position = UDim2.new(0.25, 0, 0, 30)
-creditsSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
-creditsSection.Visible = false
-creditsSection.Parent = mainFrame
-
--- Create the misc section
-local miscSection = Instance.new("Frame")
-miscSection.Size = UDim2.new(0.75, 0, 1, -100) -- Adjusted height for buttons
-miscSection.Position = UDim2.new(0.25, 0, 0, 30)
-miscSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
-miscSection.Visible = false
-miscSection.Parent = mainFrame
-
--- Create the settings section
-local settingsSection = Instance.new("Frame")
-settingsSection.Size = UDim2.new(0.75, 0, 1, -100) -- Adjusted height for buttons
-settingsSection.Position = UDim2.new(0.25, 0, 0, 30)
-settingsSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
-settingsSection.Visible = false
-settingsSection.Parent = mainFrame
-
--- Create the players section
-local playersSection = Instance.new("Frame")
-playersSection.Size = UDim2.new(0.75, 0, 1, -100) -- Adjusted height for buttons
-playersSection.Position = UDim2.new(0.25, 0, 0, 30)
-playersSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
-playersSection.Visible = false
-playersSection.Parent = mainFrame
-
--- Add players title
-local playersTitle = Instance.new("TextLabel")
-playersTitle.Size = UDim2.new(1, 0, 0, 20)
-playersTitle.Position = UDim2.new(0, 0, 0, 0)
-playersTitle.Text = "Players"
-playersTitle.TextColor3 = Color3.new(1, 1, 1) -- White text
-playersTitle.BackgroundTransparency = 1
-playersTitle.Font = Enum.Font.SciFi
-playersTitle.TextSize = 14
-playersTitle.Parent = playersSection
-
--- Create a scrolling frame for players
-local playersScrollFrame = Instance.new("ScrollingFrame")
-playersScrollFrame.Size = UDim2.new(1, 0, 1, -30) -- Adjusted height for title
-playersScrollFrame.Position = UDim2.new(0, 0, 0, 30)
-playersScrollFrame.BackgroundTransparency = 1
-playersScrollFrame.ScrollBarThickness = 5
-playersScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Will be updated dynamically
-playersScrollFrame.Parent = playersSection
-
--- Function to create player buttons
-local function createPlayerButton(playerName, position)
-    local playerButton = Instance.new("Frame")
-    playerButton.Size = UDim2.new(0.9, 0, 0, 30)
-    playerButton.Position = position
-    playerButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-    playerButton.Parent = playersScrollFrame
-
-    local playerNameLabel = Instance.new("TextLabel")
-    playerNameLabel.Size = UDim2.new(0.5, 0, 1, 0)
-    playerNameLabel.Position = UDim2.new(0, 0, 0, 0)
-    playerNameLabel.Text = playerName
-    playerNameLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
-    playerNameLabel.BackgroundTransparency = 1
-    playerNameLabel.Font = Enum.Font.SciFi
-    playerNameLabel.TextSize = 14
-    playerNameLabel.Parent = playerButton
-
-    local teleportButton = Instance.new("TextButton")
-    teleportButton.Size = UDim2.new(0.2, 0, 1, 0)
-    teleportButton.Position = UDim2.new(0.5, 0, 0, 0)
-    teleportButton.Text = "Teleport"
-    teleportButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2) -- Dark gray background
-    teleportButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-    teleportButton.Font = Enum.Font.SciFi
-    teleportButton.TextSize = 14
-    teleportButton.Parent = playerButton
-
-    local flingButton = Instance.new("TextButton")
-    flingButton.Size = UDim2.new(0.2, 0, 1, 0)
-    flingButton.Position = UDim2.new(0.7, 0, 0, 0)
-    flingButton.Text = "Fling"
-    flingButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2) -- Dark gray background
-    flingButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-    flingButton.Font = Enum.Font.SciFi
-    flingButton.TextSize = 14
-    flingButton.Parent = playerButton
-
-    teleportButton.MouseButton1Click:Connect(function()
-        local targetPlayer = game.Players:FindFirstChild(playerName)
-        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character:WaitForChild("HumanoidRootPart").CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
-        end
+    game:GetService("RunService").RenderStepped:Connect(function()
+        local elapsedTime = tick() - startTime
+        loadingCircle.Rotation = elapsedTime * rotationSpeed
     end)
 
-    flingButton.MouseButton1Click:Connect(function()
-        local targetPlayer = game.Players:FindFirstChild(playerName)
-        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local rootPart = targetPlayer.Character.HumanoidRootPart
-            rootPart.Velocity = Vector3.new(0, 1000, 0) -- Fling the player upwards
-        end
-    end)
-end
+    -- Wait 5 seconds and remove the intro screen
+    wait(5)
+    introFrame:Destroy()
 
--- Populate players section with buttons
-local function updatePlayersSection()
-    -- Clear existing buttons
-    for _, child in pairs(playersScrollFrame:GetChildren()) do
-        if child:IsA("Frame") then
-            child:Destroy()
-        end
+    -- Create the main frame
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 600, 0, 400) -- Wider GUI
+    mainFrame.Position = UDim2.new(1, -610, 0.5, -200) -- Positioned on the right side
+    mainFrame.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = gui
+
+    -- Add glowing blue border
+    local border = Instance.new("UIStroke")
+    border.Thickness = 3
+    border.Color = Color3.new(0, 0.5, 1) -- Blue color
+    border.Parent = mainFrame
+
+    -- Add glow effect to the border
+    local glow = Instance.new("UIGradient")
+    glow.Rotation = 90
+    glow.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(0, 0.5, 1)), -- Blue
+        ColorSequenceKeypoint.new(1, Color3.new(0, 1, 1)) -- Cyan
+    })
+    border.Transparency = NumberSequence.new(0.5) -- Slight transparency for glow effect
+
+    -- Make the frame draggable
+    local UserInputService = game:GetService("UserInputService")
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 
-    -- Add buttons for each player
-    local yOffset = 0
-    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-        if otherPlayer ~= player then
-            createPlayerButton(otherPlayer.Name, UDim2.new(0.05, 0, 0, yOffset))
-            yOffset = yOffset + 40
-        end
-    end
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
 
-    -- Update scrolling frame canvas size
-    playersScrollFrame.CanvasSize = UDim2.new(0, 0, 0, yOffset)
-end
-
--- Update players section when the section is opened
-playersSection:GetPropertyChangedSignal("Visible"):Connect(function()
-    if playersSection.Visible then
-        updatePlayersSection()
-    end
-end)
-
--- Add content to the main section
-local mainText = Instance.new("TextLabel")
-mainText.Size = UDim2.new(1, 0, 1, -40) -- Adjusted height for Auto Gold button
-mainText.Position = UDim2.new(0, 0, 0, 0)
-mainText.Text = "Welcome to the Main Section!"
-mainText.TextColor3 = Color3.new(1, 1, 1) -- White text
-mainText.BackgroundTransparency = 1
-mainText.Font = Enum.Font.SciFi
-mainText.TextSize = 14
-mainText.Parent = mainSection
-
--- Add Auto Gold button
-local autoGoldButton = Instance.new("TextButton")
-autoGoldButton.Size = UDim2.new(0.9, 0, 0, 30)
-autoGoldButton.Position = UDim2.new(0.05, 0, 1, -40)
-autoGoldButton.Text = "Auto Gold: OFF"
-autoGoldButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-autoGoldButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-autoGoldButton.Font = Enum.Font.SciFi
-autoGoldButton.TextSize = 14
-autoGoldButton.Parent = mainSection
-
--- Add content to the credits section
-local creditsText = Instance.new("TextLabel")
-creditsText.Size = UDim2.new(1, 0, 1, 0)
-creditsText.Position = UDim2.new(0, 0, 0, 0)
-creditsText.Text = "Credits:\nDeveloper: Mako\nDesigner: Mako"
-creditsText.TextColor3 = Color3.new(1, 1, 1) -- White text
-creditsText.BackgroundTransparency = 1
-creditsText.Font = Enum.Font.SciFi
-creditsText.TextSize = 14
-creditsText.Parent = creditsSection
-
--- Add content to the misc section
-local miscText = Instance.new("TextLabel")
-miscText.Size = UDim2.new(1, 0, 0, 20)
-miscText.Position = UDim2.new(0, 0, 0, 0)
-miscText.Text = "Misc Section"
-miscText.TextColor3 = Color3.new(1, 1, 1) -- White text
-miscText.BackgroundTransparency = 1
-miscText.Font = Enum.Font.SciFi
-miscText.TextSize = 14
-miscText.Parent = miscSection
-
--- Add Reset Button to Misc Section
-local resetButton = Instance.new("TextButton")
-resetButton.Size = UDim2.new(0.9, 0, 0, 30)
-resetButton.Position = UDim2.new(0.05, 0, 0, 30)
-resetButton.Text = "Reset"
-resetButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-resetButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-resetButton.Font = Enum.Font.SciFi
-resetButton.TextSize = 14
-resetButton.Parent = miscSection
-
--- Add Fly Toggle to Misc Section
-local flyButton = Instance.new("TextButton")
-flyButton.Size = UDim2.new(0.9, 0, 0, 30)
-flyButton.Position = UDim2.new(0.05, 0, 0, 70)
-flyButton.Text = "Fly: OFF"
-flyButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-flyButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-flyButton.Font = Enum.Font.SciFi
-flyButton.TextSize = 14
-flyButton.Parent = miscSection
-
--- Add NoClip Toggle to Misc Section
-local noclipButton = Instance.new("TextButton")
-noclipButton.Size = UDim2.new(0.9, 0, 0, 30)
-noclipButton.Position = UDim2.new(0.05, 0, 0, 110)
-noclipButton.Text = "NoClip: OFF"
-noclipButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-noclipButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-noclipButton.Font = Enum.Font.SciFi
-noclipButton.TextSize = 14
-noclipButton.Parent = miscSection
-
--- Add Infinite Jump Toggle to Misc Section
-local infiniteJumpButton = Instance.new("TextButton")
-infiniteJumpButton.Size = UDim2.new(0.9, 0, 0, 30)
-infiniteJumpButton.Position = UDim2.new(0.05, 0, 0, 150)
-infiniteJumpButton.Text = "Infinite Jump: OFF"
-infiniteJumpButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-infiniteJumpButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-infiniteJumpButton.Font = Enum.Font.SciFi
-infiniteJumpButton.TextSize = 14
-infiniteJumpButton.Parent = miscSection
-
--- Add content to the settings section
-local settingsText = Instance.new("TextLabel")
-settingsText.Size = UDim2.new(1, 0, 0, 20)
-settingsText.Position = UDim2.new(0, 0, 0, 0)
-settingsText.Text = "Settings"
-settingsText.TextColor3 = Color3.new(1, 1, 1) -- White text
-settingsText.BackgroundTransparency = 1
-settingsText.Font = Enum.Font.SciFi
-settingsText.TextSize = 14
-settingsText.Parent = settingsSection
-
--- Add Fly Speed TextBox and Adjust Button to Settings Section
-local flySpeedLabel = Instance.new("TextLabel")
-flySpeedLabel.Size = UDim2.new(0.9, 0, 0, 20)
-flySpeedLabel.Position = UDim2.new(0.05, 0, 0, 30)
-flySpeedLabel.Text = "Fly Speed: 50"
-flySpeedLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
-flySpeedLabel.BackgroundTransparency = 1
-flySpeedLabel.Font = Enum.Font.SciFi
-flySpeedLabel.TextSize = 14
-flySpeedLabel.Parent = settingsSection
-
-local flySpeedTextBox = Instance.new("TextBox")
-flySpeedTextBox.Size = UDim2.new(0.6, 0, 0, 20)
-flySpeedTextBox.Position = UDim2.new(0.05, 0, 0, 50)
-flySpeedTextBox.PlaceholderText = "Enter Fly Speed"
-flySpeedTextBox.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-flySpeedTextBox.TextColor3 = Color3.new(1, 1, 1) -- White text
-flySpeedTextBox.Font = Enum.Font.SciFi
-flySpeedTextBox.TextSize = 14
-flySpeedTextBox.Parent = settingsSection
-
-local flySpeedAdjustButton = Instance.new("TextButton")
-flySpeedAdjustButton.Size = UDim2.new(0.3, 0, 0, 20)
-flySpeedAdjustButton.Position = UDim2.new(0.65, 0, 0, 50)
-flySpeedAdjustButton.Text = "Adjust"
-flySpeedAdjustButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-flySpeedAdjustButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-flySpeedAdjustButton.Font = Enum.Font.SciFi
-flySpeedAdjustButton.TextSize = 14
-flySpeedAdjustButton.Parent = settingsSection
-
--- Add "MakoWare" text at the bottom
-local makoWareText = Instance.new("TextLabel")
-makoWareText.Size = UDim2.new(1, 0, 0, 20)
-makoWareText.Position = UDim2.new(0, 0, 1, -20)
-makoWareText.Text = "MakoWare"
-makoWareText.TextColor3 = Color3.new(0, 0.5, 1) -- Blue text
-makoWareText.BackgroundTransparency = 1
-makoWareText.Font = Enum.Font.SciFi
-makoWareText.TextSize = 14
-makoWareText.TextXAlignment = Enum.TextXAlignment.Center -- Center the text
-makoWareText.Parent = mainFrame
-
--- Create the buttons
-local mainButton = Instance.new("TextButton")
-mainButton.Size = UDim2.new(0.225, 0, 0, 30)
-mainButton.Position = UDim2.new(0.025, 0, 1, -70)
-mainButton.Text = "Main"
-mainButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-mainButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-mainButton.Font = Enum.Font.SciFi
-mainButton.TextSize = 14
-mainButton.Parent = mainFrame
-
-local creditsButton = Instance.new("TextButton")
-creditsButton.Size = UDim2.new(0.225, 0, 0, 30)
-creditsButton.Position = UDim2.new(0.275, 0, 1, -70)
-creditsButton.Text = "Credits"
-creditsButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-creditsButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-creditsButton.Font = Enum.Font.SciFi
-creditsButton.TextSize = 14
-creditsButton.Parent = mainFrame
-
-local miscButton = Instance.new("TextButton")
-miscButton.Size = UDim2.new(0.225, 0, 0, 30)
-miscButton.Position = UDim2.new(0.525, 0, 1, -70)
-miscButton.Text = "Misc"
-miscButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-miscButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-miscButton.Font = Enum.Font.SciFi
-miscButton.TextSize = 14
-miscButton.Parent = mainFrame
-
-local settingsButton = Instance.new("TextButton")
-settingsButton.Size = UDim2.new(0.225, 0, 0, 30)
-settingsButton.Position = UDim2.new(0.775, 0, 1, -70)
-settingsButton.Text = "Settings"
-settingsButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-settingsButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-settingsButton.Font = Enum.Font.SciFi
-settingsButton.TextSize = 14
-settingsButton.Parent = mainFrame
-
-local playersButton = Instance.new("TextButton")
-playersButton.Size = UDim2.new(0.225, 0, 0, 30)
-playersButton.Position = UDim2.new(0.025, 0, 0, 365)
-playersButton.Text = "Players"
-playersButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
-playersButton.TextColor3 = Color3.new(1, 1, 1) -- White text
-playersButton.Font = Enum.Font.SciFi
-playersButton.TextSize = 14
-playersButton.Parent = mainFrame
-
--- Button functionality
-mainButton.MouseButton1Click:Connect(function()
-    mainSection.Visible = true
-    creditsSection.Visible = false
-    miscSection.Visible = false
-    settingsSection.Visible = false
-    playersSection.Visible = false
-    titleLabel.Text = "Main Menu"
-end)
-
-creditsButton.MouseButton1Click:Connect(function()
-    mainSection.Visible = false
-    creditsSection.Visible = true
-    miscSection.Visible = false
-    settingsSection.Visible = false
-    playersSection.Visible = false
-    titleLabel.Text = "Credits"
-end)
-
-miscButton.MouseButton1Click:Connect(function()
-    mainSection.Visible = false
-    creditsSection.Visible = false
-    miscSection.Visible = true
-    settingsSection.Visible = false
-    playersSection.Visible = false
-    titleLabel.Text = "Misc"
-end)
-
-settingsButton.MouseButton1Click:Connect(function()
-    mainSection.Visible = false
-    creditsSection.Visible = false
-    miscSection.Visible = false
-    settingsSection.Visible = true
-    playersSection.Visible = false
-    titleLabel.Text = "Settings"
-end)
-
-playersButton.MouseButton1Click:Connect(function()
-    mainSection.Visible = false
-    creditsSection.Visible = false
-    miscSection.Visible = false
-    settingsSection.Visible = false
-    playersSection.Visible = true
-    titleLabel.Text = "Players"
-    updatePlayersSection() -- Update the players list when the section is opened
-end)
-
--- Auto Gold functionality
-local autoGoldEnabled = false
-local targetPosition = Vector3.new(-1686, 460, 146) -- Define the target position here
-
-autoGoldButton.MouseButton1Click:Connect(function()
-    autoGoldEnabled = not autoGoldEnabled
-    autoGoldButton.Text = autoGoldEnabled and "Auto Gold: ON" or "Auto Gold: OFF"
-
-    while autoGoldEnabled do
-        -- Move the player to the target position
-        player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetPosition)
-        wait(1) -- Adjust the delay as needed
-    end
-end)
-
--- Reset functionality
-resetButton.MouseButton1Click:Connect(function()
-    player.Character:BreakJoints() -- Resets the player
-end)
-
--- Fly functionality
-local flyEnabled = false
-local flySpeed = 50 -- Default fly speed
-local flyConnection
-
--- Infinite Jump functionality
-local infiniteJumpEnabled = false
-local infiniteJumpConnection
-
-flyButton.MouseButton1Click:Connect(function()
-    flyEnabled = not flyEnabled
-    flyButton.Text = flyEnabled and "Fly: ON" or "Fly: OFF"
-
-    if flyEnabled then
-        -- Enable fly
-        local character = player.Character
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-        if humanoidRootPart then
-            flyConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                local direction = humanoidRootPart.CFrame.LookVector
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-                    humanoidRootPart.CFrame = humanoidRootPart.CFrame + direction * (flySpeed / 100)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-                    humanoidRootPart.CFrame = humanoidRootPart.CFrame - direction * (flySpeed / 100)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                    humanoidRootPart.CFrame = humanoidRootPart.CFrame - humanoidRootPart.CFrame.RightVector * (flySpeed / 100)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                    humanoidRootPart.CFrame = humanoidRootPart.CFrame + humanoidRootPart.CFrame.RightVector * (flySpeed / 100)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                    humanoidRootPart.CFrame = humanoidRootPart.CFrame + Vector3.new(0, flySpeed / 100, 0)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-                    humanoidRootPart.CFrame = humanoidRootPart.CFrame - Vector3.new(0, flySpeed / 100, 0)
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
                 end
             end)
         end
+    end)
 
-        -- Enable Infinite Jump
-        infiniteJumpEnabled = true
-        infiniteJumpButton.Text = "Infinite Jump: ON"
-        infiniteJumpConnection = UserInputService.JumpRequest:Connect(function()
-            player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+    mainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+
+    -- Create the title label
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, 0, 0, 30)
+    titleLabel.Position = UDim2.new(0, 0, 0, 0)
+    titleLabel.Text = "Main Menu"
+    titleLabel.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    titleLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+    titleLabel.Font = Enum.Font.SciFi
+    titleLabel.TextSize = 18
+    titleLabel.Parent = mainFrame
+
+    -- Create the teleports section
+    local teleportsSection = Instance.new("Frame")
+    teleportsSection.Size = UDim2.new(0.25, 0, 1, -100) -- 25% width for teleports
+    teleportsSection.Position = UDim2.new(0, 0, 0, 30)
+    teleportsSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    teleportsSection.Visible = true
+    teleportsSection.Parent = mainFrame
+
+    -- Add teleports title
+    local teleportsTitle = Instance.new("TextLabel")
+    teleportsTitle.Size = UDim2.new(1, 0, 0, 20)
+    teleportsTitle.Position = UDim2.new(0, 0, 0, 0)
+    teleportsTitle.Text = "Teleports"
+    teleportsTitle.TextColor3 = Color3.new(1, 1, 1) -- White text
+    teleportsTitle.BackgroundTransparency = 1
+    teleportsTitle.Font = Enum.Font.SciFi
+    teleportsTitle.TextSize = 14
+    teleportsTitle.Parent = teleportsSection
+
+    -- Teleport positions
+    local teleportPositions = {
+        Vector3.new(-1674, 787, 72), -- Replace with your desired positions
+        Vector3.new(-915, 1126, 760), -- Replace with your desired positions
+        Vector3.new(-1524, 1118, 307), -- Replace with your desired positions
+        Vector3.new(-1397, 491, 877), -- Replace with your desired positions
+        Vector3.new(-841, 565, 117), -- Replace with your desired positions
+        Vector3.new(-896, 815, -133) -- Replace with your desired positions
+    }
+
+    -- Create teleport buttons (separated for easy text modification)
+    local teleportButton1 = Instance.new("TextButton")
+    teleportButton1.Size = UDim2.new(0.9, 0, 0, 30)
+    teleportButton1.Position = UDim2.new(0.05, 0, 0, 30)
+    teleportButton1.Text = "Grand Ledge" -- Change this text
+    teleportButton1.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    teleportButton1.TextColor3 = Color3.new(1, 1, 1) -- White text
+    teleportButton1.Font = Enum.Font.SciFi
+    teleportButton1.TextSize = 14
+    teleportButton1.Parent = teleportsSection
+
+    local teleportButton2 = Instance.new("TextButton")
+    teleportButton2.Size = UDim2.new(0.9, 0, 0, 30)
+    teleportButton2.Position = UDim2.new(0.05, 0, 0, 70)
+    teleportButton2.Text = "Hyper Peak" -- Change this text
+    teleportButton2.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    teleportButton2.TextColor3 = Color3.new(1, 1, 1) -- White text
+    teleportButton2.Font = Enum.Font.SciFi
+    teleportButton2.TextSize = 14
+    teleportButton2.Parent = teleportsSection
+
+    local teleportButton3 = Instance.new("TextButton")
+    teleportButton3.Size = UDim2.new(0.9, 0, 0, 30)
+    teleportButton3.Position = UDim2.new(0.05, 0, 0, 110)
+    teleportButton3.Text = "Tallest Tree" -- Change this text
+    teleportButton3.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    teleportButton3.TextColor3 = Color3.new(1, 1, 1) -- White text
+    teleportButton3.Font = Enum.Font.SciFi
+    teleportButton3.TextSize = 14
+    teleportButton3.Parent = teleportsSection
+
+    local teleportButton4 = Instance.new("TextButton")
+    teleportButton4.Size = UDim2.new(0.9, 0, 0, 30)
+    teleportButton4.Position = UDim2.new(0.05, 0, 0, 150)
+    teleportButton4.Text = "Lucky Cave" -- Change this text
+    teleportButton4.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    teleportButton4.TextColor3 = Color3.new(1, 1, 1) -- White text
+    teleportButton4.Font = Enum.Font.SciFi
+    teleportButton4.TextSize = 14
+    teleportButton4.Parent = teleportsSection
+
+    local teleportButton5 = Instance.new("TextButton")
+    teleportButton5.Size = UDim2.new(0.9, 0, 0, 30)
+    teleportButton5.Position = UDim2.new(0.05, 0, 0, 190)
+    teleportButton5.Text = "Climbers Plain" -- Change this text
+    teleportButton5.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    teleportButton5.TextColor3 = Color3.new(1, 1, 1) -- White text
+    teleportButton5.Font = Enum.Font.SciFi
+    teleportButton5.TextSize = 14
+    teleportButton5.Parent = teleportsSection
+
+    local teleportButton6 = Instance.new("TextButton")
+    teleportButton6.Size = UDim2.new(0.9, 0, 0, 30)
+    teleportButton6.Position = UDim2.new(0.05, 0, 0, 230)
+    teleportButton6.Text = "Skyfall Hole" -- Change this text
+    teleportButton6.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    teleportButton6.TextColor3 = Color3.new(1, 1, 1) -- White text
+    teleportButton6.Font = Enum.Font.SciFi
+    teleportButton6.TextSize = 14
+    teleportButton6.Parent = teleportsSection
+
+    -- Teleport button functionality
+    teleportButton1.MouseButton1Click:Connect(function()
+        player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[1])
+    end)
+
+    teleportButton2.MouseButton1Click:Connect(function()
+        player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[2])
+    end)
+
+    teleportButton3.MouseButton1Click:Connect(function()
+        player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[3])
+    end)
+
+    teleportButton4.MouseButton1Click:Connect(function()
+        player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[4])
+    end)
+
+    teleportButton5.MouseButton1Click:Connect(function()
+        player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[5])
+    end)
+
+    teleportButton6.MouseButton1Click:Connect(function()
+        player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(teleportPositions[6])
+    end)
+
+    -- Create the main section
+    local mainSection = Instance.new("Frame")
+    mainSection.Size = UDim2.new(0.75, 0, 1, -100) -- 75% width for main section
+    mainSection.Position = UDim2.new(0.25, 0, 0, 30)
+    mainSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    mainSection.Visible = true
+    mainSection.Parent = mainFrame
+
+    -- Create the credits section
+    local creditsSection = Instance.new("Frame")
+    creditsSection.Size = UDim2.new(0.75, 0, 1, -100) -- Adjusted height for buttons
+    creditsSection.Position = UDim2.new(0.25, 0, 0, 30)
+    creditsSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    creditsSection.Visible = false
+    creditsSection.Parent = mainFrame
+
+    -- Create the misc section
+    local miscSection = Instance.new("Frame")
+    miscSection.Size = UDim2.new(0.75, 0, 1, -100) -- Adjusted height for buttons
+    miscSection.Position = UDim2.new(0.25, 0, 0, 30)
+    miscSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    miscSection.Visible = false
+    miscSection.Parent = mainFrame
+
+    -- Create the settings section
+    local settingsSection = Instance.new("Frame")
+    settingsSection.Size = UDim2.new(0.75, 0, 1, -100) -- Adjusted height for buttons
+    settingsSection.Position = UDim2.new(0.25, 0, 0, 30)
+    settingsSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    settingsSection.Visible = false
+    settingsSection.Parent = mainFrame
+
+    -- Create the players section
+    local playersSection = Instance.new("Frame")
+    playersSection.Size = UDim2.new(0.75, 0, 1, -100) -- Adjusted height for buttons
+    playersSection.Position = UDim2.new(0.25, 0, 0, 30)
+    playersSection.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+    playersSection.Visible = false
+    playersSection.Parent = mainFrame
+
+    -- Add players title
+    local playersTitle = Instance.new("TextLabel")
+    playersTitle.Size = UDim2.new(1, 0, 0, 20)
+    playersTitle.Position = UDim2.new(0, 0, 0, 0)
+    playersTitle.Text = "Players"
+    playersTitle.TextColor3 = Color3.new(1, 1, 1) -- White text
+    playersTitle.BackgroundTransparency = 1
+    playersTitle.Font = Enum.Font.SciFi
+    playersTitle.TextSize = 14
+    playersTitle.Parent = playersSection
+
+    -- Create a scrolling frame for players
+    local playersScrollFrame = Instance.new("ScrollingFrame")
+    playersScrollFrame.Size = UDim2.new(1, 0, 1, -30) -- Adjusted height for title
+    playersScrollFrame.Position = UDim2.new(0, 0, 0, 30)
+    playersScrollFrame.BackgroundTransparency = 1
+    playersScrollFrame.ScrollBarThickness = 5
+    playersScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Will be updated dynamically
+    playersScrollFrame.Parent = playersSection
+
+    -- Function to create player buttons
+    local function createPlayerButton(playerName, position)
+        local playerButton = Instance.new("Frame")
+        playerButton.Size = UDim2.new(0.9, 0, 0, 30)
+        playerButton.Position = position
+        playerButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+        playerButton.Parent = playersScrollFrame
+
+        local playerNameLabel = Instance.new("TextLabel")
+        playerNameLabel.Size = UDim2.new(0.5, 0, 1, 0)
+        playerNameLabel.Position = UDim2.new(0, 0, 0, 0)
+        playerNameLabel.Text = playerName
+        playerNameLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+        playerNameLabel.BackgroundTransparency = 1
+        playerNameLabel.Font = Enum.Font.SciFi
+        playerNameLabel.TextSize = 14
+        playerNameLabel.Parent = playerButton
+
+        local teleportButton = Instance.new("TextButton")
+        teleportButton.Size = UDim2.new(0.2, 0, 1, 0)
+        teleportButton.Position = UDim2.new(0.5, 0, 0, 0)
+        teleportButton.Text = "Teleport"
+        teleportButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2) -- Dark gray background
+        teleportButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+        teleportButton.Font = Enum.Font.SciFi
+        teleportButton.TextSize = 14
+        teleportButton.Parent = playerButton
+
+        local flingButton = Instance.new("TextButton")
+        flingButton.Size = UDim2.new(0.2, 0, 1, 0)
+        flingButton.Position = UDim2.new(0.7, 0, 0, 0)
+        flingButton.Text = "Fling"
+        flingButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2) -- Dark gray background
+        flingButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+        flingButton.Font = Enum.Font.SciFi
+        flingButton.TextSize = 14
+        flingButton.Parent = playerButton
+
+        teleportButton.MouseButton1Click:Connect(function()
+            local targetPlayer = game.Players:FindFirstChild(playerName)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                player.Character:WaitForChild("HumanoidRootPart").CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+            end
         end)
-    else
-        -- Disable fly
-        if flyConnection then
-            flyConnection:Disconnect()
-            flyConnection = nil
-        end
 
-        -- Disable Infinite Jump
-        infiniteJumpEnabled = false
-        infiniteJumpButton.Text = "Infinite Jump: OFF"
-        if infiniteJumpConnection then
-            infiniteJumpConnection:Disconnect()
-            infiniteJumpConnection = nil
-        end
-    end
-end)
+        flingButton.MouseButton1Click:Connect(function()
+            local targetPlayer = game.Players:FindFirstChild(playerName)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local rootPart = targetPlayer.Character.HumanoidRootPart
+                local myRootPart = player.Character:WaitForChild("HumanoidRootPart")
 
--- NoClip functionality
-local noclipEnabled = false
-local noclipConnection
+                -- Store original collision state
+                local originalCollisions = {}
+                for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+                    if otherPlayer.Character then
+                        for _, part in pairs(otherPlayer.Character:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                originalCollisions[part] = part.CanCollide
+                                part.CanCollide = false
+                            end
+                        end
+                    end
+                end
 
-noclipButton.MouseButton1Click:Connect(function()
-    noclipEnabled = not noclipEnabled
-    noclipButton.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
+                -- Enable spinning by applying angular velocity
+                local bodyGyro = Instance.new("BodyGyro")
+                bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                bodyGyro.P = 100
+                bodyGyro.D = 10
+                bodyGyro.CFrame = myRootPart.CFrame
+                bodyGyro.Parent = myRootPart
 
-    if noclipEnabled then
-        -- Enable NoClip
-        noclipConnection = game:GetService("RunService").Stepped:Connect(function()
-            for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
+                -- Set angular velocity for spinning
+                local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
+                bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                bodyAngularVelocity.AngularVelocity = Vector3.new(0, 12381280, 0) -- Spin super fast
+                bodyAngularVelocity.Parent = myRootPart
+
+                -- Spam teleport to the target player for 5 seconds
+                local startTime = tick()
+                while tick() - startTime < 5 do
+                    myRootPart.CFrame = rootPart.CFrame
+                    wait(0.05) -- Very short delay for rapid teleportation
+                end
+
+                -- Stop spinning and restore collisions
+                bodyGyro:Destroy()
+                bodyAngularVelocity:Destroy()
+                for part, canCollide in pairs(originalCollisions) do
+                    part.CanCollide = canCollide
                 end
             end
         end)
-    else
-        -- Disable NoClip
-        if noclipConnection then
-            noclipConnection:Disconnect()
-            noclipConnection = nil
+    end
+
+    -- Populate players section with buttons
+    local function updatePlayersSection()
+        -- Clear existing buttons
+        for _, child in pairs(playersScrollFrame:GetChildren()) do
+            if child:IsA("Frame") then
+                child:Destroy()
+            end
         end
-        for _, part in pairs(player.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
+
+        -- Add buttons for each player
+        local yOffset = 0
+        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+            if otherPlayer ~= player then
+                createPlayerButton(otherPlayer.Name, UDim2.new(0.05, 0, 0, yOffset))
+                yOffset = yOffset + 40
+            end
+        end
+
+        -- Update scrolling frame canvas size
+        playersScrollFrame.CanvasSize = UDim2.new(0, 0, 0, yOffset)
+    end
+
+    -- Update players section when the section is opened
+    playersSection:GetPropertyChangedSignal("Visible"):Connect(function()
+        if playersSection.Visible then
+            updatePlayersSection()
+        end
+    end)
+
+    -- Add content to the main section
+    local mainText = Instance.new("TextLabel")
+    mainText.Size = UDim2.new(1, 0, 1, -40) -- Adjusted height for Auto Gold button
+    mainText.Position = UDim2.new(0, 0, 0, 0)
+    mainText.Text = "Welcome to the Main Section!"
+    mainText.TextColor3 = Color3.new(1, 1, 1) -- White text
+    mainText.BackgroundTransparency = 1
+    mainText.Font = Enum.Font.SciFi
+    mainText.TextSize = 14
+    mainText.Parent = mainSection
+
+    -- Add Auto Gold button
+    local autoGoldButton = Instance.new("TextButton")
+    autoGoldButton.Size = UDim2.new(0.9, 0, 0, 30)
+    autoGoldButton.Position = UDim2.new(0.05, 0, 1, -40)
+    autoGoldButton.Text = "Auto Gold: OFF"
+    autoGoldButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    autoGoldButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    autoGoldButton.Font = Enum.Font.SciFi
+    autoGoldButton.TextSize = 14
+    autoGoldButton.Parent = mainSection
+
+    -- Add content to the credits section
+    local creditsText = Instance.new("TextLabel")
+    creditsText.Size = UDim2.new(1, 0, 1, 0)
+    creditsText.Position = UDim2.new(0, 0, 0, 0)
+    creditsText.Text = "Credits:\nDeveloper: Mako\nDesigner: Mako"
+    creditsText.TextColor3 = Color3.new(1, 1, 1) -- White text
+    creditsText.BackgroundTransparency = 1
+    creditsText.Font = Enum.Font.SciFi
+    creditsText.TextSize = 14
+    creditsText.Parent = creditsSection
+
+    -- Add content to the misc section
+    local miscText = Instance.new("TextLabel")
+    miscText.Size = UDim2.new(1, 0, 0, 20)
+    miscText.Position = UDim2.new(0, 0, 0, 0)
+    miscText.Text = "Misc Section"
+    miscText.TextColor3 = Color3.new(1, 1, 1) -- White text
+    miscText.BackgroundTransparency = 1
+    miscText.Font = Enum.Font.SciFi
+    miscText.TextSize = 14
+    miscText.Parent = miscSection
+
+    -- Add Reset Button to Misc Section
+    local resetButton = Instance.new("TextButton")
+    resetButton.Size = UDim2.new(0.9, 0, 0, 30)
+    resetButton.Position = UDim2.new(0.05, 0, 0, 30)
+    resetButton.Text = "Reset"
+    resetButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    resetButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    resetButton.Font = Enum.Font.SciFi
+    resetButton.TextSize = 14
+    resetButton.Parent = miscSection
+
+    -- Add Fly Toggle to Misc Section
+    local flyButton = Instance.new("TextButton")
+    flyButton.Size = UDim2.new(0.9, 0, 0, 30)
+    flyButton.Position = UDim2.new(0.05, 0, 0, 70)
+    flyButton.Text = "Fly: OFF"
+    flyButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    flyButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    flyButton.Font = Enum.Font.SciFi
+    flyButton.TextSize = 14
+    flyButton.Parent = miscSection
+
+    -- Add NoClip Toggle to Misc Section
+    local noclipButton = Instance.new("TextButton")
+    noclipButton.Size = UDim2.new(0.9, 0, 0, 30)
+    noclipButton.Position = UDim2.new(0.05, 0, 0, 110)
+    noclipButton.Text = "NoClip: OFF"
+    noclipButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    noclipButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    noclipButton.Font = Enum.Font.SciFi
+    noclipButton.TextSize = 14
+    noclipButton.Parent = miscSection
+
+    -- Add Infinite Jump Toggle to Misc Section
+    local infiniteJumpButton = Instance.new("TextButton")
+    infiniteJumpButton.Size = UDim2.new(0.9, 0, 0, 30)
+    infiniteJumpButton.Position = UDim2.new(0.05, 0, 0, 150)
+    infiniteJumpButton.Text = "Infinite Jump: OFF"
+    infiniteJumpButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    infiniteJumpButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    infiniteJumpButton.Font = Enum.Font.SciFi
+    infiniteJumpButton.TextSize = 14
+    infiniteJumpButton.Parent = miscSection
+
+    -- Add content to the settings section
+    local settingsText = Instance.new("TextLabel")
+    settingsText.Size = UDim2.new(1, 0, 0, 20)
+    settingsText.Position = UDim2.new(0, 0, 0, 0)
+    settingsText.Text = "Settings"
+    settingsText.TextColor3 = Color3.new(1, 1, 1) -- White text
+    settingsText.BackgroundTransparency = 1
+    settingsText.Font = Enum.Font.SciFi
+    settingsText.TextSize = 14
+    settingsText.Parent = settingsSection
+
+    -- Add Fly Speed TextBox and Adjust Button to Settings Section
+    local flySpeedLabel = Instance.new("TextLabel")
+    flySpeedLabel.Size = UDim2.new(0.9, 0, 0, 20)
+    flySpeedLabel.Position = UDim2.new(0.05, 0, 0, 30)
+    flySpeedLabel.Text = "Fly Speed: 50"
+    flySpeedLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+    flySpeedLabel.BackgroundTransparency = 1
+    flySpeedLabel.Font = Enum.Font.SciFi
+    flySpeedLabel.TextSize = 14
+    flySpeedLabel.Parent = settingsSection
+
+    local flySpeedTextBox = Instance.new("TextBox")
+    flySpeedTextBox.Size = UDim2.new(0.6, 0, 0, 20)
+    flySpeedTextBox.Position = UDim2.new(0.05, 0, 0, 50)
+    flySpeedTextBox.PlaceholderText = "Enter Fly Speed"
+    flySpeedTextBox.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    flySpeedTextBox.TextColor3 = Color3.new(1, 1, 1) -- White text
+    flySpeedTextBox.Font = Enum.Font.SciFi
+    flySpeedTextBox.TextSize = 14
+    flySpeedTextBox.Parent = settingsSection
+
+    local flySpeedAdjustButton = Instance.new("TextButton")
+    flySpeedAdjustButton.Size = UDim2.new(0.3, 0, 0, 20)
+    flySpeedAdjustButton.Position = UDim2.new(0.65, 0, 0, 50)
+    flySpeedAdjustButton.Text = "Adjust"
+    flySpeedAdjustButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    flySpeedAdjustButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    flySpeedAdjustButton.Font = Enum.Font.SciFi
+    flySpeedAdjustButton.TextSize = 14
+    flySpeedAdjustButton.Parent = settingsSection
+
+    -- Add "MakoWare" text at the bottom
+    local makoWareText = Instance.new("TextLabel")
+    makoWareText.Size = UDim2.new(1, 0, 0, 20)
+    makoWareText.Position = UDim2.new(0, 0, 1, -20)
+    makoWareText.Text = "MakoWare"
+    makoWareText.TextColor3 = Color3.new(0, 0.5, 1) -- Blue text
+    makoWareText.BackgroundTransparency = 1
+    makoWareText.Font = Enum.Font.SciFi
+    makoWareText.TextSize = 14
+    makoWareText.TextXAlignment = Enum.TextXAlignment.Center -- Center the text
+    makoWareText.Parent = mainFrame
+
+    -- Create the buttons
+    local mainButton = Instance.new("TextButton")
+    mainButton.Size = UDim2.new(0.225, 0, 0, 30)
+    mainButton.Position = UDim2.new(0.025, 0, 1, -70)
+    mainButton.Text = "Main"
+    mainButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    mainButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    mainButton.Font = Enum.Font.SciFi
+    mainButton.TextSize = 14
+    mainButton.Parent = mainFrame
+
+    local creditsButton = Instance.new("TextButton")
+    creditsButton.Size = UDim2.new(0.225, 0, 0, 30)
+    creditsButton.Position = UDim2.new(0.275, 0, 1, -70)
+    creditsButton.Text = "Credits"
+    creditsButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    creditsButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    creditsButton.Font = Enum.Font.SciFi
+    creditsButton.TextSize = 14
+    creditsButton.Parent = mainFrame
+
+    local miscButton = Instance.new("TextButton")
+    miscButton.Size = UDim2.new(0.225, 0, 0, 30)
+    miscButton.Position = UDim2.new(0.525, 0, 1, -70)
+    miscButton.Text = "Misc"
+    miscButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    miscButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    miscButton.Font = Enum.Font.SciFi
+    miscButton.TextSize = 14
+    miscButton.Parent = mainFrame
+
+    local settingsButton = Instance.new("TextButton")
+    settingsButton.Size = UDim2.new(0.225, 0, 0, 30)
+    settingsButton.Position = UDim2.new(0.775, 0, 1, -70)
+    settingsButton.Text = "Settings"
+    settingsButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    settingsButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    settingsButton.Font = Enum.Font.SciFi
+    settingsButton.TextSize = 14
+    settingsButton.Parent = mainFrame
+
+    local playersButton = Instance.new("TextButton")
+    playersButton.Size = UDim2.new(0.225, 0, 0, 30)
+    playersButton.Position = UDim2.new(0.025, 0, 0, 365)
+    playersButton.Text = "Players"
+    playersButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark gray background
+    playersButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+    playersButton.Font = Enum.Font.SciFi
+    playersButton.TextSize = 14
+    playersButton.Parent = mainFrame
+
+    -- Button functionality
+    mainButton.MouseButton1Click:Connect(function()
+        mainSection.Visible = true
+        creditsSection.Visible = false
+        miscSection.Visible = false
+        settingsSection.Visible = false
+        playersSection.Visible = false
+        titleLabel.Text = "Main Menu"
+    end)
+
+    creditsButton.MouseButton1Click:Connect(function()
+        mainSection.Visible = false
+        creditsSection.Visible = true
+        miscSection.Visible = false
+        settingsSection.Visible = false
+        playersSection.Visible = false
+        titleLabel.Text = "Credits"
+    end)
+
+    miscButton.MouseButton1Click:Connect(function()
+        mainSection.Visible = false
+        creditsSection.Visible = false
+        miscSection.Visible = true
+        settingsSection.Visible = false
+        playersSection.Visible = false
+        titleLabel.Text = "Misc"
+    end)
+
+    settingsButton.MouseButton1Click:Connect(function()
+        mainSection.Visible = false
+        creditsSection.Visible = false
+        miscSection.Visible = false
+        settingsSection.Visible = true
+        playersSection.Visible = false
+        titleLabel.Text = "Settings"
+    end)
+
+    playersButton.MouseButton1Click:Connect(function()
+        mainSection.Visible = false
+        creditsSection.Visible = false
+        miscSection.Visible = false
+        settingsSection.Visible = false
+        playersSection.Visible = true
+        titleLabel.Text = "Players"
+        updatePlayersSection() -- Update the players list when the section is opened
+    end)
+
+    -- Auto Gold functionality
+    local autoGoldEnabled = false
+    local targetPosition = Vector3.new(-1686, 460, 146) -- Define the target position here
+
+    autoGoldButton.MouseButton1Click:Connect(function()
+        autoGoldEnabled = not autoGoldEnabled
+        autoGoldButton.Text = autoGoldEnabled and "Auto Gold: ON" or "Auto Gold: OFF"
+
+        while autoGoldEnabled do
+            -- Move the player to the target position
+            player.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetPosition)
+            wait(1) -- Adjust the delay as needed
+        end
+    end)
+
+    -- Reset functionality
+    resetButton.MouseButton1Click:Connect(function()
+        player.Character:BreakJoints() -- Resets the player
+    end)
+
+    -- Fly functionality
+    local flyEnabled = false
+    local flySpeed = 50 -- Default fly speed
+    local flyConnection
+
+    -- Infinite Jump functionality
+    local infiniteJumpEnabled = false
+    local infiniteJumpConnection
+
+    flyButton.MouseButton1Click:Connect(function()
+        flyEnabled = not flyEnabled
+        flyButton.Text = flyEnabled and "Fly: ON" or "Fly: OFF"
+
+        if flyEnabled then
+            -- Enable fly
+            local character = player.Character
+            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                flyConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                    local direction = humanoidRootPart.CFrame.LookVector
+                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                        humanoidRootPart.CFrame = humanoidRootPart.CFrame + direction * (flySpeed / 100)
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                        humanoidRootPart.CFrame = humanoidRootPart.CFrame - direction * (flySpeed / 100)
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                        humanoidRootPart.CFrame = humanoidRootPart.CFrame - humanoidRootPart.CFrame.RightVector * (flySpeed / 100)
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                        humanoidRootPart.CFrame = humanoidRootPart.CFrame + humanoidRootPart.CFrame.RightVector * (flySpeed / 100)
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                        humanoidRootPart.CFrame = humanoidRootPart.CFrame + Vector3.new(0, flySpeed / 100, 0)
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                        humanoidRootPart.CFrame = humanoidRootPart.CFrame - Vector3.new(0, flySpeed / 100, 0)
+                    end
+                end)
+            end
+
+            -- Enable Infinite Jump
+            infiniteJumpEnabled = true
+            infiniteJumpButton.Text = "Infinite Jump: ON"
+            infiniteJumpConnection = UserInputService.JumpRequest:Connect(function()
+                player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+            end)
+        else
+            -- Disable fly
+            if flyConnection then
+                flyConnection:Disconnect()
+                flyConnection = nil
+            end
+
+            -- Disable Infinite Jump
+            infiniteJumpEnabled = false
+            infiniteJumpButton.Text = "Infinite Jump: OFF"
+            if infiniteJumpConnection then
+                infiniteJumpConnection:Disconnect()
+                infiniteJumpConnection = nil
+            end
+        end
+    end)
+
+    -- NoClip functionality
+    local noclipEnabled = false
+    local noclipConnection
+
+    noclipButton.MouseButton1Click:Connect(function()
+        noclipEnabled = not noclipEnabled
+        noclipButton.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
+
+        if noclipEnabled then
+            -- Enable NoClip
+            noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+                for _, part in pairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end)
+        else
+            -- Disable NoClip
+            if noclipConnection then
+                noclipConnection:Disconnect()
+                noclipConnection = nil
+            end
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end)
+
+    -- Infinite Jump functionality
+    infiniteJumpButton.MouseButton1Click:Connect(function()
+        infiniteJumpEnabled = not infiniteJumpEnabled
+        infiniteJumpButton.Text = infiniteJumpEnabled and "Infinite Jump: ON" or "Infinite Jump: OFF"
+
+        if infiniteJumpEnabled then
+            -- Enable Infinite Jump
+            infiniteJumpConnection = UserInputService.JumpRequest:Connect(function()
+                player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+            end)
+        else
+            -- Disable Infinite Jump
+            if infiniteJumpConnection then
+                infiniteJumpConnection:Disconnect()
+                infiniteJumpConnection = nil
+            end
+        end
+    end)
+
+    -- Fly Speed Adjust functionality
+    flySpeedAdjustButton.MouseButton1Click:Connect(function()
+        local newSpeed = tonumber(flySpeedTextBox.Text)
+        if newSpeed and newSpeed > 0 then
+            flySpeed = newSpeed
+            flySpeedLabel.Text = "Fly Speed: " .. flySpeed
+        else
+            flySpeedTextBox.Text = "" -- Clear invalid input
+        end
+    end)
+
+    -- Remove corner rounding from all frames
+    for _, frame in pairs(gui:GetDescendants()) do
+        if frame:IsA("Frame") then
+            local corner = frame:FindFirstChild("UICorner")
+            if corner then
+                corner:Destroy()
             end
         end
     end
-end)
 
--- Infinite Jump functionality
-infiniteJumpButton.MouseButton1Click:Connect(function()
-    infiniteJumpEnabled = not infiniteJumpEnabled
-    infiniteJumpButton.Text = infiniteJumpEnabled and "Infinite Jump: ON" or "Infinite Jump: OFF"
+    -- Add notifications after loading screen
+    local function createNotification(text, position)
+        local notification = Instance.new("TextLabel")
+        notification.Size = UDim2.new(0, 800, 0, 100) -- Larger size
+        notification.Position = position
+        notification.Text = text
+        notification.TextColor3 = Color3.new(1, 1, 1) -- White text
+        notification.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
+        notification.Font = Enum.Font.SciFi
+        notification.TextSize = 18
+        notification.Parent = gui
 
-    if infiniteJumpEnabled then
-        -- Enable Infinite Jump
-        infiniteJumpConnection = UserInputService.JumpRequest:Connect(function()
-            player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+        -- Slide in animation
+        notification.Position = UDim2.new(1, 0, position.Y.Scale, position.Y.Offset)
+        local tweenIn = game:GetService("TweenService"):Create(notification, TweenInfo.new(0.5), {Position = position})
+        tweenIn:Play()
+
+        -- Slide out animation after 3 seconds
+        task.delay(3, function()
+            local tweenOut = game:GetService("TweenService"):Create(notification, TweenInfo.new(0.5), {Position = UDim2.new(1, 0, position.Y.Scale, position.Y.Offset)})
+            tweenOut:Play()
+            tweenOut.Completed:Wait()
+            notification:Destroy()
         end)
-    else
-        -- Disable Infinite Jump
-        if infiniteJumpConnection then
-            infiniteJumpConnection:Disconnect()
-            infiniteJumpConnection = nil
-        end
+
+        return notification
     end
-end)
 
--- Fly Speed Adjust functionality
-flySpeedAdjustButton.MouseButton1Click:Connect(function()
-    local newSpeed = tonumber(flySpeedTextBox.Text)
-    if newSpeed and newSpeed > 0 then
-        flySpeed = newSpeed
-        flySpeedLabel.Text = "Fly Speed: " .. flySpeed
-    else
-        flySpeedTextBox.Text = "" -- Clear invalid input
-    end
-end)
-
--- Remove corner rounding from all frames
-for _, frame in pairs(gui:GetDescendants()) do
-    if frame:IsA("Frame") then
-        local corner = frame:FindFirstChild("UICorner")
-        if corner then
-            corner:Destroy()
-        end
-    end
-end
-
--- Add notifications after loading screen
-local function createNotification(text, position)
-    local notification = Instance.new("TextLabel")
-    notification.Size = UDim2.new(0, 800, 0, 100) -- Larger size
-    notification.Position = position
-    notification.Text = text
-    notification.TextColor3 = Color3.new(1, 1, 1) -- White text
-    notification.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
-    notification.Font = Enum.Font.SciFi
-    notification.TextSize = 18
-    notification.Parent = gui
-
-    -- Slide in animation
-    notification.Position = UDim2.new(1, 0, position.Y.Scale, position.Y.Offset)
-    local tweenIn = game:GetService("TweenService"):Create(notification, TweenInfo.new(0.5), {Position = position})
-    tweenIn:Play()
-
-    -- Slide out animation after 3 seconds
-    task.delay(3, function()
-        local tweenOut = game:GetService("TweenService"):Create(notification, TweenInfo.new(0.5), {Position = UDim2.new(1, 0, position.Y.Scale, position.Y.Offset)})
-        tweenOut:Play()
-        tweenOut.Completed:Wait()
-        notification:Destroy()
+    -- Create notifications after loading screen
+    task.spawn(function()
+        wait(5) -- Wait for loading screen to finish
+        createNotification("Script Loaded", UDim2.new(0.7, 0, 0.1, 0))
+        createNotification("Z To Close UI", UDim2.new(0.7, 0, 0.2, 0))
     end)
 
-    return notification
+    -- Toggle UI visibility with Z key
+    UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == Enum.KeyCode.Z then
+            mainFrame.Visible = not mainFrame.Visible
+        end
+    end)
 end
 
--- Create notifications after loading screen
-task.spawn(function()
-    wait(5) -- Wait for loading screen to finish
-    createNotification("Script Loaded", UDim2.new(0.7, 0, 0.1, 0))
-    createNotification("Z To Close UI", UDim2.new(0.7, 0, 0.2, 0))
-end)
+-- Initialize the GUI
+initializeGUI()
 
--- Toggle UI visibility with Z key
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.Z then
-        mainFrame.Visible = not mainFrame.Visible
-    end
+-- Ensure the GUI persists after respawning
+player.CharacterAdded:Connect(function()
+    wait(1) -- Wait for the character to fully load
+    initializeGUI()
 end)
