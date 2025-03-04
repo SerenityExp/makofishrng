@@ -388,9 +388,9 @@ local function initializeGUI()
                 bodyAngularVelocity.AngularVelocity = Vector3.new(0, 12381280, 0) -- Spin super fast
                 bodyAngularVelocity.Parent = myRootPart
 
-                -- Spam teleport to the target player for 5 seconds
+                -- Spam teleport to the target player for 9 seconds
                 local startTime = tick()
-                while tick() - startTime < 5 do
+                while tick() - startTime < 9 do
                     myRootPart.CFrame = rootPart.CFrame
                     wait(0.05) -- Very short delay for rapid teleportation
                 end
