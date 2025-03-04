@@ -385,7 +385,7 @@ local function initializeGUI()
                 -- Set angular velocity for spinning
                 local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
                 bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-                bodyAngularVelocity.AngularVelocity = Vector3.new(0, 12381280, 0) -- Spin super fast
+                bodyAngularVelocity.AngularVelocity = Vector3.new(0, 9999999, 0) -- Spin super fast
                 bodyAngularVelocity.Parent = myRootPart
 
                 -- Spam teleport to the target player for 9 seconds
