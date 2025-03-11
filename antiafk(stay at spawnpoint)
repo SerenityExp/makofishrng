@@ -84,20 +84,32 @@ end
 animateLoadingScreen()
 
 -- Button Setup (after loading screen)
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0, 200, 0, 50)
-button.Position = UDim2.new(0.5, -100, 0.1, 0)
-button.Text = "Toggle Area"
-button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.8)
-button.TextColor3 = Color3.new(1, 1, 1)
-button.Font = Enum.Font.SciFi
-button.TextSize = 18
-button.Parent = screenGui
+local antiAFKButton = Instance.new("TextButton")
+antiAFKButton.Size = UDim2.new(0, 200, 0, 50)
+antiAFKButton.Position = UDim2.new(0.5, -220, 0.1, 0)
+antiAFKButton.Text = "Toggle Anti-AFK"
+antiAFKButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.8)
+antiAFKButton.TextColor3 = Color3.new(1, 1, 1)
+antiAFKButton.Font = Enum.Font.SciFi
+antiAFKButton.TextSize = 18
+antiAFKButton.Parent = screenGui
 
--- Animation Setup for Button
+local autoClickButton = Instance.new("TextButton")
+autoClickButton.Size = UDim2.new(0, 200, 0, 50)
+autoClickButton.Position = UDim2.new(0.5, 20, 0.1, 0)
+autoClickButton.Text = "Clicking: Off"
+autoClickButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.8)
+autoClickButton.TextColor3 = Color3.new(1, 1, 1)
+autoClickButton.Font = Enum.Font.SciFi
+autoClickButton.TextSize = 18
+autoClickButton.Parent = screenGui
+
+-- Animation Setup for Buttons
 local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true)
-local tween = TweenService:Create(button, tweenInfo, {Rotation = 5})
-tween:Play()
+local antiAFKTween = TweenService:Create(antiAFKButton, tweenInfo, {Rotation = 5})
+antiAFKTween:Play()
+local autoClickTween = TweenService:Create(autoClickButton, tweenInfo, {Rotation = 5})
+autoClickTween:Play()
 
 -- Area Setup
 local areaSize = 100 -- Increased area size
@@ -112,6 +124,9 @@ areaPart.CanCollide = false -- No collisions
 areaPart.Parent = workspace
 
 local walking = false
+local clicking = false
+local antiAFKCooldown = false
+local autoClickCooldown = false
 
 -- Random Walk Function
 local function randomWalk()
@@ -137,13 +152,84 @@ local function randomWalk()
     end
 end
 
--- Button Click Event
-button.MouseButton1Click:Connect(function()
-    walking = not walking
-    if walking then
-        randomWalk()
-        areaPart.Transparency = 0.3 -- Make the area more visible
-    else
-        areaPart.Transparency = 0.7 -- Make the area less visible
+-- Auto-Click Function
+local function autoClick()
+    while clicking do
+        mouse1click() -- Simulate a genuine mouse click
+        wait(5) -- Click every 5 seconds
+    end
+end
+
+-- Notification Function
+local function sendNotification(message)
+    local notification = Instance.new("Frame")
+    notification.Size = UDim2.new(0, 300, 0, 80)
+    notification.Position = UDim2.new(0.5, -150, 0.8, -40)
+    notification.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+    notification.BorderSizePixel = 0
+    notification.Parent = screenGui
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.Text = message
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.Font = Enum.Font.SciFi
+    textLabel.TextSize = 18
+    textLabel.BackgroundTransparency = 1
+    textLabel.Parent = notification
+
+    -- Fade out the notification
+    wait(2)
+    local fadeTween = TweenService:Create(notification, TweenInfo.new(1), {BackgroundTransparency = 1})
+    fadeTween:Play()
+    fadeTween.Completed:Wait()
+    notification:Destroy()
+end
+
+-- Anti-AFK Button Click Event
+antiAFKButton.MouseButton1Click:Connect(function()
+    if not antiAFKCooldown then
+        walking = not walking
+        antiAFKCooldown = true
+        antiAFKButton.BackgroundTransparency = 0.5
+        antiAFKButton.TextColor3 = Color3.new(0.5, 0.5, 0.5)
+        if walking then
+            antiAFKButton.Text = "Anti-AFK Active"
+            spawn(function()
+                randomWalk()
+            end)
+            areaPart.Transparency = 0.3 -- Make the area more visible
+        else
+            antiAFKButton.Text = "Toggle Anti-AFK"
+            areaPart.Transparency = 0.7 -- Make the area less visible
+        end
+        wait(3)
+        antiAFKCooldown = false
+        antiAFKButton.BackgroundTransparency = 0
+        antiAFKButton.TextColor3 = Color3.new(1, 1, 1)
+    end
+end)
+
+-- Auto-Click Button Click Event
+autoClickButton.MouseButton1Click:Connect(function()
+    if not autoClickCooldown then
+        clicking = not clicking
+        autoClickCooldown = true
+        autoClickButton.BackgroundTransparency = 0.5
+        autoClickButton.TextColor3 = Color3.new(0.5, 0.5, 0.5)
+        if clicking then
+            autoClickButton.Text = "Clicking: On"
+            spawn(function()
+                autoClick()
+            end)
+            sendNotification("Auto-Click Enabled!")
+        else
+            autoClickButton.Text = "Clicking: Off"
+            sendNotification("Auto-Click Disabled!")
+        end
+        wait(3)
+        autoClickCooldown = false
+        autoClickButton.BackgroundTransparency = 0
+        autoClickButton.TextColor3 = Color3.new(1, 1, 1)
     end
 end)
