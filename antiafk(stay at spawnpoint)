@@ -1,0 +1,149 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+screenGui.DisplayOrder = 10 -- Ensure it covers other GUIs
+
+-- Loading Screen Container
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Size = UDim2.new(1, 0, 1, 0)
+loadingFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+loadingFrame.BackgroundTransparency = 0.5
+loadingFrame.BorderSizePixel = 0
+loadingFrame.Parent = screenGui
+
+-- Loading Text
+local loadingText = Instance.new("TextLabel")
+loadingText.Size = UDim2.new(0, 300, 0, 50)
+loadingText.Position = UDim2.new(0.5, -150, 0.4, -25)
+loadingText.Text = "Initializing System..."
+loadingText.TextColor3 = Color3.new(1, 1, 1)
+loadingText.Font = Enum.Font.SciFi
+loadingText.TextSize = 24
+loadingText.BackgroundTransparency = 1
+loadingText.Parent = loadingFrame
+
+-- Progress Bar Background
+local progressBarBackground = Instance.new("Frame")
+progressBarBackground.Size = UDim2.new(0, 400, 0, 20)
+progressBarBackground.Position = UDim2.new(0.5, -200, 0.5, -10)
+progressBarBackground.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+progressBarBackground.BorderSizePixel = 0
+progressBarBackground.Parent = loadingFrame
+
+-- Progress Bar Fill
+local progressBarFill = Instance.new("Frame")
+progressBarFill.Size = UDim2.new(0, 0, 1, 0)
+progressBarFill.Position = UDim2.new(0, 0, 0, 0)
+progressBarFill.BackgroundColor3 = Color3.new(0, 0.8, 1)
+progressBarFill.BorderSizePixel = 0
+progressBarFill.Parent = progressBarBackground
+
+-- Glow Effect for Progress Bar
+local glow = Instance.new("ImageLabel")
+glow.Size = UDim2.new(1, 0, 1, 0)
+glow.Position = UDim2.new(0, 0, 0, 0)
+glow.BackgroundTransparency = 1
+glow.Image = "rbxassetid://48965808" -- Replace with a glow texture ID
+glow.ScaleType = Enum.ScaleType.Slice
+glow.SliceCenter = Rect.new(10, 10, 118, 118)
+glow.ImageColor3 = Color3.new(0, 0.8, 1)
+glow.ImageTransparency = 0.5
+glow.Parent = progressBarFill
+
+-- Animate the Loading Screen
+local function animateLoadingScreen()
+    -- Animate the progress bar
+    local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(progressBarFill, tweenInfo, {Size = UDim2.new(1, 0, 1, 0)})
+    tween:Play()
+
+    -- Update loading text
+    wait(1)
+    loadingText.Text = "Loading Assets..."
+    wait(1)
+    loadingText.Text = "Calibrating System..."
+    wait(1)
+    loadingText.Text = "Loading Complete!"
+
+    -- Fade out the loading screen
+    local fadeTween = TweenService:Create(loadingFrame, TweenInfo.new(1), {BackgroundTransparency = 1})
+    fadeTween:Play()
+    fadeTween.Completed:Wait()
+    loadingFrame:Destroy()
+end
+
+-- Start the loading screen animation
+animateLoadingScreen()
+
+-- Button Setup (after loading screen)
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 200, 0, 50)
+button.Position = UDim2.new(0.5, -100, 0.1, 0)
+button.Text = "Toggle Area"
+button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.8)
+button.TextColor3 = Color3.new(1, 1, 1)
+button.Font = Enum.Font.SciFi
+button.TextSize = 18
+button.Parent = screenGui
+
+-- Animation Setup for Button
+local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true)
+local tween = TweenService:Create(button, tweenInfo, {Rotation = 5})
+tween:Play()
+
+-- Area Setup
+local areaSize = 100 -- Increased area size
+local spawnPoint = character:WaitForChild("HumanoidRootPart").Position
+local areaPart = Instance.new("Part")
+areaPart.Size = Vector3.new(areaSize, 1, areaSize)
+areaPart.Position = Vector3.new(spawnPoint.X, spawnPoint.Y - 0.5, spawnPoint.Z) -- Same height as spawn point
+areaPart.Anchored = true
+areaPart.Transparency = 0.7
+areaPart.Color = Color3.new(0.5, 0, 0.5)
+areaPart.CanCollide = false -- No collisions
+areaPart.Parent = workspace
+
+local walking = false
+
+-- Random Walk Function
+local function randomWalk()
+    while walking do
+        -- Calculate a random position within the area at the same height as the spawn point
+        local randomX = spawnPoint.X + math.random(-areaSize/2, areaSize/2)
+        local randomZ = spawnPoint.Z + math.random(-areaSize/2, areaSize/2)
+        local targetPosition = Vector3.new(randomX, spawnPoint.Y, randomZ)
+
+        -- Move the character to the target position
+        humanoid:MoveTo(targetPosition)
+
+        -- Wait until the character reaches the target position or a timeout occurs
+        local reached = false
+        local startTime = tick()
+        while not reached and tick() - startTime < 5 do -- 5-second timeout
+            local distance = (humanoid.RootPart.Position - targetPosition).Magnitude
+            if distance < 2 then -- Close enough to the target
+                reached = true
+            end
+            RunService.Heartbeat:Wait()
+        end
+    end
+end
+
+-- Button Click Event
+button.MouseButton1Click:Connect(function()
+    walking = not walking
+    if walking then
+        randomWalk()
+        areaPart.Transparency = 0.3 -- Make the area more visible
+    else
+        areaPart.Transparency = 0.7 -- Make the area less visible
+    end
+end)
