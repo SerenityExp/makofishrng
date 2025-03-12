@@ -214,13 +214,11 @@ local function TeleportAlt()
     end
 end
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 
 local Players = game:GetService("Players")
+local ChatService = game:GetService("Chat")
 local LocalPlayer = Players.LocalPlayer
 
--- Pummel Alt (Aggressive Flipping Version)
 local function PummelAlt(targetName)
     -- Check if the alt character is present
     local AltChar = LocalPlayer.Character
@@ -268,19 +266,13 @@ local function PummelAlt(targetName)
 
     -- Main loop for spinning and flinging
     while tick() - startTime < flingDuration do
-        -- Use the Main Account's HRP for reference to spin around
-        local MainHRP = MainAccount.Character and MainAccount.Character:FindFirstChild("HumanoidRootPart")
-        if MainHRP then
-            local angle = tick() * spinSpeed
-            local xOffset = math.cos(angle) * radius
-            local zOffset = math.sin(angle) * radius
+        -- Use the Target's HRP to spin around
+        local angle = tick() * spinSpeed
+        local xOffset = math.cos(angle) * radius
+        local zOffset = math.sin(angle) * radius
 
-            -- Update the position of the Alt to spin around the Main HRP
-            AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
-        else
-            print("⚠️ Main account HRP not found!")
-            break
-        end
+        -- Update the position of the Alt to spin around the target HRP
+        AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
 
         -- Apply fling force by creating a BodyVelocity to launch the target
         local bodyVelocity = Instance.new("BodyVelocity")
@@ -298,9 +290,21 @@ local function PummelAlt(targetName)
     print("✅ Pummel Finished!")
 end
 
--- Testing the command trigger
--- Replace with actual target name when calling the command
-PummelAlt("TargetPlayerName")  -- Replace with the actual player name you want to target
+-- Listen to chat messages from the main account
+ChatService.OnMessageDoneFiltering:Connect(function(message, speaker)
+    if speaker == LocalPlayer then
+        -- Check if the message starts with ".pummel"
+        if message:sub(1, 7) == ".pummel" then
+            local targetName = message:sub(9)  -- Get the name of the target after ".pummel "
+            if targetName and targetName ~= "" then
+                -- Call the pummel function with the target name
+                PummelAlt(targetName)
+            else
+                warn("⚠️ No target specified")
+            end
+        end
+    end
+end)
 
 -- Command Handling
 local function HandleChatCommand(message)
