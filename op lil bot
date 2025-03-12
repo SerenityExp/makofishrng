@@ -157,7 +157,7 @@ local function ShotgunAlt()
     task.wait(0.5)
     BodyVelocity:Destroy()
 
-    task.wait(0)
+    task.wait(1)
     LocalPlayer.Character:BreakJoints()
 end
 
