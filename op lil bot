@@ -95,7 +95,9 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
-local function FlingAlt(targetName)
+
+
+local function WalkFling(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
         return
@@ -111,18 +113,19 @@ local function FlingAlt(targetName)
     local TargetChar = targetPlayer.Character
     local AltHRP = AltChar and AltChar:FindFirstChild("HumanoidRootPart")
     local TargetHRP = TargetChar and TargetChar:FindFirstChild("HumanoidRootPart")
+    local AltHumanoid = AltChar and AltChar:FindFirstChildOfClass("Humanoid")
 
-    if not AltHRP or not TargetHRP then
+    if not AltHRP or not TargetHRP or not AltHumanoid then
         warn("⚠️ Fling failed: Missing required parts")
         return
     end
 
-    print("✅ Flinging", targetName, "with Infinite Yield method!")
+    print("✅ Walk Flinging", targetName, "using Infinite Yield method!")
 
     -- Ensure the alt is not anchored
     AltHRP.Anchored = false
 
-    -- Remove any constraints or forces
+    -- Remove any old forces
     for _, obj in ipairs(AltHRP:GetChildren()) do
         if obj:IsA("BodyVelocity") or obj:IsA("BodyGyro") then
             obj:Destroy()
@@ -132,28 +135,28 @@ local function FlingAlt(targetName)
     -- Collision must be ON for fling
     SetCollisions(AltChar, true)
 
-    -- Wait briefly to sync with physics
-    task.wait(0.1)
+    -- Boost WalkSpeed (VERY IMPORTANT)
+    local originalWalkSpeed = AltHumanoid.WalkSpeed
+    AltHumanoid.WalkSpeed = 1000 -- Insane speed for maximum fling
 
-    -- MASSIVE Velocity Boost (Infinite Yield Method)
-    AltHRP.Velocity = Vector3.new(300, 0, 300) -- Initial boost
-    AltHRP.RotVelocity = Vector3.new(999999, 999999, 999999) -- Extreme rotation for stronger fling
-
-    -- Keep teleporting inside the target for 4 seconds
+    -- Move into target constantly for 4 seconds
     local startTime = tick()
     task.spawn(function()
         while tick() - startTime < 4 do
-            AltHRP.Position = TargetHRP.Position + Vector3.new(0, 2, 0) -- Stay inside target
+            AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(0, 0, -2) -- Stay in front of target
+            AltHRP.Velocity = TargetHRP.CFrame.LookVector * 200 -- Walk into them HARD
             task.wait(0.05)
         end
 
-        -- Cleanup to prevent issues
+        -- Reset WalkSpeed and stop movement
+        AltHumanoid.WalkSpeed = originalWalkSpeed
         AltHRP.Velocity = Vector3.new(0, 0, 0)
-        AltHRP.RotVelocity = Vector3.new(0, 0, 0)
         SetCollisions(AltChar, false)
-        print("✅ Fling completed!")
+        print("✅ Walk Fling completed!")
     end)
 end
+
+
 
 -- Sit Alt
 local function SitAlt()
