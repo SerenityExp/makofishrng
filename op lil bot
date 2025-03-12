@@ -139,8 +139,6 @@ local function FlingAlt(targetName)
     print("✅ Fling completed!")
 end
 
-
-
 -- Sit Alt
 local function SitAlt()
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -266,7 +264,7 @@ local function HandleChatCommand(message)
     elseif message == ".sit" then
     SitAlt()
     elseif message:sub(1,7) == ".fling " then
-    local targetName = message:sub(8) -- Extract username from command
+    local targetName = message:sub(8) -- Extract username
     FlingAlt(targetName)
     else
         warn("⚠️ Unknown command:", message)
