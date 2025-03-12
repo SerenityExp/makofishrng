@@ -215,7 +215,7 @@ local function TeleportAlt()
 end
 
 -- Pummel Alt (Aggressive Flipping Version)
-local function PummelAlt(targetName)
+local function PummelAlt("TargetPlayerName")
     -- Ensure the alt character is present
     local AltChar = LocalPlayer.Character
     if not AltChar then
