@@ -216,13 +216,12 @@ end
 
 -- Pummel Alt (Aggressive Flipping Version)
 local function PummelAlt(targetName)
-    if not SelectedMainAccount or not SelectedMainAccount.Character then
-        warn("⚠️ Pummel failed: No main account selected")
+    -- Ensure the alt character is present
+    local AltChar = LocalPlayer.Character
+    if not AltChar then
+        warn("⚠️ Pummel failed: Alt character not found")
         return
     end
-
-    local AltChar = LocalPlayer.Character
-    if not AltChar then return end
 
     -- Find the target player by their name
     local targetPlayer = Players:FindFirstChild(targetName)
