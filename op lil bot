@@ -214,9 +214,7 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt (Spam teleport onto target and rotate like camera turning)
-local Pummeling = false  -- To track if pummeling is active
-
+-- Pummel Alt (Aggressive Flipping Version)
 local function PummelAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Pummel failed: No main account selected")
@@ -235,46 +233,40 @@ local function PummelAlt(target)
         return
     end
 
-    print("✅ Pummeling the target with rapid teleport and camera-like turning spin!")
+    print("✅ Pummeling the target aggressively!")
 
-    local spinSpeed = 10000000000000000000000  -- Speed of turning spin (like camera turn)
-    local pummelDuration = math.huge  -- Set this to a large number to pummel indefinitely
+    -- Teleport alt extremely close to the target
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Extremely close to the target to ensure the fling
+
+    local flingDuration = 3  -- Fling duration
+    local spinSpeed = 5000   -- Speed of rotation, increase for faster turning
+    local flingForce = 10000  -- Fling force applied to the target
+    local radius = 0.5      -- Radius for aggressive spinning around the target
     local startTime = tick()
 
-    Pummeling = true
+    -- Main loop for spinning and flinging
+    while tick() - startTime < flingDuration do
+        local angle = tick() * spinSpeed
+        local xOffset = math.cos(angle) * radius
+        local zOffset = math.sin(angle) * radius
 
-    while Pummeling do
-        -- Teleport the alt right on top of the target every 0.01 seconds
-        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 0, 0)  -- Teleport slightly above the target
+        -- Update the position to spin aggressively around the target
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
 
-        -- Rotate the alt like turning the camera (around the Y-axis)
-        local angle = (tick() - startTime) * spinSpeed
-        local orientation = CFrame.Angles(0, math.rad(angle), 0)
+        -- Apply fling force by creating a BodyVelocity to launch the target
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(500000, 500000, 500000)  -- Maximum force applied to fling
+        bodyVelocity.Velocity = MainHRP.CFrame.LookVector * flingForce + Vector3.new(0, flingForce, 0)  -- Fling upward and forward
+        bodyVelocity.Parent = AltHRP
 
-        -- Apply the rotation to the HumanoidRootPart
-        AltHRP.CFrame = AltHRP.CFrame * orientation
+        -- Destroy the BodyVelocity after a short time to simulate the fling effect
+        task.wait(0.1)
+        bodyVelocity:Destroy()
 
-        task.wait(0.0001)  -- Teleport every 0.01 seconds while turning
+        task.wait(0.01)  -- Ensures the teleporting and flinging is continuous
     end
 
-    print("✅ Pummel finished!")
-end
-
--- Stop Pummel (to end the pummeling and reset state)
-local function StopPummel()
-    Pummeling = false
-    print("✅ Pummel stopped!")
-end
-
--- Command Handling for stopping
-local function HandleChatCommand(message)
-    if message == ".pummel" then
-        PummelAlt()  -- Start pummeling
-    elseif message == ".stop" then
-        StopPummel()  -- Stop pummeling
-    else
-        warn("⚠️ Unknown command:", message)
-    end
+    print("✅ Fling finished!")
 end
 
 -- Command Handling
