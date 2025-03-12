@@ -95,7 +95,7 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
--- Fling Alt
+-- Fling Alt (Circular Spin)
 local function FlingAlt(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
@@ -118,22 +118,28 @@ local function FlingAlt(targetName)
         return
     end
 
-    print("✅ Flinging", targetName, "for 3 seconds!")
+    print("✅ Flinging", targetName, "in circles for 3 seconds!")
 
     -- Disable movement & collisions during fling
     AltHRP.Anchored = false
     SetCollisions(AltChar, false)
 
-    -- Spam teleport & spin for 3 seconds
+    -- Spin & Teleport for 3 seconds
     local startTime = tick()
+    local radius = 10 -- Distance around target
+    local speed = 50  -- Rotation speed
+
     while tick() - startTime < 3 do
-        AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(0, 5, 0) -- Teleport slightly above target
-        AltHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999) -- Extreme spinning
-        task.wait(0.05) -- Super fast spam teleport
+        local angle = (tick() * speed) % 360
+        local offsetX = math.cos(math.rad(angle)) * radius
+        local offsetZ = math.sin(math.rad(angle)) * radius
+
+        -- Teleport around target in a circular motion
+        AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(offsetX, 5, offsetZ)
+        task.wait(0.05) -- Super fast teleporting
     end
 
     -- Reset physics after fling
-    AltHRP.AssemblyAngularVelocity = Vector3.zero -- Stop spinning
     SetCollisions(AltChar, true)
     print("✅ Fling completed!")
 end
