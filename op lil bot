@@ -98,8 +98,6 @@ end
 
 
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 
 function ExploitFling(targetName)
     local lp = Players.LocalPlayer
@@ -119,23 +117,30 @@ function ExploitFling(targetName)
     
     print("✅ Exploit Flinging:", targetName)
 
-    -- Set Up Spin
-    local spinForce = Instance.new("BodyAngularVelocity")
-    spinForce.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    spinForce.AngularVelocity = Vector3.new(0, 500, 0) -- Extreme spin
-    spinForce.Parent = myHRP
+    -- Set Up NoCollide (Bypass Anti-Fling Systems)
+    for _, v in pairs(myCharacter:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = false
+        end
+    end
 
-    -- Fling Loop (4 Seconds)
-    local startTime = tick()
-    while tick() - startTime < 4 do
-        myHRP.CFrame = targetHRP.CFrame + Vector3.new(0, 3, 0) -- TP above target
-        myHRP.Velocity = Vector3.new(0, 500, 0) -- Strong vertical fling
-        RunService.RenderStepped:Wait() -- Rapid update
+    -- Force Reset Character Size (For R15 Exploits)
+    myCharacter:FindFirstChildOfClass("Humanoid"):UnequipTools()
+
+    -- Heavy Fling Force
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.new(9999, 9999, 9999) -- Extreme fling
+    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bodyVelocity.Parent = myHRP
+
+    -- TP Directly Inside Target
+    for i = 1, 30 do
+        myHRP.CFrame = targetHRP.CFrame + Vector3.new(0, 2, 0)
+        RunService.Heartbeat:Wait()
     end
 
     -- Cleanup
-    spinForce:Destroy()
-    myHRP.Velocity = Vector3.new(0, 0, 0) -- Reset velocity
+    bodyVelocity:Destroy()
 end
 
 -- Hook into chat commands
@@ -146,6 +151,8 @@ game.Players.LocalPlayer.Chatted:Connect(function(msg)
     end
 end)
 
+
+    
 
 
 -- Sit Alt
