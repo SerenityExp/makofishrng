@@ -214,8 +214,8 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt (Aggressive Flipping Version)
-local function PummelAlt(target)
+-- Float Alt (Aggressive Flipping Version)
+local function FloatAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Pummel failed: No main account selected")
         return
@@ -233,7 +233,7 @@ local function PummelAlt(target)
         return
     end
 
-    print("✅ Pummeling the target aggressively!")
+    print("✅ Floating the target aggressively!")
 
     -- Teleport alt extremely close to the target
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Extremely close to the target to ensure the fling
@@ -287,11 +287,11 @@ local function HandleChatCommand(message)
         JumpAlt()
     elseif message == ".fall" then
         FallAlt()
-    elseif message:sub(1, 7) == ".pummel" then
+    elseif message:sub(1, 7) == ".float" then
         local username = message:sub(9)
         local targetPlayer = Players:FindFirstChild(username)
         if targetPlayer then
-            PummelAlt(targetPlayer)
+            FloatAlt(targetPlayer)
         else
             warn("⚠️ Target player not found")
         end
