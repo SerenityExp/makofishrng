@@ -99,60 +99,43 @@ end
 
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 
-local function TrueFling(targetName)
-    if not targetName or targetName == "" then
-        warn("⚠️ Fling failed: No target provided")
-        return
-    end
-
+local function ServerFling(player, targetName)
     local targetPlayer = Players:FindFirstChild(targetName)
     if not targetPlayer or not targetPlayer.Character then
-        warn("⚠️ Fling failed: Invalid target")
+        player:SendNotification("Fling failed: Invalid target") -- Optional UI feedback
         return
     end
 
-    local AltChar = Players.LocalPlayer.Character
     local TargetChar = targetPlayer.Character
-    local AltHRP = AltChar and AltChar:FindFirstChild("HumanoidRootPart")
-    local TargetHRP = TargetChar and TargetChar:FindFirstChild("HumanoidRootPart")
+    local TargetHRP = TargetChar:FindFirstChild("HumanoidRootPart")
 
-    if not AltHRP or not TargetHRP then
-        warn("⚠️ Fling failed: Missing HumanoidRootPart")
+    if not TargetHRP then
+        player:SendNotification("Fling failed: Target missing HumanoidRootPart") -- Optional UI feedback
         return
     end
 
-    print("✅ Starting Balanced Fling on", targetName, "!")
+    print("✅ Server-Sided Flinging:", targetName)
 
-    -- Store original velocity
-    local originalVelocity = AltHRP.Velocity
+    -- Create BodyVelocity for server-sided fling
+    local flingForce = Instance.new("BodyVelocity")
+    flingForce.Velocity = Vector3.new(math.random(-100,100), 300, math.random(-100,100)) -- Random strong force
+    flingForce.MaxForce = Vector3.new(math.huge, math.huge, math.huge) -- Infinite force
+    flingForce.Parent = TargetHRP
 
-    local startTime = tick()
-    while tick() - startTime < 4 do -- Fling for 4 seconds
-        if not AltChar or not AltChar.Parent or not AltHRP or not AltHRP.Parent then
-            break -- Stop if alt dies or gets deleted
-        end
-
-        -- Teleport directly inside the target
-        AltHRP.CFrame = TargetHRP.CFrame
-
-        -- Moderate up/down velocity to ensure proper collision
-        AltHRP.Velocity = Vector3.new(0, 250, 0) -- Go up
-        wait(0.1) -- Small delay for contact
-        AltHRP.Velocity = Vector3.new(0, -250, 0) -- Go down
-        wait(0.1) -- Small delay for contact
-    end
-
-    -- Reset velocity after fling
-    AltHRP.Velocity = originalVelocity
-
-    print("✅ Balanced Fling Completed!")
+    -- Remove fling force after 0.5 seconds to let physics take over
+    game:GetService("Debris"):AddItem(flingForce, 0.5)
 end
 
-
-
-
+-- Hook into command handler
+game.Players.PlayerAdded:Connect(function(player)
+    player.Chatted:Connect(function(message)
+        if message:sub(1,7) == ".fling " then
+            local targetName = message:sub(8) -- Extract username
+            ServerFling(player, targetName)
+        end
+    end)
+end)
 
 
 -- Sit Alt
@@ -281,7 +264,7 @@ local function HandleChatCommand(message)
     SitAlt()
     elseif message:sub(1,7) == ".fling " then
     local targetName = message:sub(8) -- Extract username
-    TrueFling(targetName)
+    ServerFling(targetName)
     else
         warn("⚠️ Unknown command:", message)
     end
