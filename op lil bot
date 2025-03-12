@@ -140,7 +140,7 @@ local function ShotgunAlt()
     LocalPlayer.Character:BreakJoints() -- Reset after firing
 end
 
--- Vanish Alt (Now moves further underground over time)
+-- Vanish Alt
 local function VanishAlt()
     StopAll()
     if not SelectedMainAccount or not SelectedMainAccount.Character then
@@ -149,8 +149,7 @@ local function VanishAlt()
     end
 
     local AltChar = LocalPlayer.Character
-    local AltHRP = AltChar and AltChar:FindFirstChild("HumanoidRootPart")
-    if not AltChar or not AltHRP then return end
+    if not AltChar then return end
 
     Following = true
     Vanishing = true
@@ -161,16 +160,13 @@ local function VanishAlt()
     SetCollisions(AltChar, false)
 
     task.spawn(function()
-        local depth = -25 -- Start depth
         while Vanishing do
-            depth = depth - 10 -- Move deeper every second
-            ApplyFloatingMovement(AltChar, Vector3.new(0, depth, 0))
+            ApplyFloatingMovement(AltChar, Vector3.new(0, -25, 0))
             task.wait(1)
         end
         SetCollisions(AltChar, true)
     end)
 end
-
 
 -- Teleport Alt to Main Instantly
 local function TeleportAlt()
@@ -211,35 +207,32 @@ local function HandleChatCommand(message)
     end
 end
 
--- UI Selection (Chat listener persists)
+-- UI Selection (Now smaller & scrollable)
 local function SetupSelectionUI()
     local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
     local Frame = Instance.new("Frame", ScreenGui)
-    Frame.Size = UDim2.new(0, 200, 0, 300)
+    Frame.Size = UDim2.new(0, 200, 0, 200) -- Smaller
     Frame.Position = UDim2.new(0, 10, 0, 10)
     Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+    Frame.ClipsDescendants = true 
 
-    local UIList = Instance.new("UIListLayout", Frame)
+    local ScrollingFrame = Instance.new("ScrollingFrame", Frame)
+    ScrollingFrame.Size = UDim2.new(1, 0, 1, 0)
+    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, #Players:GetPlayers() * 35)
+    ScrollingFrame.ScrollBarThickness = 6
+    ScrollingFrame.BackgroundTransparency = 1
+
+    local UIList = Instance.new("UIListLayout", ScrollingFrame)
+    UIList.Padding = UDim.new(0, 5)
 
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
-            local Button = Instance.new("TextButton", Frame)
+            local Button = Instance.new("TextButton", ScrollingFrame)
             Button.Size = UDim2.new(1, 0, 0, 30)
             Button.Text = player.Name
-            Button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-            Button.TextColor3 = Color3.new(1, 1, 1)
-
             Button.MouseButton1Click:Connect(function()
                 SelectedMainAccount = player
                 print("✅ Main Account Selected: " .. player.Name)
-
-                if Connection then
-                    Connection:Disconnect()
-                end
-
-                Connection = player.Chatted:Connect(function(msg)
-                    HandleChatCommand(msg)
-                end)
             end)
         end
     end
