@@ -95,7 +95,6 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
--- Fling Alt (Touch Fling)
 local function FlingAlt(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
@@ -118,26 +117,29 @@ local function FlingAlt(targetName)
         return
     end
 
-    print("✅ Flinging", targetName, "with touch fling!")
+    print("✅ Flinging", targetName, "with Infinite Yield method!")
 
-    -- Unanchor and remove all velocity constraints
+    -- Ensure the alt is not anchored
     AltHRP.Anchored = false
+
+    -- Remove any constraints or forces
     for _, obj in ipairs(AltHRP:GetChildren()) do
         if obj:IsA("BodyVelocity") or obj:IsA("BodyGyro") then
             obj:Destroy()
         end
     end
 
-    -- MASSIVE Velocity for touch fling
-    local flingVelocity = Instance.new("BodyVelocity")
-    flingVelocity.Velocity = Vector3.new(50000, 50000, 50000) -- Insane movement
-    flingVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    flingVelocity.Parent = AltHRP
-
-    -- Collision setup
+    -- Collision must be ON for fling
     SetCollisions(AltChar, true)
 
-    -- Move into the target repeatedly for 4 seconds
+    -- Wait briefly to sync with physics
+    task.wait(0.1)
+
+    -- MASSIVE Velocity Boost (Infinite Yield Method)
+    AltHRP.Velocity = Vector3.new(300, 0, 300) -- Initial boost
+    AltHRP.RotVelocity = Vector3.new(999999, 999999, 999999) -- Extreme rotation for stronger fling
+
+    -- Keep teleporting inside the target for 4 seconds
     local startTime = tick()
     task.spawn(function()
         while tick() - startTime < 4 do
@@ -145,8 +147,9 @@ local function FlingAlt(targetName)
             task.wait(0.05)
         end
 
-        -- Cleanup
-        flingVelocity:Destroy()
+        -- Cleanup to prevent issues
+        AltHRP.Velocity = Vector3.new(0, 0, 0)
+        AltHRP.RotVelocity = Vector3.new(0, 0, 0)
         SetCollisions(AltChar, false)
         print("✅ Fling completed!")
     end)
