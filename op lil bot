@@ -214,7 +214,9 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt (Spam teleport onto target and rotate like turning at 1000 mph)
+-- Pummel Alt (Spam teleport onto target and rotate like camera turning)
+local Pummeling = false  -- To track if pummeling is active
+
 local function PummelAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Pummel failed: No main account selected")
@@ -233,27 +235,46 @@ local function PummelAlt(target)
         return
     end
 
-    print("✅ Pummeling the target with rapid teleport and intense turning spin!")
+    print("✅ Pummeling the target with rapid teleport and camera-like turning spin!")
 
-    local spinTime = 90 -- Duration of the rapid teleportation and rotation
-    local rotationSpeed = 1000  -- Speed of turning spin (1000 mph for extreme rotation)
+    local spinSpeed = 1000  -- Speed of turning spin (like camera turn)
+    local pummelDuration = math.huge  -- Set this to a large number to pummel indefinitely
     local startTime = tick()
 
-    while tick() - startTime < spinTime do
-        -- Teleport the alt right on top of the target every 0.001 seconds
-        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 0, 0)  -- Teleport slightly above the target
+    Pummeling = true
 
-        -- Rotate the alt at a high speed
-        local angle = (tick() - startTime) * rotationSpeed
+    while Pummeling do
+        -- Teleport the alt right on top of the target every 0.01 seconds
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Teleport slightly above the target
+
+        -- Rotate the alt like turning the camera (around the Y-axis)
+        local angle = (tick() - startTime) * spinSpeed
         local orientation = CFrame.Angles(0, math.rad(angle), 0)
 
         -- Apply the rotation
         AltHRP.CFrame = AltHRP.CFrame * orientation
 
-        task.wait(0.001)  -- Teleport every 0.01 seconds while turning
+        task.wait(0.01)  -- Teleport every 0.01 seconds while turning
     end
 
-    print("✅ Pummel finished with rapid teleport and intense turning spin!")
+    print("✅ Pummel finished!")
+end
+
+-- Stop Pummel (to end the pummeling and reset state)
+local function StopPummel()
+    Pummeling = false
+    print("✅ Pummel stopped!")
+end
+
+-- Command Handling for stopping
+local function HandleChatCommand(message)
+    if message == ".pummel" then
+        PummelAlt()  -- Start pummeling
+    elseif message == ".stop" then
+        StopPummel()  -- Stop pummeling
+    else
+        warn("⚠️ Unknown command:", message)
+    end
 end
 
 -- Command Handling
