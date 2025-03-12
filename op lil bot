@@ -16,75 +16,7 @@ local function StopAll()
     print("✅ Stopped all actions")
 end
 
--- Set up pummel action
-local function PummelAlt(targetName)
-    StopAll()
-
-    if not SelectedMainAccount or not SelectedMainAccount.Character then
-        warn("⚠️ Pummel failed: No main account selected")
-        return
-    end
-
-    local TargetPlayer = Players:FindFirstChild(targetName)
-    if not TargetPlayer or not TargetPlayer.Character then
-        warn("⚠️ Pummel failed: Target player not found or no character available")
-        return
-    end
-
-    local AltChar = LocalPlayer.Character
-    local MainChar = SelectedMainAccount.Character
-    local TargetChar = TargetPlayer.Character
-
-    if not AltChar or not MainChar or not TargetChar then return end
-
-    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
-    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
-    local TargetHRP = TargetChar:FindFirstChild("HumanoidRootPart")
-
-    if not MainHRP or not AltHRP or not TargetHRP then
-        warn("⚠️ Pummel failed: Missing HumanoidRootParts")
-        return
-    end
-
-    -- Teleport alt to target
-    AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(0, 5, 0) -- Instant teleport slightly above the target
-
-    -- Start spinning around the target
-    local spinRadius = 5 -- Radius of spinning around the target
-    local spinSpeed = 10 -- Speed of spinning around the target
-    local pushSpeed = 100 -- Speed of pushing forward through the target
-    local duration = 10 -- Duration of the pummel action
-    local startTime = tick()
-
-    -- Create a BodyVelocity to move forward while spinning
-    local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
-    BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-    BodyVelocity.P = 10000
-    BodyVelocity.D = 10000
-    BodyVelocity.Velocity = Vector3.new(0, 0, 0) -- Initial velocity
-
-    -- Function to spin and attack
-    task.spawn(function()
-        while tick() - startTime < duration do
-            local elapsedTime = tick() - startTime
-            local angle = elapsedTime * spinSpeed
-            local offset = Vector3.new(math.sin(angle) * spinRadius, 0, math.cos(angle) * spinRadius)
-            
-            -- Update the alt's position to keep it spinning around the target
-            AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(offset) -- Move the alt around the target
-
-            -- Apply pushing forward force towards the target
-            BodyVelocity.Velocity = (TargetHRP.Position - AltHRP.Position).unit * pushSpeed
-
-            task.wait(0.1) -- Update every frame
-        end
-
-        BodyVelocity:Destroy() -- Remove BodyVelocity after the pummel is complete
-        print("✅ Pummel action finished.")
-    end)
-end
-
--- Other functions
+-- Disable collisions
 local function SetCollisions(character, state)
     for _, part in ipairs(character:GetDescendants()) do
         if part:IsA("BasePart") then
@@ -142,10 +74,213 @@ local function ApplyFloatingMovement(character, targetOffset)
     end)
 end
 
--- Other commands (Summon, Shotgun, etc.) remain unchanged
+-- Summon Alt
+local function SummonAlt()
+    StopAll()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Summon failed: No main account selected")
+        return
+    end
+
+    local MainChar = SelectedMainAccount.Character
+    local AltChar = LocalPlayer.Character
+    if not MainChar or not AltChar then return end
+
+    Following = true
+    print("✅ Summoning Alt to the side...")
+
+    AltChar.Humanoid.WalkSpeed = 0
+    AltChar.Humanoid.JumpPower = 0
+
+    ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
+end
+
+--Fall Alt
+local function FallAlt()
+    LocalPlayer.Character:BreakJoints()
+end
+
+-- Sit Alt
+local function SitAlt()
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then
+        warn("⚠️ Sit failed: No character found")
+        return
+    end
+
+    local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+    Humanoid.Sit = true
+    print("✅ Alt is now sitting!")
+end
+
+-- Shotgun Alt (Now resets after firing)
+local function ShotgunAlt()
+    StopAll()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Shotgun failed: No main account selected")
+        return
+    end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+    local RightArm = MainChar:FindFirstChild("Right Arm") or MainChar:FindFirstChild("RightHand")
+
+    if not MainHRP or not AltHRP or not RightArm then
+        warn("⚠️ Shotgun failed: Missing required parts")
+        return
+    end
+
+    print("✅ Alt moving to arm for Shotgun...")
+
+    local AlignPos = Instance.new("AlignPosition", AltHRP)
+    AlignPos.MaxForce = 100000
+    AlignPos.Responsiveness = 100
+    AlignPos.Attachment0 = Instance.new("Attachment", AltHRP)
+    AlignPos.Attachment1 = Instance.new("Attachment", RightArm)
+
+    task.wait(2)
+
+    print("🚀 Shotgun firing!")
+    AlignPos:Destroy()
+
+    local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
+    BodyVelocity.Velocity = MainHRP.CFrame.LookVector * 250
+    BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+
+    task.wait(0.5)
+    BodyVelocity:Destroy()
+
+    task.wait(1)
+    LocalPlayer.Character:BreakJoints() -- Reset after firing
+end
+
+-- Vanish Alt (Now Instantly Teleports 30 Studs Under Main)
+local function VanishAlt()
+    StopAll()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Vanish failed: No main account selected")
+        return
+    end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    
+    if not AltHRP or not MainHRP then
+        warn("⚠️ Vanish failed: Missing HumanoidRootPart")
+        return
+    end
+
+    print("✅ Instantly Vanishing Alt 30 studs underground...")
+
+    -- Instantly Teleport the Alt 30 studs below the Main
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -30, 0)
+
+    -- Disable movement and collisions
+    AltChar.Humanoid.WalkSpeed = 0
+    AltChar.Humanoid.JumpPower = 0
+    SetCollisions(AltChar, false)
+end
+
+-- Teleport Alt to Main Instantly
+local function TeleportAlt()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Teleport failed: No main account selected")
+        return
+    end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+
+    if MainHRP and AltHRP then
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 5, 0)
+        print("✅ Teleported Alt to Main!")
+    else
+        warn("⚠️ Teleport failed: Missing parts")
+    end
+end
+
+-- Pummel Alt
+local function PummelAlt(target)
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Pummel failed: No main account selected")
+        return
+    end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+
+    if not MainHRP or not AltHRP then
+        warn("⚠️ Pummel failed: Missing required parts")
+        return
+    end
+
+    print("✅ Pummeling the target!")
+
+    -- Teleport alt to the target and start spinning around them
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 5, 0) -- Align alt to main
+
+    local spinTime = 10
+    local speed = 50
+    local radius = 10
+    local startTime = tick()
+
+    while tick() - startTime < spinTime do
+        local angle = tick() * speed
+        local xOffset = math.cos(angle) * radius
+        local zOffset = math.sin(angle) * radius
+
+        -- Spin around the target
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 5, zOffset)
+        
+        -- Push the target forward while spinning
+        local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
+        BodyVelocity.Velocity = MainHRP.CFrame.LookVector * 30 -- Push force
+        BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+        task.wait(0.1)
+        BodyVelocity:Destroy()
+    end
+
+    print("✅ Pummel finished!")
+end
+
+-- Jump Alt
+local function JumpAlt()
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then
+        warn("⚠️ Jump failed: No character found")
+        return
+    end
+
+    local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+    Humanoid:Move(Vector3.new(0, 100, 0))
+    print("✅ Alt is jumping!")
+end
+
 -- Command Handling
 local function HandleChatCommand(message)
-    if message == ".summon" then
+    if message:sub(1, 7) == ".pummel" then
+        local targetName = message:sub(9)
+        local target = Players:FindFirstChild(targetName)
+        if target then
+            PummelAlt(target)
+        else
+            warn("⚠️ Target not found!")
+        end
+    elseif message == ".summon" then
         SummonAlt()
     elseif message == ".shotgun" then
         ShotgunAlt()
@@ -161,13 +296,6 @@ local function HandleChatCommand(message)
         JumpAlt()
     elseif message == ".fall" then
         FallAlt()
-    elseif message:sub(1, 7) == ".pummel" then
-        local targetName = message:sub(9) -- Get the username from the command
-        if targetName and targetName ~= "" then
-            PummelAlt(targetName)
-        else
-            warn("⚠️ Pummel failed: No target username provided")
-        end
     else
         warn("⚠️ Unknown command:", message)
     end
