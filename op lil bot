@@ -98,6 +98,8 @@ end
 
 
 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 function ExploitFling(targetName)
     local lp = Players.LocalPlayer
@@ -115,7 +117,7 @@ function ExploitFling(targetName)
         return warn("❌ Missing HumanoidRootPart")
     end
     
-    print("✅ Exploit Flinging:", targetName)
+    print("✅ Flinging:", targetName)
 
     -- Set Up NoCollide (Bypass Anti-Fling Systems)
     for _, v in pairs(myCharacter:GetDescendants()) do
@@ -124,18 +126,16 @@ function ExploitFling(targetName)
         end
     end
 
-    -- Force Reset Character Size (For R15 Exploits)
-    myCharacter:FindFirstChildOfClass("Humanoid"):UnequipTools()
-
-    -- Heavy Fling Force
+    -- Add Massive Velocity
     local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = Vector3.new(9999, 9999, 9999) -- Extreme fling
+    bodyVelocity.Velocity = Vector3.new(0, 9999, 0) -- Extreme fling force
     bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
     bodyVelocity.Parent = myHRP
 
-    -- TP Directly Inside Target
-    for i = 1, 30 do
-        myHRP.CFrame = targetHRP.CFrame + Vector3.new(0, 2, 0)
+    -- Spam TP Directly Inside Target for 2 Seconds
+    local startTime = tick()
+    while tick() - startTime < 2 do
+        myHRP.CFrame = targetHRP.CFrame + Vector3.new(0, 0, 0) -- Stay inside them
         RunService.Heartbeat:Wait()
     end
 
