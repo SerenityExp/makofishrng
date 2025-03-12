@@ -285,9 +285,6 @@ local function HandleChatCommand(message)
         StopAll()
     elseif message == ".sit" then
     SitAlt()
-    elseif string.sub(message, 1, 8) == ".pummel " then
-    local targetName = string.sub(message, 9)
-    PummelAlt(targetName)
     else
         warn("⚠️ Unknown command:", message)
     end
