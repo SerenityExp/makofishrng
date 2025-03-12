@@ -217,21 +217,26 @@ end
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
 -- Pummel Alt (Aggressive Flipping Version)
 local function PummelAlt(targetName)
-    -- Ensure the alt character is present
+    -- Check if the alt character is present
     local AltChar = LocalPlayer.Character
     if not AltChar then
         warn("⚠️ Pummel failed: Alt character not found")
         return
     end
+    print("✅ Alt character found!")
 
     -- Find the target player by their name
     local targetPlayer = Players:FindFirstChild(targetName)
     if not targetPlayer then
-        print("⚠️ Target not found: ", targetName)
+        warn("⚠️ Target not found: ", targetName)
         return
     end
+    print("✅ Target found: ", targetPlayer.Name)
 
     -- Ensure target character is present
     local TargetChar = targetPlayer.Character
@@ -239,21 +244,20 @@ local function PummelAlt(targetName)
         warn("⚠️ Target player has no character")
         return
     end
+    print("✅ Target character found!")
 
     -- Ensure both characters have HumanoidRootPart
     local TargetHRP = TargetChar:FindFirstChild("HumanoidRootPart")
     local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
     if not TargetHRP or not AltHRP then
-        print("⚠️ Missing HumanoidRootParts")
+        warn("⚠️ Missing HumanoidRootParts!")
         return
     end
-
-    -- Debugging: Confirm the target and alt characters
-    print("✅ AltHRP found:", AltHRP)
-    print("✅ TargetHRP found:", TargetHRP)
+    print("✅ HumanoidRootParts found!")
 
     -- Teleport alt extremely close to the target's HRP
     AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(0, 1, 0)  -- Close to the target to initiate pummel
+    print("✅ Alt position updated close to target")
 
     -- Parameters for pummeling behavior
     local flingDuration = 10  -- Duration of the pummel
@@ -293,6 +297,10 @@ local function PummelAlt(targetName)
 
     print("✅ Pummel Finished!")
 end
+
+-- Testing the command trigger
+-- Replace with actual target name when calling the command
+PummelAlt("TargetPlayerName")  -- Replace with the actual player name you want to target
 
 -- Command Handling
 local function HandleChatCommand(message)
