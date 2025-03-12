@@ -235,13 +235,13 @@ local function PummelAlt(target)
 
     print("✅ Pummeling the target with rapid teleport and intense turning spin!")
 
-    local spinTime = 5  -- Duration of the rapid teleportation and rotation
+    local spinTime = 90 -- Duration of the rapid teleportation and rotation
     local rotationSpeed = 1000  -- Speed of turning spin (1000 mph for extreme rotation)
     local startTime = tick()
 
     while tick() - startTime < spinTime do
-        -- Teleport the alt right on top of the target every 0.01 seconds
-        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Teleport slightly above the target
+        -- Teleport the alt right on top of the target every 0.001 seconds
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 0, 0)  -- Teleport slightly above the target
 
         -- Rotate the alt at a high speed
         local angle = (tick() - startTime) * rotationSpeed
@@ -250,7 +250,7 @@ local function PummelAlt(target)
         -- Apply the rotation
         AltHRP.CFrame = AltHRP.CFrame * orientation
 
-        task.wait(0.01)  -- Teleport every 0.01 seconds while turning
+        task.wait(0.001)  -- Teleport every 0.01 seconds while turning
     end
 
     print("✅ Pummel finished with rapid teleport and intense turning spin!")
