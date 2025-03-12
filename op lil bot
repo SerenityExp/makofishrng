@@ -95,9 +95,12 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
+-- TouchFling Alt
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 
--- Fling Alt
-local function WalkFling(targetName)
+local function TouchFling(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
         return
@@ -115,50 +118,50 @@ local function WalkFling(targetName)
     local TargetHRP = TargetChar and TargetChar:FindFirstChild("HumanoidRootPart")
 
     if not AltHRP or not TargetHRP then
-        warn("⚠️ Fling failed: Missing required parts")
+        warn("⚠️ Fling failed: Missing HumanoidRootPart")
         return
     end
 
-    print("✅ Walk Flinging", targetName, "!")
+    print("✅ Touch Flinging", targetName, "!")
 
-    -- Enable CanCollide on all players for better fling effect
-    local originalCollisions = {}
-    for _, otherPlayer in pairs(Players:GetPlayers()) do
-        if otherPlayer.Character then
-            for _, part in pairs(otherPlayer.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    originalCollisions[part] = part.CanCollide
-                    part.CanCollide = true
-                end
+    -- Attach fling mechanics
+    local vel, movel = nil, 0.1
+    local function startFling()
+        local startTime = tick()
+        while tick() - startTime < 4 do -- Runs for 4 seconds
+            if not AltChar or not AltChar.Parent or not AltHRP or not AltHRP.Parent then
+                break -- Stop if the character is removed
             end
+
+            -- Teleport inside target
+            AltHRP.CFrame = TargetHRP.CFrame
+
+            -- Apply insane velocity for fling
+            vel = AltHRP.Velocity
+            AltHRP.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
+
+            RunService.RenderStepped:Wait()
+            if AltChar and AltChar.Parent and AltHRP and AltHRP.Parent then
+                AltHRP.Velocity = vel
+            end
+
+            RunService.Stepped:Wait()
+            if AltChar and AltChar.Parent and AltHRP and AltHRP.Parent then
+                AltHRP.Velocity = vel + Vector3.new(0, movel, 0)
+                movel = movel * -1
+            end
+
+            wait(0.05) -- Spam teleport every 0.05s
         end
+
+        -- Stop fling
+        if AltHRP then
+            AltHRP.Velocity = Vector3.new(0, 0, 0) -- Reset velocity
+        end
+        print("✅ Touch Fling completed!")
     end
 
-    -- Make sure the alt's humanoid is set to walking
-    local Humanoid = AltChar:FindFirstChild("Humanoid")
-    if Humanoid then
-        Humanoid.WalkSpeed = 500 -- Insane speed to keep pressure
-    end
-
-    -- Force Teleport Spam inside Target (Up & Down)
-    local startTime = tick()
-    task.spawn(function()
-        while tick() - startTime < 4 do -- 4 seconds of insane fling
-            AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(0, 5, 0) -- Go up
-            task.wait(0.02)
-            AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(0, -5, 0) -- Go down
-            task.wait(0.02)
-        end
-
-        -- Cleanup after fling
-        if Humanoid then
-            Humanoid.WalkSpeed = 16 -- Reset speed
-        end
-        for part, canCollide in pairs(originalCollisions) do
-            part.CanCollide = canCollide
-        end
-        print("✅ Walk Fling completed!")
-    end)
+    task.spawn(startFling) -- Run fling in background
 end
 
 
@@ -289,7 +292,7 @@ local function HandleChatCommand(message)
     SitAlt()
     elseif message:sub(1,7) == ".fling " then
     local targetName = message:sub(8) -- Extract username
-    FlingAlt(targetName)
+    TouchFling(targetName)
     else
         warn("⚠️ Unknown command:", message)
     end
