@@ -214,7 +214,7 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt (Aggressive Version)
+-- Pummel Alt (Adjusted for smoother control over speed and rotation)
 local function PummelAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Pummel failed: No main account selected")
@@ -239,29 +239,31 @@ local function PummelAlt(target)
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0) -- Make alt extremely close
 
     local spinTime = 10
-    local speed = 1000 -- Much faster speed for spinning
-    local radius = 0.5 -- Almost inside them (tight radius)
-    local forceMultiplier = 500 -- Aggressive force multiplier for pushes
+    local speed = 5 -- Adjust this to change the speed of movement (lower for slower, higher for faster)
+    local radius = 0.5 -- Radius for the spin (keep it small to avoid rapid movements)
+    local forceMultiplier = 100 -- Adjust force if necessary to push the target
+
     local startTime = tick()
 
     while tick() - startTime < spinTime do
-        local angle = tick() * speed
+        -- Calculate the angle based on time and speed
+        local angle = (tick() - startTime) * speed
         local xOffset = math.cos(angle) * radius
         local zOffset = math.sin(angle) * radius
 
-        -- Spin around the target (closer, faster)
+        -- Move Alt around the target in a smooth circular motion
         AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
-        
-        -- Apply aggressive force to push the target
-        if tick() - startTime % 0.1 < 0.05 then
+
+        -- Apply push force periodically
+        if tick() - startTime % 0.2 < 0.1 then
             local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
-            BodyVelocity.Velocity = MainHRP.CFrame.LookVector * forceMultiplier  -- Stronger push force
+            BodyVelocity.Velocity = MainHRP.CFrame.LookVector * forceMultiplier
             BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-            task.wait(0.05)  -- Make the force more frequent
+            task.wait(0.1)  -- Apply force at a slower rate to avoid extreme impact
             BodyVelocity:Destroy()
         end
 
-        task.wait(0.05)  -- Faster teleportation
+        task.wait(0.05)  -- Slight delay to prevent rapid movements
     end
 
     print("✅ Pummel finished!")
