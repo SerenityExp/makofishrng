@@ -97,7 +97,7 @@ end
 
 
 -- Fling Alt
-local function TouchFling(targetName)
+local function WalkFling(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
         return
@@ -119,9 +119,9 @@ local function TouchFling(targetName)
         return
     end
 
-    print("✅ Touch Flinging", targetName, "!")
+    print("✅ Walk Flinging", targetName, "!")
 
-    -- Enable collisions with all players to increase fling effectiveness
+    -- Enable CanCollide on all players for better fling effect
     local originalCollisions = {}
     for _, otherPlayer in pairs(Players:GetPlayers()) do
         if otherPlayer.Character then
@@ -134,32 +134,30 @@ local function TouchFling(targetName)
         end
     end
 
-    -- Spinning mechanism
-    local bodyGyro = Instance.new("BodyGyro", AltHRP)
-    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bodyGyro.P = 100
-    bodyGyro.D = 10
-    bodyGyro.CFrame = AltHRP.CFrame
+    -- Make sure the alt's humanoid is set to walking
+    local Humanoid = AltChar:FindFirstChild("Humanoid")
+    if Humanoid then
+        Humanoid.WalkSpeed = 500 -- Insane speed to keep pressure
+    end
 
-    local bodyAngularVelocity = Instance.new("BodyAngularVelocity", AltHRP)
-    bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bodyAngularVelocity.AngularVelocity = Vector3.new(0, 99999, 0) -- Insane spin
-
-    -- Spam teleport inside the target for 4 seconds
+    -- Force Teleport Spam inside Target (Up & Down)
     local startTime = tick()
     task.spawn(function()
-        while tick() - startTime < 4 do
-            AltHRP.CFrame = TargetHRP.CFrame
-            task.wait(0.01) -- Rapid teleport spam
+        while tick() - startTime < 4 do -- 4 seconds of insane fling
+            AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(0, 5, 0) -- Go up
+            task.wait(0.02)
+            AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(0, -5, 0) -- Go down
+            task.wait(0.02)
         end
 
         -- Cleanup after fling
-        bodyGyro:Destroy()
-        bodyAngularVelocity:Destroy()
+        if Humanoid then
+            Humanoid.WalkSpeed = 16 -- Reset speed
+        end
         for part, canCollide in pairs(originalCollisions) do
             part.CanCollide = canCollide
         end
-        print("✅ Touch Fling completed!")
+        print("✅ Walk Fling completed!")
     end)
 end
 
