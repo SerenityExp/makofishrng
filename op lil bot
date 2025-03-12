@@ -214,117 +214,76 @@ local function TeleportAlt()
     end
 end
 
+-- Float Alt (Slowly Push Up Under the User)
+local function FloatAlt()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Float failed: No main account selected")
+        return
+    end
 
-local Players = game:GetService("Players")
-local ChatService = game:GetService("Chat")
-local LocalPlayer = Players.LocalPlayer
-
-local function PummelAlt(targetName)
-    -- Check if the alt character is present
     local AltChar = LocalPlayer.Character
-    if not AltChar then
-        warn("⚠️ Pummel failed: Alt character not found")
-        return
-    end
-    print("✅ Alt character found!")
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
 
-    -- Find the target player by their name
-    local targetPlayer = Players:FindFirstChild(targetName)
-    if not targetPlayer then
-        warn("⚠️ Target not found: ", targetName)
-        return
-    end
-    print("✅ Target found: ", targetPlayer.Name)
-
-    -- Ensure target character is present
-    local TargetChar = targetPlayer.Character
-    if not TargetChar then
-        warn("⚠️ Target player has no character")
-        return
-    end
-    print("✅ Target character found!")
-
-    -- Ensure both characters have HumanoidRootPart
-    local TargetHRP = TargetChar:FindFirstChild("HumanoidRootPart")
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
     local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
-    if not TargetHRP or not AltHRP then
-        warn("⚠️ Missing HumanoidRootParts!")
+
+    if not MainHRP or not AltHRP then
+        warn("⚠️ Float failed: Missing required parts")
         return
     end
-    print("✅ HumanoidRootParts found!")
 
-    -- Teleport alt extremely close to the target's HRP
-    AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(0, 1, 0)  -- Close to the target to initiate pummel
-    print("✅ Alt position updated close to target")
+    print("✅ Floating under the user...")
 
-    -- Parameters for pummeling behavior
-    local flingDuration = 10  -- Duration of the pummel
-    local spinSpeed = 5000   -- Speed of rotation for spinning around the target
-    local flingForce = 1000  -- Force applied to fling the target
-    local radius = 0.5      -- Radius for aggressive spinning around the target
-    local startTime = tick()
+    -- Position the alt under the user
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -2, 0)  -- Adjust the offset to position the alt below
 
-    -- Main loop for spinning and flinging
-    while tick() - startTime < flingDuration do
-        -- Use the Target's HRP to spin around
-        local angle = tick() * spinSpeed
-        local xOffset = math.cos(angle) * radius
-        local zOffset = math.sin(angle) * radius
-
-        -- Update the position of the Alt to spin around the target HRP
-        AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
-
-        -- Apply fling force by creating a BodyVelocity to launch the target
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(500000, 500000, 500000)  -- Max force to fling the target
-        bodyVelocity.Velocity = TargetHRP.CFrame.LookVector * flingForce + Vector3.new(0, flingForce, 0)  -- Fling upward and forward
-        bodyVelocity.Parent = AltHRP
-
-        -- Destroy the BodyVelocity after a short time to simulate the fling effect
-        task.wait(0.1)
-        bodyVelocity:Destroy()
-
-        task.wait(0.01)  -- Ensures the teleporting and flinging is continuous
-    end
-
-    print("✅ Pummel Finished!")
+    -- Loop to slowly push the alt upwards
+    local pushSpeed = 5  -- Speed at which the alt is pushed upwards
+    task.spawn(function()
+        while SelectedMainAccount and SelectedMainAccount.Character do
+            -- Gradually move the alt upwards
+            AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, pushSpeed * 0.1, 0)
+            task.wait(0.1)
+        end
+    end)
 end
 
 -- Listen to chat messages from the main account
 ChatService.OnMessageDoneFiltering:Connect(function(message, speaker)
     if speaker == LocalPlayer then
-        -- Check if the message starts with ".pummel"
-        if message:sub(1, 7) == ".pummel" then
-            local targetName = message:sub(9)  -- Get the name of the target after ".pummel "
-            if targetName and targetName ~= "" then
-                -- Call the pummel function with the target name
-                PummelAlt(targetName)
-            else
-                warn("⚠️ No target specified")
-            end
+        -- Check if the message starts with ".float"
+        if message:sub(1, 6) == ".float" then
+            FloatAlt()  -- Call the Float function
         end
     end
 end)
 
 -- Command Handling
 local function HandleChatCommand(message)
-    if message == ".summon" then
+    local command, targetName = message:match("^(%S+)%s*(.*)$")
+
+    if command == ".summon" then
         SummonAlt()
-    elseif message == ".shotgun" then
+    elseif command == ".shotgun" then
         ShotgunAlt()
-    elseif message == ".vanish" then
+    elseif command == ".vanish" then
         VanishAlt()
-    elseif message == ".tp" then
+    elseif command == ".tp" then
         TeleportAlt()
-    elseif message == ".stop" then
+    elseif command == ".stop" then
         StopAll()
-    elseif message == ".sit" then
+    elseif command == ".sit" then
         SitAlt()
-    elseif message == ".jump" then
+    elseif command == ".jump" then
         JumpAlt()
-    elseif message == ".fall" then
+    elseif command == ".fall" then
         FallAlt()
+    elseif command == ".float" then
+        FloatAlt()  -- Call the Float function
     else
+        -- Handle unrecognized commands if needed
+        print("⚠️ Unknown command:", message)
     end
 end
 
