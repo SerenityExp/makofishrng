@@ -96,8 +96,8 @@ local function SummonAlt()
 end
 
 
-
-local function WalkFling(targetName)
+-- Fling Alt
+local function TouchFling(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
         return
@@ -113,46 +113,53 @@ local function WalkFling(targetName)
     local TargetChar = targetPlayer.Character
     local AltHRP = AltChar and AltChar:FindFirstChild("HumanoidRootPart")
     local TargetHRP = TargetChar and TargetChar:FindFirstChild("HumanoidRootPart")
-    local AltHumanoid = AltChar and AltChar:FindFirstChildOfClass("Humanoid")
 
-    if not AltHRP or not TargetHRP or not AltHumanoid then
+    if not AltHRP or not TargetHRP then
         warn("⚠️ Fling failed: Missing required parts")
         return
     end
 
-    print("✅ Walk Flinging", targetName, "using Infinite Yield method!")
+    print("✅ Touch Flinging", targetName, "!")
 
-    -- Ensure the alt is not anchored
-    AltHRP.Anchored = false
-
-    -- Remove any old forces
-    for _, obj in ipairs(AltHRP:GetChildren()) do
-        if obj:IsA("BodyVelocity") or obj:IsA("BodyGyro") then
-            obj:Destroy()
+    -- Enable collisions with all players to increase fling effectiveness
+    local originalCollisions = {}
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer.Character then
+            for _, part in pairs(otherPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    originalCollisions[part] = part.CanCollide
+                    part.CanCollide = true
+                end
+            end
         end
     end
 
-    -- Collision must be ON for fling
-    SetCollisions(AltChar, true)
+    -- Spinning mechanism
+    local bodyGyro = Instance.new("BodyGyro", AltHRP)
+    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bodyGyro.P = 100
+    bodyGyro.D = 10
+    bodyGyro.CFrame = AltHRP.CFrame
 
-    -- Boost WalkSpeed (VERY IMPORTANT)
-    local originalWalkSpeed = AltHumanoid.WalkSpeed
-    AltHumanoid.WalkSpeed = 1000 -- Insane speed for maximum fling
+    local bodyAngularVelocity = Instance.new("BodyAngularVelocity", AltHRP)
+    bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bodyAngularVelocity.AngularVelocity = Vector3.new(0, 99999, 0) -- Insane spin
 
-    -- Move into target constantly for 4 seconds
+    -- Spam teleport inside the target for 4 seconds
     local startTime = tick()
     task.spawn(function()
         while tick() - startTime < 4 do
-            AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(0, 0, -2) -- Stay in front of target
-            AltHRP.Velocity = TargetHRP.CFrame.LookVector * 200 -- Walk into them HARD
-            task.wait(0.05)
+            AltHRP.CFrame = TargetHRP.CFrame
+            task.wait(0.01) -- Rapid teleport spam
         end
 
-        -- Reset WalkSpeed and stop movement
-        AltHumanoid.WalkSpeed = originalWalkSpeed
-        AltHRP.Velocity = Vector3.new(0, 0, 0)
-        SetCollisions(AltChar, false)
-        print("✅ Walk Fling completed!")
+        -- Cleanup after fling
+        bodyGyro:Destroy()
+        bodyAngularVelocity:Destroy()
+        for part, canCollide in pairs(originalCollisions) do
+            part.CanCollide = canCollide
+        end
+        print("✅ Touch Fling completed!")
     end)
 end
 
