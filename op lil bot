@@ -238,10 +238,10 @@ local function PummelAlt(target)
     -- Teleport alt to the target and start spinning around them
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0) -- Make alt extremely close
 
-    local spinTime = 10
-    local speed = 5 -- Adjust this to change the speed of movement (lower for slower, higher for faster)
+    local spinTime = 15
+    local speed = 50 -- Adjust this to change the speed of movement (lower for slower, higher for faster)
     local radius = 0.5 -- Radius for the spin (keep it small to avoid rapid movements)
-    local forceMultiplier = 100 -- Adjust force if necessary to push the target
+    local forceMultiplier = 400 -- Adjust force if necessary to push the target
 
     local startTime = tick()
 
@@ -258,12 +258,12 @@ local function PummelAlt(target)
         if tick() - startTime % 0.2 < 0.1 then
             local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
             BodyVelocity.Velocity = MainHRP.CFrame.LookVector * forceMultiplier
-            BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-            task.wait(0.1)  -- Apply force at a slower rate to avoid extreme impact
+            BodyVelocity.MaxForce = Vector3.new(100000000, 100000000, 100000000)
+            task.wait(0.01)  -- Apply force at a slower rate to avoid extreme impact
             BodyVelocity:Destroy()
         end
 
-        task.wait(0.05)  -- Slight delay to prevent rapid movements
+        task.wait(0.001)  -- Slight delay to prevent rapid movements
     end
 
     print("✅ Pummel finished!")
