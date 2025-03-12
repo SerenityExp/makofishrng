@@ -214,8 +214,11 @@ local function TeleportAlt()
     end
 end
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
 -- Pummel Alt (Aggressive Flipping Version)
-local function PummelAlt("TargetPlayerName")
+local function PummelAlt(targetName)
     -- Ensure the alt character is present
     local AltChar = LocalPlayer.Character
     if not AltChar then
@@ -225,25 +228,29 @@ local function PummelAlt("TargetPlayerName")
 
     -- Find the target player by their name
     local targetPlayer = Players:FindFirstChild(targetName)
-    if not targetPlayer or not targetPlayer.Character then
-        warn("⚠️ Pummel failed: Target player not found or has no character")
+    if not targetPlayer then
+        print("⚠️ Target not found: ", targetName)
         return
     end
 
+    -- Ensure target character is present
     local TargetChar = targetPlayer.Character
+    if not TargetChar then
+        warn("⚠️ Target player has no character")
+        return
+    end
+
+    -- Ensure both characters have HumanoidRootPart
     local TargetHRP = TargetChar:FindFirstChild("HumanoidRootPart")
     local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
-
     if not TargetHRP or not AltHRP then
-        warn("⚠️ Pummel failed: Missing required parts")
+        print("⚠️ Missing HumanoidRootParts")
         return
     end
 
-    -- Debugging: Confirm that we found both HumanoidRootParts
+    -- Debugging: Confirm the target and alt characters
     print("✅ AltHRP found:", AltHRP)
     print("✅ TargetHRP found:", TargetHRP)
-
-    print("✅ Pummeling the target aggressively!")
 
     -- Teleport alt extremely close to the target
     AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(0, 1, 0)  -- Extremely close to the target to ensure the fling
@@ -281,6 +288,9 @@ local function PummelAlt("TargetPlayerName")
 
     print("✅ Fling finished!")
 end
+
+-- Test Trigger (Directly calling for debugging)
+PummelAlt("TargetPlayerName")  -- Replace with the actual player name you want to target
 
 -- Command Handling
 local function HandleChatCommand(message)
