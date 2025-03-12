@@ -217,7 +217,10 @@ end
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Pummel Alt (Aggressive Flipping Version)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Pummel Alt (Basic Test Version)
 local function PummelAlt(targetName)
     -- Ensure the alt character is present
     local AltChar = LocalPlayer.Character
@@ -255,42 +258,9 @@ local function PummelAlt(targetName)
     -- Teleport alt extremely close to the target
     AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(0, 1, 0)  -- Extremely close to the target to ensure the fling
 
-    local flingDuration = 15  -- Fling duration
-    local spinSpeed = 5000   -- Speed of rotation, increase for faster turning
-    local flingForce = 1000  -- Fling force applied to the target
-    local radius = 0.2      -- Radius for aggressive spinning around the target
-    local startTime = tick()
-
-    -- Main loop for spinning and flinging
-    while tick() - startTime < flingDuration do
-        local angle = tick() * spinSpeed
-        local xOffset = math.cos(angle) * radius
-        local zOffset = math.sin(angle) * radius
-
-        -- Update the position to spin aggressively around the target
-        AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
-
-        -- Debugging: Checking current AltHRP position
-        print("✅ AltHRP Position: ", AltHRP.Position)
-
-        -- Apply fling force to the target (NOT the alt character)
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(500000, 500000, 500000)  -- Maximum force applied to fling
-        bodyVelocity.Velocity = TargetHRP.CFrame.LookVector * flingForce + Vector3.new(0, flingForce, 0)  -- Fling upward and forward
-        bodyVelocity.Parent = TargetHRP  -- Apply the force to the target's HumanoidRootPart
-
-        -- Destroy the BodyVelocity after a short time to simulate the fling effect
-        task.wait(0.1)
-        bodyVelocity:Destroy()
-
-        task.wait(0.01)  -- Ensures the teleporting and flinging is continuous
-    end
-
-    print("✅ Fling finished!")
+    print("✅ Pummel Started!")
 end
 
--- Test Trigger (Directly calling for debugging)
-PummelAlt("TargetPlayerName")  -- Replace with the actual player name you want to target
 
 -- Command Handling
 local function HandleChatCommand(message)
