@@ -140,7 +140,7 @@ local function ShotgunAlt()
     LocalPlayer.Character:BreakJoints() -- Reset after firing
 end
 
--- Vanish Alt (Now moves further underground over time)
+-- Vanish Alt (Now Instantly Teleports 30 Studs Under Main)
 local function VanishAlt()
     StopAll()
     if not SelectedMainAccount or not SelectedMainAccount.Character then
@@ -149,26 +149,26 @@ local function VanishAlt()
     end
 
     local AltChar = LocalPlayer.Character
-    local AltHRP = AltChar and AltChar:FindFirstChild("HumanoidRootPart")
-    if not AltChar or not AltHRP then return end
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
 
-    Following = true
-    Vanishing = true
-    print("✅ Vanishing Alt underground...")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    
+    if not AltHRP or not MainHRP then
+        warn("⚠️ Vanish failed: Missing HumanoidRootPart")
+        return
+    end
 
+    print("✅ Instantly Vanishing Alt 30 studs underground...")
+    
+    -- Instantly Teleport the Alt 30 studs below the Main
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -30, 0)
+
+    -- Disable movement and collisions
     AltChar.Humanoid.WalkSpeed = 0
     AltChar.Humanoid.JumpPower = 0
     SetCollisions(AltChar, false)
-
-    task.spawn(function()
-        local depth = -25 -- Start depth
-        while Vanishing do
-            depth = depth - 10 -- Move deeper every second
-            ApplyFloatingMovement(AltChar, Vector3.new(0, depth, 0))
-            task.wait(1)
-        end
-        SetCollisions(AltChar, true)
-    end)
 end
 
 -- Teleport Alt to Main Instantly
