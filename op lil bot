@@ -82,8 +82,9 @@ local function SummonAlt()
         return
     end
 
+    local MainChar = SelectedMainAccount.Character
     local AltChar = LocalPlayer.Character
-    if not AltChar then return end
+    if not MainChar or not AltChar then return end
 
     Following = true
     print("✅ Summoning Alt to the side...")
@@ -94,7 +95,7 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
--- Shotgun Alt
+-- Shotgun Alt (Now resets after firing)
 local function ShotgunAlt()
     StopAll()
     if not SelectedMainAccount or not SelectedMainAccount.Character then
@@ -139,7 +140,7 @@ local function ShotgunAlt()
     LocalPlayer.Character:BreakJoints() -- Reset after firing
 end
 
--- Vanish Alt (Fix: Moves further underground over time)
+-- Vanish Alt (Now moves further underground over time)
 local function VanishAlt()
     StopAll()
     if not SelectedMainAccount or not SelectedMainAccount.Character then
@@ -148,7 +149,8 @@ local function VanishAlt()
     end
 
     local AltChar = LocalPlayer.Character
-    if not AltChar then return end
+    local AltHRP = AltChar and AltChar:FindFirstChild("HumanoidRootPart")
+    if not AltChar or not AltHRP then return end
 
     Following = true
     Vanishing = true
@@ -159,10 +161,10 @@ local function VanishAlt()
     SetCollisions(AltChar, false)
 
     task.spawn(function()
-        local depth = -25
+        local depth = -25 -- Start depth
         while Vanishing do
+            depth = depth - 10 -- Move deeper every second
             ApplyFloatingMovement(AltChar, Vector3.new(0, depth, 0))
-            depth = depth - 5 -- **Moves further underground over time**
             task.wait(1)
         end
         SetCollisions(AltChar, true)
@@ -208,22 +210,20 @@ local function HandleChatCommand(message)
     end
 end
 
--- UI Selection (Now horizontal at bottom with smaller buttons)
+-- UI Selection (Chat listener persists)
 local function SetupSelectionUI()
     local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
     local Frame = Instance.new("Frame", ScreenGui)
-    Frame.Size = UDim2.new(1, 0, 0, 30) -- Full width, 30px height
-    Frame.Position = UDim2.new(0, 0, 1, -30) -- Anchored to bottom
+    Frame.Size = UDim2.new(0, 200, 0, 300)
+    Frame.Position = UDim2.new(0, 10, 0, 10)
     Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 
     local UIList = Instance.new("UIListLayout", Frame)
-    UIList.FillDirection = Enum.FillDirection.Horizontal -- Horizontal Layout
-    UIList.Padding = UDim.new(0, 2)
 
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
             local Button = Instance.new("TextButton", Frame)
-            Button.Size = UDim2.new(0, 75, 1, 0)
+            Button.Size = UDim2.new(1, 0, 0, 30)
             Button.Text = player.Name
             Button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
             Button.TextColor3 = Color3.new(1, 1, 1)
@@ -231,6 +231,14 @@ local function SetupSelectionUI()
             Button.MouseButton1Click:Connect(function()
                 SelectedMainAccount = player
                 print("✅ Main Account Selected: " .. player.Name)
+
+                if Connection then
+                    Connection:Disconnect()
+                end
+
+                Connection = player.Chatted:Connect(function(msg)
+                    HandleChatCommand(msg)
+                end)
             end)
         end
     end
