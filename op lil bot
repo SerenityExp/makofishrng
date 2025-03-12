@@ -214,7 +214,7 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt (Spams teleport inside target with turning spin and fling)
+-- Pummel Alt (Spam teleport inside target and rotate at 1000 mph)
 local function PummelAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Pummel failed: No main account selected")
@@ -233,36 +233,30 @@ local function PummelAlt(target)
         return
     end
 
-    print("✅ Pummeling the target with teleport spin and fling!")
+    print("✅ Pummeling the target with rapid teleport and intense rotation!")
 
-    -- Teleport alt inside the target and fling
-    local spinTime = 5  -- Duration of the teleport spin
-    local rotationSpeed = 5000  -- Speed of turning spin (light-speed turning)
-    local flingForce = 5000  -- Intense force to fling the target
-    local radius = 0.5  -- Radius for tight teleport inside the target
-
+    local spinTime = 5  -- Duration of the rapid teleportation and rotation
+    local rotationSpeed = 1000  -- Speed of turning spin (1000 mph for extreme rotation)
+    local radius = 0.5  -- Radius to keep the alt close to the target
     local startTime = tick()
 
     while tick() - startTime < spinTime do
+        -- Teleport the alt right on top of the target every 0.01 seconds
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Teleport slightly above the target
+
+        -- Spin the alt at an intense speed
         local angle = (tick() - startTime) * rotationSpeed
-        local turnCFrame = CFrame.Angles(0, math.rad(angle), 0)
+        local xOffset = math.cos(angle) * radius
+        local zOffset = math.sin(angle) * radius
 
-        -- Teleport the alt inside the target while rotating (spinning)
-        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0) * turnCFrame
+        -- Apply the spinning movement by setting the alt's CFrame to rotate at 1000 mph
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
 
-        -- Apply fling force
-        local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
-        BodyVelocity.Velocity = (MainHRP.Position - AltHRP.Position).unit * flingForce
-        BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-        task.wait(0.1)  -- Spam teleport quickly while turning
-        BodyVelocity:Destroy()  -- Remove BodyVelocity to simulate fling
-
-        task.wait(0.1)  -- Keep teleporting and spinning
+        task.wait(0.01)  -- Teleport every 0.01 seconds while spinning
     end
 
-    print("✅ Pummel finished with teleport spin and fling!")
+    print("✅ Pummel finished with rapid teleport and intense rotation!")
 end
-
 
 -- Command Handling
 local function HandleChatCommand(message)
