@@ -238,7 +238,7 @@ local function PummelAlt(target)
     -- Teleport alt extremely close to the target
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Extremely close to the target to ensure the fling
 
-    local flingDuration = 3  -- Fling duration
+    local flingDuration = 15  -- Fling duration
     local spinSpeed = 5000   -- Speed of rotation, increase for faster turning
     local flingForce = 10000  -- Fling force applied to the target
     local radius = 0.5      -- Radius for aggressive spinning around the target
