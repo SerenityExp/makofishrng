@@ -178,7 +178,7 @@ local function VanishAlt()
     end
 
     print("✅ Instantly Vanishing Alt 30 studs underground...")
-    
+
     -- Instantly Teleport the Alt 30 studs below the Main
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -30, 0)
 
@@ -210,7 +210,7 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt
+-- Pummel Alt (Aggressive Version)
 local function PummelAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Pummel failed: No main account selected")
@@ -235,8 +235,9 @@ local function PummelAlt(target)
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 5, 0) -- Align alt to main
 
     local spinTime = 10
-    local speed = 50
-    local radius = 10
+    local speed = 100 -- Increased speed for more aggressive spinning
+    local radius = 15 -- Larger radius for wider spins
+    local forceMultiplier = 100 -- Increased force multiplier for aggressive pushes
     local startTime = tick()
 
     while tick() - startTime < spinTime do
@@ -247,10 +248,10 @@ local function PummelAlt(target)
         -- Spin around the target
         AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 5, zOffset)
         
-        -- Push the target forward every second while spinning
-        if tick() - startTime % 1 < 0.1 then
+        -- Push the target forward with high force every 0.2 seconds while spinning
+        if tick() - startTime % 0.2 < 0.1 then
             local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
-            BodyVelocity.Velocity = MainHRP.CFrame.LookVector * 30 -- Push force
+            BodyVelocity.Velocity = MainHRP.CFrame.LookVector * forceMultiplier -- Aggressive push force
             BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
             task.wait(0.1)
             BodyVelocity:Destroy()
@@ -260,19 +261,6 @@ local function PummelAlt(target)
     end
 
     print("✅ Pummel finished!")
-end
-
--- Jump Alt
-local function JumpAlt()
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then
-        warn("⚠️ Jump failed: No character found")
-        return
-    end
-
-    local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-    Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-    Humanoid:Move(Vector3.new(0, 50, 0))
-    print("✅ Alt has jumped!")
 end
 
 -- Command Handling
@@ -294,12 +282,12 @@ local function HandleChatCommand(message)
     elseif message == ".fall" then
         FallAlt()
     elseif message:sub(1, 7) == ".pummel" then
-        local targetName = message:sub(9)
-        local target = Players:FindFirstChild(targetName)
-        if target then
-            PummelAlt(target)
+        local username = message:sub(9)
+        local targetPlayer = Players:FindFirstChild(username)
+        if targetPlayer then
+            PummelAlt(targetPlayer)
         else
-            warn("⚠️ Pummel failed: Target not found")
+            warn("⚠️ Target player not found")
         end
     else
         warn("⚠️ Unknown command:", message)
