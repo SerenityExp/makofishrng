@@ -214,7 +214,7 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt (Turning Spin with Intense Fling)
+-- Pummel Alt (Spams teleport inside target with turning spin and fling)
 local function PummelAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Pummel failed: No main account selected")
@@ -233,41 +233,36 @@ local function PummelAlt(target)
         return
     end
 
-    print("✅ Pummeling the target with turning spin and force!")
+    print("✅ Pummeling the target with teleport spin and fling!")
 
-    -- Teleport alt to the target's position (almost inside them)
-    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Make alt extremely close
-
-    -- Intense fling settings
-    local forceMultiplier = 100000 -- Extremely high force for fling
-    local spinTime = 5 -- Duration of fling effect
-    local radius = 0.5 -- Radius for tighter spin
-    local rotationSpeed = 5000 -- Speed of turning spin (light-speed turning)
+    -- Teleport alt inside the target and fling
+    local spinTime = 5  -- Duration of the teleport spin
+    local rotationSpeed = 5000  -- Speed of turning spin (light-speed turning)
+    local flingForce = 5000  -- Intense force to fling the target
+    local radius = 0.5  -- Radius for tight teleport inside the target
 
     local startTime = tick()
 
-    -- Create BodyVelocity to apply extreme speed in the direction of fling
-    local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
-    BodyVelocity.Velocity = MainHRP.CFrame.LookVector * forceMultiplier -- Apply large force in the target's direction
-    BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000) -- Max possible force to break through any resistance
-    BodyVelocity.Parent = AltHRP
-
-    -- Apply turning spin and fling effect
     while tick() - startTime < spinTime do
         local angle = (tick() - startTime) * rotationSpeed
         local turnCFrame = CFrame.Angles(0, math.rad(angle), 0)
 
-        -- Apply the turning rotation to the alt's CFrame
-        AltHRP.CFrame = AltHRP.CFrame * turnCFrame
+        -- Teleport the alt inside the target while rotating (spinning)
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0) * turnCFrame
 
-        task.wait(0.025)  -- Fast updates for the spinning effect
+        -- Apply fling force
+        local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
+        BodyVelocity.Velocity = (MainHRP.Position - AltHRP.Position).unit * flingForce
+        BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+        task.wait(0.1)  -- Spam teleport quickly while turning
+        BodyVelocity:Destroy()  -- Remove BodyVelocity to simulate fling
+
+        task.wait(0.1)  -- Keep teleporting and spinning
     end
 
-    -- Destroy BodyVelocity after the fling effect ends
-    BodyVelocity:Destroy()
-
-    print("✅ Pummel finished with turning spin!")
+    print("✅ Pummel finished with teleport spin and fling!")
 end
+
 
 -- Command Handling
 local function HandleChatCommand(message)
