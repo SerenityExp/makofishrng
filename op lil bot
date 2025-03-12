@@ -120,18 +120,23 @@ local function FlingAlt(targetName)
 
     print("✅ Flinging", targetName, "for 3 seconds!")
 
-    -- Spam teleport & spin for 3 seconds
-    task.spawn(function()
-        local startTime = tick()
-        while tick() - startTime < 3 do
-            AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(0, 5, 0) -- Teleport above the target
-            AltHRP.AssemblyAngularVelocity = Vector3.new(999, 999, 999) -- Insane spinning
-            task.wait(0.05) -- Fast spam teleporting
-        end
-        AltHRP.AssemblyAngularVelocity = Vector3.zero -- Stop spinning after 3 seconds
-    end)
-end
+    -- Disable movement & collisions during fling
+    AltHRP.Anchored = false
+    SetCollisions(AltChar, false)
 
+    -- Spam teleport & spin for 3 seconds
+    local startTime = tick()
+    while tick() - startTime < 3 do
+        AltHRP.CFrame = TargetHRP.CFrame * CFrame.new(0, 5, 0) -- Teleport slightly above target
+        AltHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999) -- Extreme spinning
+        task.wait(0.05) -- Super fast spam teleport
+    end
+
+    -- Reset physics after fling
+    AltHRP.AssemblyAngularVelocity = Vector3.zero -- Stop spinning
+    SetCollisions(AltChar, true)
+    print("✅ Fling completed!")
+end
 
 -- Sit Alt
 local function SitAlt()
