@@ -95,52 +95,43 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
---Pummel Alt
-local function pummel(targetPlayer)
-    if not targetPlayer or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        return
-    end
+-- Pummel Alt
+function PummelAlt(targetName)
+    local targetPlayer = game.Players:FindFirstChild(targetName)
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local rootPart = targetPlayer.Character.HumanoidRootPart
+        local myCharacter = AltCharacter -- Make sure this references the alt’s character
+        local myRootPart = myCharacter and myCharacter:FindFirstChild("HumanoidRootPart")
 
-    local rootPart = targetPlayer.Character.HumanoidRootPart
-    local myRootPart = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if myRootPart then
+            local duration = 4 -- Pummel duration in seconds
+            local endTime = tick() + duration
 
-    if not myRootPart then return end
+            -- Spinning setup
+            local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
+            bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+            bodyAngularVelocity.AngularVelocity = Vector3.new(0, 500, 0) -- Fast spinning
+            bodyAngularVelocity.Parent = myRootPart
 
-    local duration = 4 -- Pummel duration in seconds
-    local endTime = tick() + duration
+            while tick() < endTime do
+                -- Move in a sphere pattern around the target
+                local angle = math.random() * math.pi * 2
+                local radius = 5
+                local height = math.random(-5, 5)
+                local offset = Vector3.new(math.cos(angle) * radius, height, math.sin(angle) * radius)
 
-    -- Spinning setup
-    local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
-    bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bodyAngularVelocity.AngularVelocity = Vector3.new(0, 500, 0) -- Fast spinning
-    bodyAngularVelocity.Parent = myRootPart
+                myRootPart.CFrame = rootPart.CFrame * CFrame.new(offset)
 
-    while tick() < endTime do
-        -- Move randomly around the target
-        local offset = Vector3.new(
-            math.random(-5, 5),
-            math.random(-5, 5),
-            math.random(-5, 5)
-        )
-        myRootPart.CFrame = rootPart.CFrame * CFrame.new(offset)
+                -- Short wait for rapid movement
+                task.wait(0.05)
+            end
 
-        -- Short wait to keep rapid movement
-        task.wait(0.05)
-    end
-
-    -- Cleanup
-    bodyAngularVelocity:Destroy()
-end
-
-game.Players.LocalPlayer.Chatted:Connect(function(msg)
-    local args = string.split(msg, " ")
-    if args[1] == ".pummel" and args[2] then
-        local target = game.Players:FindFirstChild(args[2])
-        if target then
-            pummel(target)
+            -- Cleanup
+            bodyAngularVelocity:Destroy()
         end
     end
-end)
+end
+
 
 
 -- Sit Alt
@@ -267,6 +258,9 @@ local function HandleChatCommand(message)
         StopAll()
     elseif message == ".sit" then
     SitAlt()
+    elseif string.sub(message, 1, 8) == ".pummel " then
+    local targetName = string.sub(message, 9)
+    PummelAlt(targetName)
     else
         warn("⚠️ Unknown command:", message)
     end
