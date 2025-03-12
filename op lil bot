@@ -237,7 +237,7 @@ local function PummelAlt(target)
 
     print("✅ Pummeling the target with rapid teleport and camera-like turning spin!")
 
-    local spinSpeed = 1000  -- Speed of turning spin (like camera turn)
+    local spinSpeed = 10000000  -- Speed of turning spin (like camera turn)
     local pummelDuration = math.huge  -- Set this to a large number to pummel indefinitely
     local startTime = tick()
 
