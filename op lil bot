@@ -214,12 +214,6 @@ local function TeleportAlt()
     end
 end
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
 -- Pummel Alt (Basic Test Version)
 local function PummelAlt(targetName)
     -- Ensure the alt character is present
