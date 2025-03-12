@@ -99,9 +99,8 @@ end
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
 
-local function UltraSpinFling(targetName)
+local function TrueFling(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
         return
@@ -113,7 +112,7 @@ local function UltraSpinFling(targetName)
         return
     end
 
-    local AltChar = LocalPlayer.Character
+    local AltChar = Players.LocalPlayer.Character
     local TargetChar = targetPlayer.Character
     local AltHRP = AltChar and AltChar:FindFirstChild("HumanoidRootPart")
     local TargetHRP = TargetChar and TargetChar:FindFirstChild("HumanoidRootPart")
@@ -123,30 +122,33 @@ local function UltraSpinFling(targetName)
         return
     end
 
-    print("✅ Ultra Spin Flinging", targetName, "!")
+    print("✅ Starting True Fling on", targetName, "!")
 
-    -- Create insane spinning force
-    local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
-    bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bodyAngularVelocity.AngularVelocity = Vector3.new(0, 99999999, 0) -- Extreme spin speed
-    bodyAngularVelocity.Parent = AltHRP
+    -- Store original velocity
+    local originalVelocity = AltHRP.Velocity
 
     local startTime = tick()
-    while tick() - startTime < 4 do -- Run for 4 seconds
+    while tick() - startTime < 4 do -- Fling for 4 seconds
         if not AltChar or not AltChar.Parent or not AltHRP or not AltHRP.Parent then
-            break -- Stop if the character is removed
+            break -- Stop if alt dies or gets deleted
         end
 
-        -- Spam teleport inside target
+        -- Spam teleport directly inside target
         AltHRP.CFrame = TargetHRP.CFrame
 
-        wait(0.01) -- Spam TP every 0.01s
+        -- Apply massive velocity change up/down for physics explosion
+        AltHRP.Velocity = Vector3.new(0, 100000, 0)
+        RunService.Heartbeat:Wait()
+        AltHRP.Velocity = Vector3.new(0, -100000, 0)
+        RunService.Heartbeat:Wait()
     end
 
-    -- Stop spinning
-    bodyAngularVelocity:Destroy()
-    print("✅ Ultra Spin Fling Completed!")
+    -- Reset velocity after fling
+    AltHRP.Velocity = originalVelocity
+
+    print("✅ True Fling Completed!")
 end
+
 
 
 
@@ -278,7 +280,7 @@ local function HandleChatCommand(message)
     SitAlt()
     elseif message:sub(1,7) == ".fling " then
     local targetName = message:sub(8) -- Extract username
-    UltraSpinFling(targetName)
+    TrueFling(targetName)
     else
         warn("⚠️ Unknown command:", message)
     end
