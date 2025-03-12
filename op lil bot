@@ -95,7 +95,7 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
--- Fling Alt (Light-Speed Spin & Constant Teleport)
+-- Fling Alt (Inspired by Infinite Yield)
 local function FlingAlt(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
@@ -118,25 +118,31 @@ local function FlingAlt(targetName)
         return
     end
 
-    print("✅ Flinging", targetName, "with insane spin & teleport!")
+    print("✅ Flinging", targetName, "like Infinite Yield!")
 
+    -- Make sure the alt is unanchored & can fling properly
+    AltHRP.Anchored = false
+    SetCollisions(AltChar, false)
+
+    -- Apply absurd velocity to send the target flying
+    local BodyAngularVelocity = Instance.new("BodyAngularVelocity")
+    BodyAngularVelocity.AngularVelocity = Vector3.new(0, 9999, 0) -- Fast spin
+    BodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    BodyAngularVelocity.Parent = AltHRP
+
+    -- Start the fling loop
     local startTime = tick()
     task.spawn(function()
         while tick() - startTime < 4 do -- Runs for 4 seconds
-            -- Teleport inside target
-            AltHRP.CFrame = TargetHRP.CFrame
-            
-            -- Ultra-fast spin
-            for _ = 1, 5 do
-                AltHRP.CFrame = AltHRP.CFrame * CFrame.Angles(0, math.rad(100000), 0)
-                task.wait(0.02) -- Faster updates
-            end
-            
-            task.wait(0.1) -- Re-teleport every 0.1 seconds
+            AltHRP.CFrame = TargetHRP.CFrame -- Stay inside target
+            task.wait(0.1) -- Consistent re-teleporting
         end
-    end)
 
-    print("✅ Fling completed!")
+        -- Cleanup after fling
+        BodyAngularVelocity:Destroy()
+        SetCollisions(AltChar, true)
+        print("✅ Fling completed!")
+    end)
 end
 
 -- Sit Alt
