@@ -237,7 +237,7 @@ local function PummelAlt(target)
 
     print("✅ Pummeling the target with rapid teleport and camera-like turning spin!")
 
-    local spinSpeed = 10000000  -- Speed of turning spin (like camera turn)
+    local spinSpeed = 10000000000000000000000  -- Speed of turning spin (like camera turn)
     local pummelDuration = math.huge  -- Set this to a large number to pummel indefinitely
     local startTime = tick()
 
@@ -245,7 +245,7 @@ local function PummelAlt(target)
 
     while Pummeling do
         -- Teleport the alt right on top of the target every 0.01 seconds
-        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Teleport slightly above the target
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 0, 0)  -- Teleport slightly above the target
 
         -- Rotate the alt like turning the camera (around the Y-axis)
         local angle = (tick() - startTime) * spinSpeed
@@ -254,7 +254,7 @@ local function PummelAlt(target)
         -- Apply the rotation to the HumanoidRootPart
         AltHRP.CFrame = AltHRP.CFrame * orientation
 
-        task.wait(0.01)  -- Teleport every 0.01 seconds while turning
+        task.wait(0.0001)  -- Teleport every 0.01 seconds while turning
     end
 
     print("✅ Pummel finished!")
