@@ -95,7 +95,7 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
---Fall Alt
+-- Fall Alt
 local function FallAlt()
     LocalPlayer.Character:BreakJoints()
 end
@@ -178,7 +178,7 @@ local function VanishAlt()
     end
 
     print("✅ Instantly Vanishing Alt 30 studs underground...")
-
+    
     -- Instantly Teleport the Alt 30 studs below the Main
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -30, 0)
 
@@ -247,12 +247,16 @@ local function PummelAlt(target)
         -- Spin around the target
         AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 5, zOffset)
         
-        -- Push the target forward while spinning
-        local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
-        BodyVelocity.Velocity = MainHRP.CFrame.LookVector * 30 -- Push force
-        BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-        task.wait(0.1)
-        BodyVelocity:Destroy()
+        -- Push the target forward every second while spinning
+        if tick() - startTime % 1 < 0.1 then
+            local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
+            BodyVelocity.Velocity = MainHRP.CFrame.LookVector * 30 -- Push force
+            BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+            task.wait(0.1)
+            BodyVelocity:Destroy()
+        end
+
+        task.wait(0.1) -- Keep looping
     end
 
     print("✅ Pummel finished!")
@@ -266,21 +270,14 @@ local function JumpAlt()
     end
 
     local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-    Humanoid:Move(Vector3.new(0, 100, 0))
-    print("✅ Alt is jumping!")
+    Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    Humanoid:Move(Vector3.new(0, 50, 0))
+    print("✅ Alt has jumped!")
 end
 
 -- Command Handling
 local function HandleChatCommand(message)
-    if message:sub(1, 7) == ".pummel" then
-        local targetName = message:sub(9)
-        local target = Players:FindFirstChild(targetName)
-        if target then
-            PummelAlt(target)
-        else
-            warn("⚠️ Target not found!")
-        end
-    elseif message == ".summon" then
+    if message == ".summon" then
         SummonAlt()
     elseif message == ".shotgun" then
         ShotgunAlt()
@@ -296,6 +293,14 @@ local function HandleChatCommand(message)
         JumpAlt()
     elseif message == ".fall" then
         FallAlt()
+    elseif message:sub(1, 7) == ".pummel" then
+        local targetName = message:sub(9)
+        local target = Players:FindFirstChild(targetName)
+        if target then
+            PummelAlt(target)
+        else
+            warn("⚠️ Pummel failed: Target not found")
+        end
     else
         warn("⚠️ Unknown command:", message)
     end
