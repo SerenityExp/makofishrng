@@ -143,6 +143,142 @@ local function PummelAlt(targetName)
     SpinAround() -- Call the spin function
 end
 
+-- Summon Alt
+local function SummonAlt()
+    StopAll()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Summon failed: No main account selected")
+        return
+    end
+
+    local MainChar = SelectedMainAccount.Character
+    local AltChar = LocalPlayer.Character
+    if not MainChar or not AltChar then return end
+
+    Following = true
+    print("✅ Summoning Alt to the side...")
+
+    AltChar.Humanoid.WalkSpeed = 0
+    AltChar.Humanoid.JumpPower = 0
+
+    ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
+end
+
+-- Fall Alt
+local function FallAlt()
+    LocalPlayer.Character:BreakJoints()
+end
+
+-- Sit Alt
+local function SitAlt()
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then
+        warn("⚠️ Sit failed: No character found")
+        return
+    end
+
+    local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+    Humanoid.Sit = true
+    print("✅ Alt is now sitting!")
+end
+
+-- Shotgun Alt (Now resets after firing)
+local function ShotgunAlt()
+    StopAll()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Shotgun failed: No main account selected")
+        return
+    end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+    local RightArm = MainChar:FindFirstChild("Right Arm") or MainChar:FindFirstChild("RightHand")
+
+    if not MainHRP or not AltHRP or not RightArm then
+        warn("⚠️ Shotgun failed: Missing required parts")
+        return
+    end
+
+    print("✅ Alt moving to arm for Shotgun...")
+
+    local AlignPos = Instance.new("AlignPosition", AltHRP)
+    AlignPos.MaxForce = 100000
+    AlignPos.Responsiveness = 100
+    AlignPos.Attachment0 = Instance.new("Attachment", AltHRP)
+    AlignPos.Attachment1 = Instance.new("Attachment", RightArm)
+
+    task.wait(2)
+
+    print("🚀 Shotgun firing!")
+    AlignPos:Destroy()
+
+    local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
+    BodyVelocity.Velocity = MainHRP.CFrame.LookVector * 250
+    BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+
+    task.wait(0.5)
+    BodyVelocity:Destroy()
+
+    task.wait(1)
+    LocalPlayer.Character:BreakJoints() -- Reset after firing
+end
+
+-- Vanish Alt (Now Instantly Teleports 30 Studs Under Main)
+local function VanishAlt()
+    StopAll()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Vanish failed: No main account selected")
+        return
+    end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    
+    if not AltHRP or not MainHRP then
+        warn("⚠️ Vanish failed: Missing HumanoidRootPart")
+        return
+    end
+
+    print("✅ Instantly Vanishing Alt 30 studs underground...")
+
+    -- Instantly Teleport the Alt 30 studs below the Main
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -30, 0)
+
+    -- Disable movement and collisions
+    AltChar.Humanoid.WalkSpeed = 0
+    AltChar.Humanoid.JumpPower = 0
+    SetCollisions(AltChar, false)
+end
+
+-- Teleport Alt to Main Instantly
+local function TeleportAlt()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Teleport failed: No main account selected")
+        return
+    end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+
+    if MainHRP and AltHRP then
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 5, 0)
+        print("✅ Teleported Alt to Main!")
+    else
+        warn("⚠️ Teleport failed: Missing parts")
+    end
+end
+
 -- Command Handling
 local function HandleChatCommand(message)
     if message == ".summon" then
