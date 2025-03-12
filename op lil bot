@@ -99,43 +99,53 @@ end
 
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-local function ServerFling(player, targetName)
+function ExploitFling(targetName)
+    local lp = Players.LocalPlayer
     local targetPlayer = Players:FindFirstChild(targetName)
+    
     if not targetPlayer or not targetPlayer.Character then
-        player:SendNotification("Fling failed: Invalid target") -- Optional UI feedback
-        return
+        return warn("❌ Invalid target")
+    end
+    
+    local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local myCharacter = lp.Character
+    local myHRP = myCharacter and myCharacter:FindFirstChild("HumanoidRootPart")
+    
+    if not (myHRP and targetHRP) then
+        return warn("❌ Missing HumanoidRootPart")
+    end
+    
+    print("✅ Exploit Flinging:", targetName)
+
+    -- Set Up Spin
+    local spinForce = Instance.new("BodyAngularVelocity")
+    spinForce.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    spinForce.AngularVelocity = Vector3.new(0, 500, 0) -- Extreme spin
+    spinForce.Parent = myHRP
+
+    -- Fling Loop (4 Seconds)
+    local startTime = tick()
+    while tick() - startTime < 4 do
+        myHRP.CFrame = targetHRP.CFrame + Vector3.new(0, 3, 0) -- TP above target
+        myHRP.Velocity = Vector3.new(0, 500, 0) -- Strong vertical fling
+        RunService.RenderStepped:Wait() -- Rapid update
     end
 
-    local TargetChar = targetPlayer.Character
-    local TargetHRP = TargetChar:FindFirstChild("HumanoidRootPart")
-
-    if not TargetHRP then
-        player:SendNotification("Fling failed: Target missing HumanoidRootPart") -- Optional UI feedback
-        return
-    end
-
-    print("✅ Server-Sided Flinging:", targetName)
-
-    -- Create BodyVelocity for server-sided fling
-    local flingForce = Instance.new("BodyVelocity")
-    flingForce.Velocity = Vector3.new(math.random(-100,100), 300, math.random(-100,100)) -- Random strong force
-    flingForce.MaxForce = Vector3.new(math.huge, math.huge, math.huge) -- Infinite force
-    flingForce.Parent = TargetHRP
-
-    -- Remove fling force after 0.5 seconds to let physics take over
-    game:GetService("Debris"):AddItem(flingForce, 0.5)
+    -- Cleanup
+    spinForce:Destroy()
+    myHRP.Velocity = Vector3.new(0, 0, 0) -- Reset velocity
 end
 
--- Hook into command handler
-game.Players.PlayerAdded:Connect(function(player)
-    player.Chatted:Connect(function(message)
-        if message:sub(1,7) == ".fling " then
-            local targetName = message:sub(8) -- Extract username
-            ServerFling(player, targetName)
-        end
-    end)
+-- Hook into chat commands
+game.Players.LocalPlayer.Chatted:Connect(function(msg)
+    if msg:sub(1,7) == ".fling " then
+        local targetName = msg:sub(8)
+        ExploitFling(targetName)
+    end
 end)
+
 
 
 -- Sit Alt
@@ -264,7 +274,7 @@ local function HandleChatCommand(message)
     SitAlt()
     elseif message:sub(1,7) == ".fling " then
     local targetName = message:sub(8) -- Extract username
-    ServerFling(targetName)
+    ExploitFling(targetName)
     else
         warn("⚠️ Unknown command:", message)
     end
