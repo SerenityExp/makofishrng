@@ -320,16 +320,7 @@ local function HandleChatCommand(message)
         JumpAlt()
     elseif message == ".fall" then
         FallAlt()
-    elseif message:sub(1, 7) == ".pummel" then
-        local username = message:sub(9)
-        local targetPlayer = Players:FindFirstChild(username)
-        if targetPlayer then
-            PummelAlt(targetPlayer)
-        else
-            warn("⚠️ Target player not found")
-        end
     else
-        warn("⚠️ Unknown command:", message)
     end
 end
 
