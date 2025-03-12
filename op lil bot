@@ -266,7 +266,7 @@ local function PummelAlt(targetName)
         -- Debugging: Checking current AltHRP position
         print("✅ AltHRP Position: ", AltHRP.Position)
 
-        -- Apply fling force by creating a BodyVelocity to launch the target
+        -- Apply fling force to the target (NOT the alt character)
         local bodyVelocity = Instance.new("BodyVelocity")
         bodyVelocity.MaxForce = Vector3.new(500000, 500000, 500000)  -- Maximum force applied to fling
         bodyVelocity.Velocity = TargetHRP.CFrame.LookVector * flingForce + Vector3.new(0, flingForce, 0)  -- Fling upward and forward
