@@ -95,72 +95,6 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
--- Pummel Alt
-function PummelAlt(targetName)
-    local targetPlayer = game.Players:FindFirstChild(targetName)
-
-    if not targetPlayer then
-        warn("❌ Target player not found:", targetName)
-        return
-    end
-
-    local targetCharacter = targetPlayer.Character
-    if not targetCharacter then
-        warn("❌ Target player has no character!")
-        return
-    end
-
-    local targetRootPart = targetCharacter:FindFirstChild("HumanoidRootPart")
-    if not targetRootPart then
-        warn("❌ Target character has no HumanoidRootPart!")
-        return
-    end
-
-    local myCharacter = AltCharacter
-    if not myCharacter then
-        warn("❌ Alt character not found!")
-        return
-    end
-
-    local myRootPart = myCharacter:FindFirstChild("HumanoidRootPart")
-    if not myRootPart then
-        warn("❌ Alt has no HumanoidRootPart!")
-        return
-    end
-
-    warn("✅ Target found:", targetPlayer.Name)
-
-    -- Duration of pummel
-    local duration = 4
-    local endTime = tick() + duration
-
-    -- Create BodyGyro for spinning
-    local bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bodyGyro.P = 3000
-    bodyGyro.Parent = myRootPart
-
-    -- Pummel loop
-    while tick() < endTime do
-        -- Randomly move around the target in a sphere-like pattern
-        local offset = Vector3.new(
-            math.random(-5, 5),
-            math.random(-3, 3),
-            math.random(-5, 5)
-        )
-        myRootPart.CFrame = targetRootPart.CFrame * CFrame.new(offset)
-
-        -- Spin rapidly
-        bodyGyro.CFrame = myRootPart.CFrame * CFrame.Angles(0, math.rad(math.random(300, 900)), 0)
-
-        -- Wait briefly before next teleport
-        wait(0.1)
-    end
-
-    -- Stop spinning
-    bodyGyro:Destroy()
-end
-
 -- Sit Alt
 local function SitAlt()
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -284,7 +218,7 @@ local function HandleChatCommand(message)
     elseif message == ".stop" then
         StopAll()
     elseif message == ".sit" then
-    SitAlt()
+        SitAlt()
     else
         warn("⚠️ Unknown command:", message)
     end
