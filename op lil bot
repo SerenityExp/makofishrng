@@ -95,64 +95,52 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
-
-
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-function ExploitFling(targetName)
-    local lp = Players.LocalPlayer
-    local targetPlayer = Players:FindFirstChild(targetName)
-    
-    if not targetPlayer or not targetPlayer.Character then
-        return warn("❌ Invalid target")
-    end
-    
-    local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-    local myCharacter = lp.Character
-    local myHRP = myCharacter and myCharacter:FindFirstChild("HumanoidRootPart")
-    
-    if not (myHRP and targetHRP) then
-        return warn("❌ Missing HumanoidRootPart")
-    end
-    
-    print("✅ Flinging:", targetName)
-
-    -- Set Up NoCollide (Bypass Anti-Fling Systems)
-    for _, v in pairs(myCharacter:GetDescendants()) do
-        if v:IsA("BasePart") then
-            v.CanCollide = false
-        end
+--Pummel Alt
+local function pummel(targetPlayer)
+    if not targetPlayer or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        return
     end
 
-    -- Add Massive Velocity
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = Vector3.new(0, 9999, 0) -- Extreme fling force
-    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    bodyVelocity.Parent = myHRP
+    local rootPart = targetPlayer.Character.HumanoidRootPart
+    local myRootPart = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
-    -- Spam TP Directly Inside Target for 2 Seconds
-    local startTime = tick()
-    while tick() - startTime < 2 do
-        myHRP.CFrame = targetHRP.CFrame + Vector3.new(0, 0, 0) -- Stay inside them
-        RunService.Heartbeat:Wait()
+    if not myRootPart then return end
+
+    local duration = 4 -- Pummel duration in seconds
+    local endTime = tick() + duration
+
+    -- Spinning setup
+    local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
+    bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bodyAngularVelocity.AngularVelocity = Vector3.new(0, 500, 0) -- Fast spinning
+    bodyAngularVelocity.Parent = myRootPart
+
+    while tick() < endTime do
+        -- Move randomly around the target
+        local offset = Vector3.new(
+            math.random(-5, 5),
+            math.random(-5, 5),
+            math.random(-5, 5)
+        )
+        myRootPart.CFrame = rootPart.CFrame * CFrame.new(offset)
+
+        -- Short wait to keep rapid movement
+        task.wait(0.05)
     end
 
     -- Cleanup
-    bodyVelocity:Destroy()
+    bodyAngularVelocity:Destroy()
 end
 
--- Hook into chat commands
 game.Players.LocalPlayer.Chatted:Connect(function(msg)
-    if msg:sub(1,7) == ".fling " then
-        local targetName = msg:sub(8)
-        ExploitFling(targetName)
+    local args = string.split(msg, " ")
+    if args[1] == ".pummel" and args[2] then
+        local target = game.Players:FindFirstChild(args[2])
+        if target then
+            pummel(target)
+        end
     end
 end)
-
-
-    
 
 
 -- Sit Alt
