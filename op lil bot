@@ -148,6 +148,7 @@ local function ShotgunAlt()
     task.wait(2)
 
     print("🚀 Shotgun firing!")
+    LocalPlayer.Character:BreakJoints()
     AlignPos:Destroy()
 
     local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
@@ -158,7 +159,6 @@ local function ShotgunAlt()
     BodyVelocity:Destroy()
 
     task.wait(1)
-    LocalPlayer.Character:BreakJoints() -- Reset after firing
 end
 
 -- Vanish Alt (Now Instantly Teleports 30 Studs Under Main)
