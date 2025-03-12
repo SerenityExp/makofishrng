@@ -100,37 +100,37 @@ function PummelAlt(targetName)
     local targetPlayer = game.Players:FindFirstChild(targetName)
     if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local rootPart = targetPlayer.Character.HumanoidRootPart
-        local myCharacter = AltCharacter -- Make sure this references the alt’s character
+        local myCharacter = AltCharacter -- Ensure this references the alt's character
         local myRootPart = myCharacter and myCharacter:FindFirstChild("HumanoidRootPart")
 
         if myRootPart then
             local duration = 4 -- Pummel duration in seconds
             local endTime = tick() + duration
 
-            -- Spinning setup
-            local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
-            bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-            bodyAngularVelocity.AngularVelocity = Vector3.new(0, 500, 0) -- Fast spinning
-            bodyAngularVelocity.Parent = myRootPart
+            -- Create BodyGyro for spinning
+            local bodyGyro = Instance.new("BodyGyro")
+            bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+            bodyGyro.P = 3000
+            bodyGyro.Parent = myRootPart
 
+            -- Pummel loop
             while tick() < endTime do
-                -- Move in a sphere pattern around the target
-                local angle = math.random() * math.pi * 2
-                local radius = 5
-                local height = math.random(-5, 5)
-                local offset = Vector3.new(math.cos(angle) * radius, height, math.sin(angle) * radius)
+                -- Teleport close to the target
+                myRootPart.CFrame = rootPart.CFrame * CFrame.new(math.random(-5, 5), math.random(-3, 3), math.random(-5, 5))
 
-                myRootPart.CFrame = rootPart.CFrame * CFrame.new(offset)
+                -- Spin rapidly
+                bodyGyro.CFrame = myRootPart.CFrame * CFrame.Angles(0, math.rad(math.random(300, 900)), 0)
 
-                -- Short wait for rapid movement
-                task.wait(0.05)
+                -- Wait briefly before next teleport
+                wait(0.1)
             end
 
-            -- Cleanup
-            bodyAngularVelocity:Destroy()
+            -- Remove spinning effect after pummeling
+            bodyGyro:Destroy()
         end
     end
 end
+
 
 
 
