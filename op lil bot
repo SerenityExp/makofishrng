@@ -251,7 +251,7 @@ local function PummelAlt(target)
         local angle = (tick() - startTime) * spinSpeed
         local orientation = CFrame.Angles(0, math.rad(angle), 0)
 
-        -- Apply the rotation
+        -- Apply the rotation to the HumanoidRootPart
         AltHRP.CFrame = AltHRP.CFrame * orientation
 
         task.wait(0.01)  -- Teleport every 0.01 seconds while turning
