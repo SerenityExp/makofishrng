@@ -157,8 +157,8 @@ local function ShotgunAlt()
     task.wait(0.5)
     BodyVelocity:Destroy()
 
+    task.wait(0)
     LocalPlayer.Character:BreakJoints()
-    task.wait(1)
 end
 
 -- Vanish Alt (Now Instantly Teleports 30 Studs Under Main)
