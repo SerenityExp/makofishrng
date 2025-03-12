@@ -95,7 +95,7 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
--- Fling Alt (Spin in Place)
+-- Fling Alt (Spin in Place Inside Target)
 local function FlingAlt(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
@@ -123,22 +123,18 @@ local function FlingAlt(targetName)
     -- Teleport inside the target
     AltHRP.CFrame = TargetHRP.CFrame
 
-    -- Create a loop that spins the alt super fast in place
+    -- Spin in place for 3 seconds
     local startTime = tick()
     task.spawn(function()
         while tick() - startTime < 3 do
             AltHRP.CFrame = AltHRP.CFrame * CFrame.Angles(0, math.rad(5000), 0) -- Insane rotation
-            task.wait(0.02) -- Super fast update speed
+            task.wait(0.03) -- Super fast update speed
         end
     end)
 
     print("✅ Fling completed!")
 end
 
-    -- Reset physics after fling
-    SetCollisions(AltChar, true)
-    print("✅ Fling completed!")
-end
 
 -- Sit Alt
 local function SitAlt()
