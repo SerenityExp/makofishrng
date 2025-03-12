@@ -236,12 +236,12 @@ local function PummelAlt(target)
     print("✅ Pummeling the target!")
 
     -- Teleport alt to the target and start spinning around them
-    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 5, 0) -- Align alt to main
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0) -- Make alt extremely close
 
     local spinTime = 10
-    local speed = 500 -- Very high speed for rapid spinning
-    local radius = 5 -- Closer radius for a tighter circle
-    local forceMultiplier = 100 -- Aggressive force multiplier for pushes
+    local speed = 1000 -- Much faster speed for spinning
+    local radius = 0.5 -- Almost inside them (tight radius)
+    local forceMultiplier = 500 -- Aggressive force multiplier for pushes
     local startTime = tick()
 
     while tick() - startTime < spinTime do
@@ -249,8 +249,8 @@ local function PummelAlt(target)
         local xOffset = math.cos(angle) * radius
         local zOffset = math.sin(angle) * radius
 
-        -- Spin around the target
-        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 5, zOffset)
+        -- Spin around the target (closer, faster)
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
         
         -- Push the target forward with high force every 0.2 seconds while spinning
         if tick() - startTime % 0.2 < 0.1 then
