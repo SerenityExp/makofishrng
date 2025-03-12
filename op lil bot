@@ -95,7 +95,7 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
--- Fling Alt (Reliable Spin & Launch)
+-- Fling Alt (Touch Fling)
 local function FlingAlt(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
@@ -118,35 +118,39 @@ local function FlingAlt(targetName)
         return
     end
 
-    print("✅ Flinging", targetName, "with extreme force!")
+    print("✅ Flinging", targetName, "with touch fling!")
 
-    -- Unanchor to allow movement
+    -- Unanchor and remove all velocity constraints
     AltHRP.Anchored = false
-    SetCollisions(AltChar, false)
+    for _, obj in ipairs(AltHRP:GetChildren()) do
+        if obj:IsA("BodyVelocity") or obj:IsA("BodyGyro") then
+            obj:Destroy()
+        end
+    end
 
-    -- Start the fling loop
+    -- MASSIVE Velocity for touch fling
+    local flingVelocity = Instance.new("BodyVelocity")
+    flingVelocity.Velocity = Vector3.new(50000, 50000, 50000) -- Insane movement
+    flingVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    flingVelocity.Parent = AltHRP
+
+    -- Collision setup
+    SetCollisions(AltChar, true)
+
+    -- Move into the target repeatedly for 4 seconds
     local startTime = tick()
     task.spawn(function()
-        while tick() - startTime < 4 do -- Runs for 4 seconds
-            -- Teleport inside target and spin rapidly
-            AltHRP.CFrame = TargetHRP.CFrame * CFrame.Angles(0, math.rad(9999), 0) -- Extreme spinning
-            task.wait(0.05) -- Faster update for better fling
+        while tick() - startTime < 4 do
+            AltHRP.Position = TargetHRP.Position + Vector3.new(0, 2, 0) -- Stay inside target
+            task.wait(0.05)
         end
 
-        -- Apply a final strong velocity burst to launch the target
-        local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
-        BodyVelocity.Velocity = Vector3.new(0, 500, 0) -- Sends them flying up
-        BodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-
-        task.wait(0.5)
-        BodyVelocity:Destroy()
-
         -- Cleanup
-        SetCollisions(AltChar, true)
+        flingVelocity:Destroy()
+        SetCollisions(AltChar, false)
         print("✅ Fling completed!")
     end)
 end
-
 
 -- Sit Alt
 local function SitAlt()
