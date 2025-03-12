@@ -97,7 +97,11 @@ end
 
 
 
-local function TouchFling(targetName)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local function UltraSpinFling(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
         return
@@ -115,53 +119,36 @@ local function TouchFling(targetName)
     local TargetHRP = TargetChar and TargetChar:FindFirstChild("HumanoidRootPart")
 
     if not AltHRP or not TargetHRP then
-        warn("⚠️ Fling failed: Missing required parts")
+        warn("⚠️ Fling failed: Missing HumanoidRootPart")
         return
     end
 
-    print("✅ Touch Flinging", targetName, "!")
+    print("✅ Ultra Spin Flinging", targetName, "!")
 
-    -- Enable collisions with all players to increase fling effectiveness
-    local originalCollisions = {}
-    for _, otherPlayer in pairs(Players:GetPlayers()) do
-        if otherPlayer.Character then
-            for _, part in pairs(otherPlayer.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    originalCollisions[part] = part.CanCollide
-                    part.CanCollide = true
-                end
-            end
+    -- Create insane spinning force
+    local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
+    bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bodyAngularVelocity.AngularVelocity = Vector3.new(0, 99999999, 0) -- Extreme spin speed
+    bodyAngularVelocity.Parent = AltHRP
+
+    local startTime = tick()
+    while tick() - startTime < 4 do -- Run for 4 seconds
+        if not AltChar or not AltChar.Parent or not AltHRP or not AltHRP.Parent then
+            break -- Stop if the character is removed
         end
+
+        -- Spam teleport inside target
+        AltHRP.CFrame = TargetHRP.CFrame
+
+        wait(0.01) -- Spam TP every 0.01s
     end
 
-    -- Spinning mechanism
-    local bodyGyro = Instance.new("BodyGyro", AltHRP)
-    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bodyGyro.P = 100
-    bodyGyro.D = 10
-    bodyGyro.CFrame = AltHRP.CFrame
-
-    local bodyAngularVelocity = Instance.new("BodyAngularVelocity", AltHRP)
-    bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bodyAngularVelocity.AngularVelocity = Vector3.new(0, 99999, 0) -- Insane spin
-
-    -- Spam teleport inside the target for 4 seconds
-    local startTime = tick()
-    task.spawn(function()
-        while tick() - startTime < 4 do
-            AltHRP.CFrame = TargetHRP.CFrame
-            task.wait(0.01) -- Rapid teleport spam
-        end
-
-        -- Cleanup after fling
-        bodyGyro:Destroy()
-        bodyAngularVelocity:Destroy()
-        for part, canCollide in pairs(originalCollisions) do
-            part.CanCollide = canCollide
-        end
-        print("✅ Touch Fling completed!")
-    end)
+    -- Stop spinning
+    bodyAngularVelocity:Destroy()
+    print("✅ Ultra Spin Fling Completed!")
 end
+
+
 
 
 
@@ -291,7 +278,7 @@ local function HandleChatCommand(message)
     SitAlt()
     elseif message:sub(1,7) == ".fling " then
     local targetName = message:sub(8) -- Extract username
-    TouchFling(targetName)
+    UltraSpinFling(targetName)
     else
         warn("⚠️ Unknown command:", message)
     end
