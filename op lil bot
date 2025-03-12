@@ -95,6 +95,11 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
+--Fall Alt
+local function FallAlt()
+    LocalPlayer.Character:BreakJoints()
+end
+
 -- Sit Alt
 local function SitAlt()
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then
