@@ -214,7 +214,7 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt (Exploit Fling Method at Light Speed)
+-- Pummel Alt (Exploit Fling Method with Literal Spin at Light Speed)
 local function PummelAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Pummel failed: No main account selected")
@@ -233,18 +233,27 @@ local function PummelAlt(target)
         return
     end
 
-    print("✅ Pummeling the target with light-speed force!")
+    print("✅ Pummeling the target with light-speed spin and force!")
 
     -- Teleport alt to the target's position (almost inside them)
-    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 0, 0)  -- Make alt extremely close
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Make alt extremely close
 
     -- Intense fling settings
-    local forceMultiplier = 1000000000 -- Extremely high force for fling
+    local forceMultiplier = 10000000000 -- Extremely high force for fling
     local spinTime = 10 -- Duration of fling effect
-    local radius = 0.1 -- Radius for tighter spin
-    local speed = 100000000 -- Extremely fast spin speed (light-speed rotation)
+    local radius = 0.001 -- Radius for tighter spin
+    local speed = 10000000000 -- Extremely fast spin speed (light-speed rotation)
+    local rotationSpeed = 10000000000 -- Rotation speed for spinning the alt like crazy
 
     local startTime = tick()
+
+    -- Create BodyGyro to control spin (rotation)
+    local BodyGyro = Instance.new("BodyGyro", AltHRP)
+    BodyGyro.MaxTorque = Vector3.new(10000000000, 10000000000, 10000000000) -- High torque for fast rotation
+    BodyGyro.CFrame = AltHRP.CFrame -- Keep initial orientation
+    BodyGyro.D = 100  -- Damping to keep it spinning at high speed
+    BodyGyro.P = 10  -- Power to maintain fast rotation
+    BodyGyro.Parent = AltHRP
 
     -- Applying intense force while spinning around the target
     while tick() - startTime < spinTime do
@@ -257,28 +266,24 @@ local function PummelAlt(target)
 
         -- Apply high force for intense fling
         if tick() - startTime % 0.05 < 0.025 then
-            -- Create BodyVelocity to apply extreme speed
+            -- Create BodyVelocity to apply extreme speed in the direction of fling
             local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
             BodyVelocity.Velocity = MainHRP.CFrame.LookVector * forceMultiplier -- Apply large force in the target's direction
-            BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000) -- Max possible force to break through any resistance
+            BodyVelocity.MaxForce = Vector3.new(10000000000, 10000000000, 10000000000) -- Max possible force to break through any resistance
             BodyVelocity.Parent = AltHRP
-
-            -- Create a BodyGyro to stabilize and control the rotation of the Alt
-            local BodyGyro = Instance.new("BodyGyro", AltHRP)
-            BodyGyro.MaxTorque = Vector3.new(100000, 100000, 100000) -- High torque to maintain stability
-            BodyGyro.CFrame = AltHRP.CFrame  -- Keeps orientation fixed
-            BodyGyro.Parent = AltHRP
 
             -- Wait for the next update and destroy the force objects to prevent stacking
             task.wait(0.025)
             BodyVelocity:Destroy()
-            BodyGyro:Destroy()
         end
 
         task.wait(0.025)  -- Fast updates to create the effect
     end
 
-    print("✅ Pummel finished with light-speed force!")
+    -- Destroy the BodyGyro after the spin time is over to stop rotation
+    BodyGyro:Destroy()
+
+    print("✅ Pummel finished with light-speed spin!")
 end
 
 -- Command Handling
