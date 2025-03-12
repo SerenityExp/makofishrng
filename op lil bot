@@ -95,7 +95,7 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
--- Fling Alt (Inspired by Infinite Yield)
+-- Fling Alt (Reliable Spin & Launch)
 local function FlingAlt(targetName)
     if not targetName or targetName == "" then
         warn("⚠️ Fling failed: No target provided")
@@ -118,32 +118,35 @@ local function FlingAlt(targetName)
         return
     end
 
-    print("✅ Flinging", targetName, "like Infinite Yield!")
+    print("✅ Flinging", targetName, "with extreme force!")
 
-    -- Make sure the alt is unanchored & can fling properly
+    -- Unanchor to allow movement
     AltHRP.Anchored = false
     SetCollisions(AltChar, false)
-
-    -- Apply absurd velocity to send the target flying
-    local BodyAngularVelocity = Instance.new("BodyAngularVelocity")
-    BodyAngularVelocity.AngularVelocity = Vector3.new(0, 9999, 0) -- Fast spin
-    BodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    BodyAngularVelocity.Parent = AltHRP
 
     -- Start the fling loop
     local startTime = tick()
     task.spawn(function()
         while tick() - startTime < 4 do -- Runs for 4 seconds
-            AltHRP.CFrame = TargetHRP.CFrame -- Stay inside target
-            task.wait(0.1) -- Consistent re-teleporting
+            -- Teleport inside target and spin rapidly
+            AltHRP.CFrame = TargetHRP.CFrame * CFrame.Angles(0, math.rad(9999), 0) -- Extreme spinning
+            task.wait(0.05) -- Faster update for better fling
         end
 
-        -- Cleanup after fling
-        BodyAngularVelocity:Destroy()
+        -- Apply a final strong velocity burst to launch the target
+        local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
+        BodyVelocity.Velocity = Vector3.new(0, 500, 0) -- Sends them flying up
+        BodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+
+        task.wait(0.5)
+        BodyVelocity:Destroy()
+
+        -- Cleanup
         SetCollisions(AltChar, true)
         print("✅ Fling completed!")
     end)
 end
+
 
 -- Sit Alt
 local function SitAlt()
