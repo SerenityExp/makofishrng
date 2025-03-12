@@ -222,7 +222,7 @@ end
 -- Float Alt (Aggressive Flipping Version)
 local function FloatAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
-        warn("⚠️ Pummel failed: No main account selected")
+        warn("⚠️ Float failed: No main account selected")
         return
     end
 
@@ -234,7 +234,7 @@ local function FloatAlt(target)
     local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
 
     if not MainHRP or not AltHRP then
-        warn("⚠️ Pummel failed: Missing required parts")
+        warn("⚠️ Float failed: Missing required parts")
         return
     end
 
