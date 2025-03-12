@@ -1,3 +1,8 @@
+wait just import the pummle into this script
+
+
+
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local SelectedMainAccount = nil
@@ -214,10 +219,10 @@ local function TeleportAlt()
     end
 end
 
--- Float Alt (Aggressive Flipping Version)
-local function FloatAlt(target)
+-- Pummel Alt (Aggressive Flipping Version)
+local function PummelAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
-        warn("⚠️ Float failed: No main account selected")
+        warn("⚠️ Pummel failed: No main account selected")
         return
     end
 
@@ -229,11 +234,11 @@ local function FloatAlt(target)
     local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
 
     if not MainHRP or not AltHRP then
-        warn("⚠️ Float failed: Missing required parts")
+        warn("⚠️ Pummel failed: Missing required parts")
         return
     end
 
-    print("✅ Floating the target aggressively!")
+    print("✅ Pummeling the target aggressively!")
 
     -- Teleport alt extremely close to the target
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Extremely close to the target to ensure the fling
@@ -291,13 +296,13 @@ local function HandleChatCommand(message)
         local username = message:sub(9)
         local targetPlayer = Players:FindFirstChild(username)
         if targetPlayer then
-            FloatAlt(targetPlayer)
+            PummelAlt(targetPlayer)
         else
             warn("⚠️ Target player not found")
         end
     else
         warn("⚠️ Unknown command:", message)
-        end
+    end
 end
 
 -- UI Selection (Chat listener persists)
