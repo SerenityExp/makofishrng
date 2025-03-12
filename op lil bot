@@ -78,6 +78,60 @@ local function ApplyFloatingMovement(character, targetOffset)
     end)
 end
 
+-- Pummel Alt (Aggressive Spinning and Hitting)
+local function PummelAlt(target)
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Pummel failed: No main account selected")
+        return
+    end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+
+    if not MainHRP or not AltHRP then
+        warn("⚠️ Pummel failed: Missing required parts")
+        return
+    end
+
+    print("✅ Pummeling the target aggressively!")
+
+    -- Set the starting position for pummeling
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0)  -- Close to the target
+
+    local spinSpeed = 5000   -- Speed of rotation
+    local radius = 0.5      -- Radius for spinning around the target
+    local backAndForthTime = 2  -- Time interval for switching the direction of the pummeling
+    local startTime = tick()
+
+    -- Main loop for aggressive pummeling and spinning
+    while tick() - startTime < 10 do  -- 10 seconds for pummeling
+        local angle = tick() * spinSpeed
+        local xOffset = math.cos(angle) * radius
+        local zOffset = math.sin(angle) * radius
+
+        -- Update the position to move back and forth aggressively
+        AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
+
+        -- Apply a BodyVelocity to simulate continuous pummeling
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(500000, 500000, 500000)  -- Maximum force applied for fling
+        bodyVelocity.Velocity = MainHRP.CFrame.LookVector * 50  -- Small force for pummeling effect
+        bodyVelocity.Parent = AltHRP
+
+        -- Destroy the BodyVelocity after a short time to simulate the pummeling effect
+        task.wait(0.1)
+        bodyVelocity:Destroy()
+
+        task.wait(backAndForthTime)  -- Simulate the back-and-forth motion
+    end
+
+    print("✅ Pummeling finished!")
+end
+
 -- Summon Alt
 local function SummonAlt()
     StopAll()
@@ -287,6 +341,11 @@ local function HandleChatCommand(message)
         JumpAlt()
     elseif message == ".fall" then
         FallAlt()
+    elseif message:sub(1, 7) == ".pummel" then
+        local username = message:sub(9)
+        local targetPlayer = Players:FindFirstChild(username)
+        if targetPlayer then
+            PummelAlt(targetPlayer)
     elseif message:sub(1, 7) == ".float" then
         local username = message:sub(9)
         local targetPlayer = Players:FindFirstChild(username)
