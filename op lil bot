@@ -219,6 +219,10 @@ local function HandleChatCommand(message)
         StopAll()
     elseif message == ".sit" then
         SitAlt()
+    elseif message == ".jump" then
+        JumpAlt()
+    elseif message == ".fall" then
+        FallAlt()
     else
         warn("⚠️ Unknown command:", message)
     end
