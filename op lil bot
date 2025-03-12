@@ -95,6 +95,18 @@ local function SummonAlt()
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
+-- Sit Alt
+local function SitAlt()
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then
+        warn("⚠️ Sit failed: No character found")
+        return
+    end
+
+    local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+    Humanoid.Sit = true
+    print("✅ Alt is now sitting!")
+end
+
 -- Shotgun Alt (Now resets after firing)
 local function ShotgunAlt()
     StopAll()
@@ -205,6 +217,8 @@ local function HandleChatCommand(message)
         TeleportAlt()
     elseif message == ".stop" then
         StopAll()
+    elseif message == ".sit" then
+    SitAlt()
     else
         warn("⚠️ Unknown command:", message)
     end
