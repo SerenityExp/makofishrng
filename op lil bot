@@ -239,6 +239,10 @@ local function PummelAlt(targetName)
         return
     end
 
+    -- Debugging: Confirm that we found both HumanoidRootParts
+    print("✅ AltHRP found:", AltHRP)
+    print("✅ TargetHRP found:", TargetHRP)
+
     print("✅ Pummeling the target aggressively!")
 
     -- Teleport alt extremely close to the target
@@ -258,6 +262,9 @@ local function PummelAlt(targetName)
 
         -- Update the position to spin aggressively around the target
         AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
+
+        -- Debugging: Checking current AltHRP position
+        print("✅ AltHRP Position: ", AltHRP.Position)
 
         -- Apply fling force by creating a BodyVelocity to launch the target
         local bodyVelocity = Instance.new("BodyVelocity")
