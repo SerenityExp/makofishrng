@@ -12,6 +12,10 @@ local function StopAll()
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = 16
         LocalPlayer.Character.Humanoid.JumpPower = 50
+        -- Stand up if sitting
+        if LocalPlayer.Character.Humanoid.Sit then
+            LocalPlayer.Character.Humanoid.Sit = false
+        end
     end
     print("✅ Stopped all actions")
 end
@@ -100,7 +104,7 @@ local function FallAlt()
     LocalPlayer.Character:BreakJoints()
 end
 
--- Sit Alt
+-- Sit Alt (Sit down and stand back up when any command is issued)
 local function SitAlt()
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then
         warn("⚠️ Sit failed: No character found")
