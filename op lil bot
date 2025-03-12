@@ -214,7 +214,10 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt (Basic Test Version)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Pummel Alt (Aggressive Flipping Version)
 local function PummelAlt(targetName)
     -- Ensure the alt character is present
     local AltChar = LocalPlayer.Character
@@ -249,12 +252,47 @@ local function PummelAlt(targetName)
     print("✅ AltHRP found:", AltHRP)
     print("✅ TargetHRP found:", TargetHRP)
 
-    -- Teleport alt extremely close to the target
-    AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(0, 1, 0)  -- Extremely close to the target to ensure the fling
+    -- Teleport alt extremely close to the target's HRP
+    AltHRP.CFrame = TargetHRP.CFrame + Vector3.new(0, 1, 0)  -- Close to the target to initiate pummel
 
-    print("✅ Pummel Started!")
+    -- Parameters for pummeling behavior
+    local flingDuration = 10  -- Duration of the pummel
+    local spinSpeed = 5000   -- Speed of rotation for spinning around the target
+    local flingForce = 1000  -- Force applied to fling the target
+    local radius = 0.5      -- Radius for aggressive spinning around the target
+    local startTime = tick()
+
+    -- Main loop for spinning and flinging
+    while tick() - startTime < flingDuration do
+        -- Use the Main Account's HRP for reference to spin around
+        local MainHRP = MainAccount.Character and MainAccount.Character:FindFirstChild("HumanoidRootPart")
+        if MainHRP then
+            local angle = tick() * spinSpeed
+            local xOffset = math.cos(angle) * radius
+            local zOffset = math.sin(angle) * radius
+
+            -- Update the position of the Alt to spin around the Main HRP
+            AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
+        else
+            print("⚠️ Main account HRP not found!")
+            break
+        end
+
+        -- Apply fling force by creating a BodyVelocity to launch the target
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(500000, 500000, 500000)  -- Max force to fling the target
+        bodyVelocity.Velocity = TargetHRP.CFrame.LookVector * flingForce + Vector3.new(0, flingForce, 0)  -- Fling upward and forward
+        bodyVelocity.Parent = AltHRP
+
+        -- Destroy the BodyVelocity after a short time to simulate the fling effect
+        task.wait(0.1)
+        bodyVelocity:Destroy()
+
+        task.wait(0.01)  -- Ensures the teleporting and flinging is continuous
+    end
+
+    print("✅ Pummel Finished!")
 end
-
 
 -- Command Handling
 local function HandleChatCommand(message)
