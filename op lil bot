@@ -214,7 +214,7 @@ local function TeleportAlt()
     end
 end
 
--- Pummel Alt (Adjusted for smoother control over speed and rotation)
+-- Pummel Alt (Exploit Fling Method)
 local function PummelAlt(target)
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Pummel failed: No main account selected")
@@ -233,40 +233,46 @@ local function PummelAlt(target)
         return
     end
 
-    print("✅ Pummeling the target!")
+    print("✅ Pummeling the target with intense force!")
 
     -- Teleport alt to the target and start spinning around them
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, 1, 0) -- Make alt extremely close
 
-    local spinTime = 15
-    local speed = 50 -- Adjust this to change the speed of movement (lower for slower, higher for faster)
-    local radius = 0.5 -- Radius for the spin (keep it small to avoid rapid movements)
-    local forceMultiplier = 400 -- Adjust force if necessary to push the target
+    local forceMultiplier = 5000 -- Extremely high force for fling
+    local spinTime = 5 -- Duration of the fling
+    local radius = 1 -- Radius for spinning around (increase for a wider spin)
 
     local startTime = tick()
 
     while tick() - startTime < spinTime do
-        -- Calculate the angle based on time and speed
-        local angle = (tick() - startTime) * speed
+        -- Calculate a strong force to fling the target
+        local angle = (tick() - startTime) * 10 -- Increase speed for faster spinning
         local xOffset = math.cos(angle) * radius
         local zOffset = math.sin(angle) * radius
 
-        -- Move Alt around the target in a smooth circular motion
+        -- Move the alt around the target in a very tight circle
         AltHRP.CFrame = MainHRP.CFrame + Vector3.new(xOffset, 1, zOffset)
 
-        -- Apply push force periodically
-        if tick() - startTime % 0.2 < 0.1 then
+        -- Apply intense force to fling the target
+        if tick() - startTime % 0.1 < 0.05 then
             local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
             BodyVelocity.Velocity = MainHRP.CFrame.LookVector * forceMultiplier
-            BodyVelocity.MaxForce = Vector3.new(100000000, 100000000, 100000000)
-            task.wait(0.01)  -- Apply force at a slower rate to avoid extreme impact
+            BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+
+            local BodyGyro = Instance.new("BodyGyro", AltHRP)
+            BodyGyro.MaxTorque = Vector3.new(100000, 100000, 100000)  -- High torque to keep things stable
+            BodyGyro.CFrame = AltHRP.CFrame -- Prevents rotation issues
+
+            -- Apply the body velocity and gyro for extremely forceful movement
+            task.wait(0.1)
             BodyVelocity:Destroy()
+            BodyGyro:Destroy()
         end
 
-        task.wait(0.001)  -- Slight delay to prevent rapid movements
+        task.wait(0.05)  -- Quick update interval for smoother force application
     end
 
-    print("✅ Pummel finished!")
+    print("✅ Pummel finished with intense force!")
 end
 
 -- Command Handling
