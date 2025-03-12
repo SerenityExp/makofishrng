@@ -272,9 +272,6 @@ local function HandleChatCommand(message)
         StopAll()
     elseif message == ".sit" then
     SitAlt()
-    elseif message:sub(1,7) == ".fling " then
-    local targetName = message:sub(8) -- Extract username
-    ExploitFling(targetName)
     else
         warn("⚠️ Unknown command:", message)
     end
