@@ -240,8 +240,8 @@ local function PummelAlt(target)
 
     local flingDuration = 15  -- Fling duration
     local spinSpeed = 5000   -- Speed of rotation, increase for faster turning
-    local flingForce = 10000  -- Fling force applied to the target
-    local radius = 0.5      -- Radius for aggressive spinning around the target
+    local flingForce = 1000  -- Fling force applied to the target
+    local radius = 0.2      -- Radius for aggressive spinning around the target
     local startTime = tick()
 
     -- Main loop for spinning and flinging
