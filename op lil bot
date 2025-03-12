@@ -16,16 +16,6 @@ local function StopAll()
     print("✅ Stopped all actions")
 end
 
--- Disable collisions
-local function SetCollisions(character, state)
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = state
-            part.CanTouch = state
-        end
-    end
-end
-
 -- Floating movement function
 local function ApplyFloatingMovement(character, targetOffset)
     local hrp = character:FindFirstChild("HumanoidRootPart")
@@ -37,13 +27,13 @@ local function ApplyFloatingMovement(character, targetOffset)
         end
     end
 
-    local alignPos = Instance.new("AlignPosition")
+    local alignPos = Instance.new("AlignPosition", hrp)
     alignPos.MaxForce = 100000
     alignPos.Responsiveness = 100
     alignPos.RigidityEnabled = true
     alignPos.Parent = hrp
 
-    local alignOri = Instance.new("AlignOrientation")
+    local alignOri = Instance.new("AlignOrientation", hrp)
     alignOri.MaxTorque = 100000
     alignOri.Responsiveness = 100
     alignOri.RigidityEnabled = true
@@ -82,9 +72,8 @@ local function SummonAlt()
         return
     end
 
-    local MainChar = SelectedMainAccount.Character
     local AltChar = LocalPlayer.Character
-    if not MainChar or not AltChar then return end
+    if not AltChar then return end
 
     Following = true
     print("✅ Summoning Alt to the side...")
@@ -93,51 +82,6 @@ local function SummonAlt()
     AltChar.Humanoid.JumpPower = 0
 
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
-end
-
--- Shotgun Alt (Now resets after firing)
-local function ShotgunAlt()
-    StopAll()
-    if not SelectedMainAccount or not SelectedMainAccount.Character then
-        warn("⚠️ Shotgun failed: No main account selected")
-        return
-    end
-
-    local AltChar = LocalPlayer.Character
-    local MainChar = SelectedMainAccount.Character
-    if not AltChar or not MainChar then return end
-
-    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
-    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
-    local RightArm = MainChar:FindFirstChild("Right Arm") or MainChar:FindFirstChild("RightHand")
-
-    if not MainHRP or not AltHRP or not RightArm then
-        warn("⚠️ Shotgun failed: Missing required parts")
-        return
-    end
-
-    print("✅ Alt moving to arm for Shotgun...")
-
-    local AlignPos = Instance.new("AlignPosition", AltHRP)
-    AlignPos.MaxForce = 100000
-    AlignPos.Responsiveness = 100
-    AlignPos.Attachment0 = Instance.new("Attachment", AltHRP)
-    AlignPos.Attachment1 = Instance.new("Attachment", RightArm)
-
-    task.wait(2)
-
-    print("🚀 Shotgun firing!")
-    AlignPos:Destroy()
-
-    local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
-    BodyVelocity.Velocity = MainHRP.CFrame.LookVector * 250
-    BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-
-    task.wait(0.5)
-    BodyVelocity:Destroy()
-
-    task.wait(1)
-    LocalPlayer.Character:BreakJoints() -- Reset after firing
 end
 
 -- Vanish Alt
@@ -157,14 +101,12 @@ local function VanishAlt()
 
     AltChar.Humanoid.WalkSpeed = 0
     AltChar.Humanoid.JumpPower = 0
-    SetCollisions(AltChar, false)
 
     task.spawn(function()
         while Vanishing do
             ApplyFloatingMovement(AltChar, Vector3.new(0, -25, 0))
             task.wait(1)
         end
-        SetCollisions(AltChar, true)
     end)
 end
 
@@ -194,8 +136,6 @@ end
 local function HandleChatCommand(message)
     if message == ".summon" then
         SummonAlt()
-    elseif message == ".shotgun" then
-        ShotgunAlt()
     elseif message == ".vanish" then
         VanishAlt()
     elseif message == ".tp" then
@@ -207,29 +147,28 @@ local function HandleChatCommand(message)
     end
 end
 
--- UI Selection (Now smaller & scrollable)
+-- UI Selection (Now horizontal at bottom)
 local function SetupSelectionUI()
     local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
     local Frame = Instance.new("Frame", ScreenGui)
-    Frame.Size = UDim2.new(0, 200, 0, 200) -- Smaller
-    Frame.Position = UDim2.new(0, 10, 0, 10)
+    Frame.Size = UDim2.new(1, 0, 0, 50) -- Full width, 50px height
+    Frame.Position = UDim2.new(0, 0, 1, -50) -- Anchored to bottom
     Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-    Frame.ClipsDescendants = true 
 
-    local ScrollingFrame = Instance.new("ScrollingFrame", Frame)
-    ScrollingFrame.Size = UDim2.new(1, 0, 1, 0)
-    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, #Players:GetPlayers() * 35)
-    ScrollingFrame.ScrollBarThickness = 6
-    ScrollingFrame.BackgroundTransparency = 1
-
-    local UIList = Instance.new("UIListLayout", ScrollingFrame)
+    local UIList = Instance.new("UIListLayout", Frame)
+    UIList.FillDirection = Enum.FillDirection.Horizontal -- Horizontal Layout
     UIList.Padding = UDim.new(0, 5)
 
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
-            local Button = Instance.new("TextButton", ScrollingFrame)
-            Button.Size = UDim2.new(1, 0, 0, 30)
+            local Button = Instance.new("TextButton", Frame)
+            Button.Size = UDim2.new(0, 150, 1, 0) -- 150px width, full height
             Button.Text = player.Name
+            Button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+            Button.TextColor3 = Color3.new(1, 1, 1)
+            Button.Font = Enum.Font.SourceSansBold
+            Button.TextScaled = true
+
             Button.MouseButton1Click:Connect(function()
                 SelectedMainAccount = player
                 print("✅ Main Account Selected: " .. player.Name)
@@ -239,3 +178,4 @@ local function SetupSelectionUI()
 end
 
 SetupSelectionUI()
+
