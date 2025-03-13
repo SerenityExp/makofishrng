@@ -4,13 +4,14 @@ local SelectedMainAccount = nil
 local Following = false
 local Connection = nil
 local Vanishing = false
-local Floating = false -- Track if floating is active
+local Floating = false
+local BodyPosition = nil
 
 -- Stop all ongoing actions before switching commands
 local function StopAll()
     Following = false
     Vanishing = false
-    Floating = false  -- Stop floating
+    Floating = false
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = 16
         LocalPlayer.Character.Humanoid.JumpPower = 50
@@ -37,14 +38,12 @@ local function ApplyFloatingMovement(character, targetOffset)
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- Remove previous AlignPosition/AlignOrientation if they exist
     for _, obj in ipairs(hrp:GetChildren()) do
         if obj:IsA("AlignPosition") or obj:IsA("AlignOrientation") then
             obj:Destroy()
         end
     end
 
-    -- Create new AlignPosition and AlignOrientation
     local alignPos = Instance.new("AlignPosition")
     alignPos.MaxForce = 100000
     alignPos.Responsiveness = 100
@@ -65,9 +64,8 @@ local function ApplyFloatingMovement(character, targetOffset)
     alignOri.Attachment0 = attachment0
     alignOri.Attachment1 = targetAttachment
 
-    -- Start floating movement
     task.spawn(function()
-        while Floating and SelectedMainAccount and SelectedMainAccount.Character do
+        while Following and SelectedMainAccount and SelectedMainAccount.Character do
             local targetHRP = SelectedMainAccount.Character:FindFirstChild("HumanoidRootPart")
             if targetHRP then
                 targetAttachment.Parent = targetHRP
@@ -76,7 +74,6 @@ local function ApplyFloatingMovement(character, targetOffset)
             task.wait(0.1)
         end
 
-        -- Clean up after floating stops
         alignPos:Destroy()
         alignOri:Destroy()
         targetAttachment:Destroy()
@@ -86,26 +83,22 @@ end
 
 -- Summon Alt
 local function SummonAlt()
+    StopAll()
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Summon failed: No main account selected")
         return
     end
 
+    local MainChar = SelectedMainAccount.Character
     local AltChar = LocalPlayer.Character
-    if not AltChar then return end
+    if not MainChar or not AltChar then return end
 
-    -- Stop any previous floating actions before summoning
-    Floating = false  -- Ensure floating is stopped before summoning
-
-    -- Start Summoning process
     Following = true
     print("✅ Summoning Alt to the side...")
 
-    -- Make AltCharacter follow the Main character
     AltChar.Humanoid.WalkSpeed = 0
     AltChar.Humanoid.JumpPower = 0
 
-    -- Apply floating movement after summon (to keep it under main character)
     ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
@@ -273,40 +266,6 @@ local function FloatAlt()
     print("✅ Floating continuously upwards!")
 end
 
--- UI Selection (Chat listener persists)
-local function SetupSelectionUI()
-    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-    local Frame = Instance.new("Frame", ScreenGui)
-    Frame.Size = UDim2.new(0, 200, 0, 300)
-    Frame.Position = UDim2.new(0, 10, 0, 10)
-    Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-
-    local UIList = Instance.new("UIListLayout", Frame)
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            local Button = Instance.new("TextButton", Frame)
-            Button.Size = UDim2.new(1, 0, 0, 30)
-            Button.Text = player.Name
-            Button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-            Button.TextColor3 = Color3.new(1, 1, 1)
-
-            Button.MouseButton1Click:Connect(function()
-                SelectedMainAccount = player
-                print("✅ Main Account Selected: " .. player.Name)
-
-                if Connection then
-                    Connection:Disconnect()
-                end
-
-                Connection = player.Chatted:Connect(function(msg)
-                    HandleChatCommand(msg)
-                end)
-            end)
-        end
-    end
-end
-
 -- Command Handling
 local function HandleChatCommand(message)
     if message == ".summon" then
@@ -321,15 +280,16 @@ local function HandleChatCommand(message)
         StopAll()
     elseif message == ".sit" then
         SitAlt()
-    elseif message == ".float" then
-        FloatAlt()
+    elseif message == ".jump" then
+        JumpAlt()
     elseif message == ".fall" then
         FallAlt()
+    elseif message == ".float" then
+        FloatAlt()
+    else
+        warn("⚠️ Unknown command:", message)
     end
 end
-
--- Bind chat command handling
-game:GetService("Players").LocalPlayer.Chatted:Connect(HandleChatCommand)
 
 -- UI Selection (Chat listener persists)
 local function SetupSelectionUI()
