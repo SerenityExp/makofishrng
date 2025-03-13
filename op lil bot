@@ -214,6 +214,30 @@ local function TeleportAlt()
     end
 end
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local SelectedMainAccount = nil
+local Following = false
+local Connection = nil
+local Vanishing = false
+local Floating = false  -- Track if floating is active
+
+-- Stop all ongoing actions before switching commands
+local function StopAll()
+    Following = false
+    Vanishing = false
+    Floating = false  -- Stop floating
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        LocalPlayer.Character.Humanoid.JumpPower = 50
+        -- Stand up if sitting
+        if LocalPlayer.Character.Humanoid.Sit then
+            LocalPlayer.Character.Humanoid.Sit = false
+        end
+    end
+    print("✅ Stopped all actions")
+end
+
 -- Float Alt (Float under the Main Account's legs and keep rising up)
 local function FloatAlt()
     if not SelectedMainAccount or not SelectedMainAccount.Character then
@@ -241,9 +265,10 @@ local function FloatAlt()
     -- Gradually rise the Alt above the target (Main Account)
     local riseSpeed = 0.1  -- Speed at which the alt rises (adjust for smoother or faster movement)
 
-    -- Continuous loop to keep the alt rising
+    -- Start floating until stop command is given
+    Floating = true
     task.spawn(function()
-        while true do
+        while Floating do
             if AltHRP then
                 -- Keep rising slowly by incrementing Y position
                 AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, riseSpeed, 0)  -- Rise up by `riseSpeed`
