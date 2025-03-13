@@ -158,7 +158,7 @@ local function ShotgunAlt()
     BodyVelocity:Destroy()
 
     task.wait(1)
-    LocalPlayer.Character:BreakJoints()
+    LocalPlayer.Character:BreakJoints() -- Reset after firing
 end
 
 -- Vanish Alt (Now Instantly Teleports 30 Studs Under Main)
@@ -214,15 +214,15 @@ local function TeleportAlt()
     end
 end
 
--- Float Alt (Slowly Push Up Under the User)
-local function FloatAlt()
-    if not SelectedMainAccount or not SelectedMainAccount.Character then
-        warn("⚠️ Float failed: No main account selected")
+-- Float Alt (Move Alt under Main Account)
+local function FloatAlt(target)
+    if not target or not target.Character then
+        warn("⚠️ Float failed: No target character found")
         return
     end
 
     local AltChar = LocalPlayer.Character
-    local MainChar = SelectedMainAccount.Character
+    local MainChar = target.Character
     if not AltChar or not MainChar then return end
 
     local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
@@ -233,57 +233,53 @@ local function FloatAlt()
         return
     end
 
-    print("✅ Floating under the user...")
+    print("✅ Floating the Alt under the target...")
 
-    -- Position the alt under the user
-    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -2, 0)  -- Adjust the offset to position the alt below
+    -- Set the target Alt's position under the main target
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)  -- You can adjust the offset as needed
 
-    -- Loop to slowly push the alt upwards
-    local pushSpeed = 5  -- Speed at which the alt is pushed upwards
+    -- Adjust the floating to remain under the target continuously
     task.spawn(function()
-        while SelectedMainAccount and SelectedMainAccount.Character do
-            -- Gradually move the alt upwards
-            AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, pushSpeed * 0.1, 0)
-            task.wait(0.1)
+        while target and target.Character do
+            -- Keep the alt floating under the main target
+            if AltHRP and MainHRP then
+                AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)
+            end
+            task.wait(0.1)  -- You can adjust the wait time for smoothness
         end
     end)
-end
 
--- Listen to chat messages from the main account
-ChatService.OnMessageDoneFiltering:Connect(function(message, speaker)
-    if speaker == LocalPlayer then
-        -- Check if the message starts with ".float"
-        if message:sub(1, 6) == ".float" then
-            FloatAlt()  -- Call the Float function
-        end
-    end
-end)
+    print("✅ Floating completed!")
+end
 
 -- Command Handling
 local function HandleChatCommand(message)
-    local command, targetName = message:match("^(%S+)%s*(.*)$")
-
-    if command == ".summon" then
+    if message == ".summon" then
         SummonAlt()
-    elseif command == ".shotgun" then
+    elseif message == ".shotgun" then
         ShotgunAlt()
-    elseif command == ".vanish" then
+    elseif message == ".vanish" then
         VanishAlt()
-    elseif command == ".tp" then
+    elseif message == ".tp" then
         TeleportAlt()
-    elseif command == ".stop" then
+    elseif message == ".stop" then
         StopAll()
-    elseif command == ".sit" then
+    elseif message == ".sit" then
         SitAlt()
-    elseif command == ".jump" then
+    elseif message == ".jump" then
         JumpAlt()
-    elseif command == ".fall" then
+    elseif message == ".fall" then
         FallAlt()
-    elseif command == ".float" then
-        FloatAlt()  -- Call the Float function
+    elseif message:sub(1, 7) == ".float" then
+        local username = message:sub(9)
+        local targetPlayer = Players:FindFirstChild(username)
+        if targetPlayer then
+            FloatAlt(targetPlayer)
+        else
+            warn("⚠️ Target player not found")
+        end
     else
-        -- Handle unrecognized commands if needed
-        print("⚠️ Unknown command:", message)
+        warn("⚠️ Unknown command:", message)
     end
 end
 
