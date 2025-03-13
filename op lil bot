@@ -4,7 +4,7 @@ local SelectedMainAccount = nil
 local Following = false
 local Connection = nil
 local Vanishing = false
-local Floating = false  -- Added to track floating status
+local Floating = false  -- Track floating status
 
 -- Stop all ongoing actions before switching commands
 local function StopAll()
@@ -82,7 +82,7 @@ end
 
 -- Summon Alt
 local function SummonAlt()
-    StopAll()
+    StopAll()  -- Stop any previous actions like floating
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Summon failed: No main account selected")
         return
@@ -98,7 +98,7 @@ local function SummonAlt()
     AltChar.Humanoid.WalkSpeed = 0
     AltChar.Humanoid.JumpPower = 0
 
-    ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
+    ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))  -- Apply floating movement after summoning
 end
 
 -- Fall Alt
