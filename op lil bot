@@ -214,36 +214,31 @@ local function TeleportAlt()
     end
 end
 
--- Float Alt (Move Alt under Main Account)
-local function FloatAlt(target)
-    if not target or not target.Character then
-        warn("⚠️ Float failed: No target character found")
-        return
-    end
-
+-- Float Alt (Float under the Alt's character)
+local function FloatAlt()
     local AltChar = LocalPlayer.Character
-    local MainChar = target.Character
-    if not AltChar or not MainChar then return end
-
-    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
-    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
-
-    if not MainHRP or not AltHRP then
-        warn("⚠️ Float failed: Missing required parts")
+    if not AltChar then
+        warn("⚠️ Float failed: No character found")
         return
     end
 
-    print("✅ Floating the Alt under the target...")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+    if not AltHRP then
+        warn("⚠️ Float failed: Missing HumanoidRootPart")
+        return
+    end
 
-    -- Set the target Alt's position under the main target
-    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)  -- You can adjust the offset as needed
+    print("✅ Floating the Alt under its own character...")
 
-    -- Adjust the floating to remain under the target continuously
+    -- Set the target Alt's position under itself
+    AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, -3, 0)  -- You can adjust the offset as needed
+
+    -- Adjust the floating to remain under the character continuously
     task.spawn(function()
-        while target and target.Character do
-            -- Keep the alt floating under the main target
-            if AltHRP and MainHRP then
-                AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)
+        while true do
+            -- Keep the alt floating under its own character
+            if AltHRP then
+                AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, -3, 0)
             end
             task.wait(0.1)  -- You can adjust the wait time for smoothness
         end
@@ -270,14 +265,8 @@ local function HandleChatCommand(message)
         JumpAlt()
     elseif message == ".fall" then
         FallAlt()
-    elseif message:sub(1, 7) == ".float" then
-        local username = message:sub(9)
-        local targetPlayer = Players:FindFirstChild(username)
-        if targetPlayer then
-            FloatAlt(targetPlayer)
-        else
-            warn("⚠️ Target player not found")
-        end
+    elseif message == ".float" then
+        FloatAlt()
     else
         warn("⚠️ Unknown command:", message)
     end
