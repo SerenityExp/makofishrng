@@ -307,8 +307,6 @@ local function SetupSelectionUI()
     end
 end
 
-SetupSelectionUI()
-
 -- Command Handling
 local function HandleChatCommand(message)
     if message == ".summon" then
@@ -332,3 +330,39 @@ end
 
 -- Bind chat command handling
 game:GetService("Players").LocalPlayer.Chatted:Connect(HandleChatCommand)
+
+-- UI Selection (Chat listener persists)
+local function SetupSelectionUI()
+    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+    local Frame = Instance.new("Frame", ScreenGui)
+    Frame.Size = UDim2.new(0, 200, 0, 300)
+    Frame.Position = UDim2.new(0, 10, 0, 10)
+    Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+
+    local UIList = Instance.new("UIListLayout", Frame)
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local Button = Instance.new("TextButton", Frame)
+            Button.Size = UDim2.new(1, 0, 0, 30)
+            Button.Text = player.Name
+            Button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+            Button.TextColor3 = Color3.new(1, 1, 1)
+
+            Button.MouseButton1Click:Connect(function()
+                SelectedMainAccount = player
+                print("✅ Main Account Selected: " .. player.Name)
+
+                if Connection then
+                    Connection:Disconnect()
+                end
+
+                Connection = player.Chatted:Connect(function(msg)
+                    HandleChatCommand(msg)
+                end)
+            end)
+        end
+    end
+end
+
+SetupSelectionUI()
