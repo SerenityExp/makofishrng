@@ -4,7 +4,7 @@ local SelectedMainAccount = nil
 local Following = false
 local Connection = nil
 local Vanishing = false
-local Floating = false  -- Track floating status
+local Floating = false -- Track if floating is active
 
 -- Stop all ongoing actions before switching commands
 local function StopAll()
@@ -37,12 +37,14 @@ local function ApplyFloatingMovement(character, targetOffset)
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
+    -- Remove previous AlignPosition/AlignOrientation if they exist
     for _, obj in ipairs(hrp:GetChildren()) do
         if obj:IsA("AlignPosition") or obj:IsA("AlignOrientation") then
             obj:Destroy()
         end
     end
 
+    -- Create new AlignPosition and AlignOrientation
     local alignPos = Instance.new("AlignPosition")
     alignPos.MaxForce = 100000
     alignPos.Responsiveness = 100
@@ -63,6 +65,7 @@ local function ApplyFloatingMovement(character, targetOffset)
     alignOri.Attachment0 = attachment0
     alignOri.Attachment1 = targetAttachment
 
+    -- Start floating movement
     task.spawn(function()
         while Floating and SelectedMainAccount and SelectedMainAccount.Character do
             local targetHRP = SelectedMainAccount.Character:FindFirstChild("HumanoidRootPart")
@@ -73,6 +76,7 @@ local function ApplyFloatingMovement(character, targetOffset)
             task.wait(0.1)
         end
 
+        -- Clean up after floating stops
         alignPos:Destroy()
         alignOri:Destroy()
         targetAttachment:Destroy()
@@ -82,23 +86,27 @@ end
 
 -- Summon Alt
 local function SummonAlt()
-    StopAll()  -- Stop any previous actions like floating
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Summon failed: No main account selected")
         return
     end
 
-    local MainChar = SelectedMainAccount.Character
     local AltChar = LocalPlayer.Character
-    if not MainChar or not AltChar then return end
+    if not AltChar then return end
 
+    -- Stop any previous floating actions before summoning
+    Floating = false  -- Ensure floating is stopped before summoning
+
+    -- Start Summoning process
     Following = true
     print("✅ Summoning Alt to the side...")
 
+    -- Make AltCharacter follow the Main character
     AltChar.Humanoid.WalkSpeed = 0
     AltChar.Humanoid.JumpPower = 0
 
-    ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))  -- Apply floating movement after summoning
+    -- Apply floating movement after summon (to keep it under main character)
+    ApplyFloatingMovement(AltChar, Vector3.new(7, 10, 0))
 end
 
 -- Fall Alt
@@ -235,20 +243,20 @@ local function FloatAlt()
         return
     end
 
-    Floating = true  -- Start floating
     print("✅ Floating under the Main Account's legs...")
 
     -- Position the alt under the main account's legs to start
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)
 
     -- Create a BodyPosition to control the rising
-    local BodyPosition = Instance.new("BodyPosition")
+    BodyPosition = Instance.new("BodyPosition")
     BodyPosition.MaxForce = Vector3.new(100000, 100000, 100000)  -- Allow a lot of force for smooth movement
     BodyPosition.D = 1000  -- Dampening, control how smooth the rise is
     BodyPosition.P = 10000  -- Power, controls the speed of the movement
     BodyPosition.Parent = AltHRP
 
     -- Keep rising the alt upwards
+    Floating = true
     task.spawn(function()
         while Floating do
             -- Set the desired position above the main account (rising effect)
@@ -263,31 +271,6 @@ local function FloatAlt()
     end)
 
     print("✅ Floating continuously upwards!")
-end
-
--- Command Handling
-local function HandleChatCommand(message)
-    if message == ".summon" then
-        SummonAlt()
-    elseif message == ".shotgun" then
-        ShotgunAlt()
-    elseif message == ".vanish" then
-        VanishAlt()
-    elseif message == ".tp" then
-        TeleportAlt()
-    elseif message == ".stop" then
-        StopAll()  -- Stop all actions including floating
-    elseif message == ".sit" then
-        SitAlt()
-    elseif message == ".jump" then
-        JumpAlt()
-    elseif message == ".fall" then
-        FallAlt()
-    elseif message == ".float" then
-        FloatAlt()
-    else
-        warn("⚠️ Unknown command:", message)
-    end
 end
 
 -- UI Selection (Chat listener persists)
@@ -325,3 +308,27 @@ local function SetupSelectionUI()
 end
 
 SetupSelectionUI()
+
+-- Command Handling
+local function HandleChatCommand(message)
+    if message == ".summon" then
+        SummonAlt()
+    elseif message == ".shotgun" then
+        ShotgunAlt()
+    elseif message == ".vanish" then
+        VanishAlt()
+    elseif message == ".tp" then
+        TeleportAlt()
+    elseif message == ".stop" then
+        StopAll()
+    elseif message == ".sit" then
+        SitAlt()
+    elseif message == ".float" then
+        FloatAlt()
+    elseif message == ".fall" then
+        FallAlt()
+    end
+end
+
+-- Bind chat command handling
+game:GetService("Players").LocalPlayer.Chatted:Connect(HandleChatCommand)
