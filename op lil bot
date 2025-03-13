@@ -4,11 +4,15 @@ local SelectedMainAccount = nil
 local Following = false
 local Connection = nil
 local Vanishing = false
+local Floating = false  -- Track if floating is active
+local BodyPosition = nil
+local AltHRP = nil
 
 -- Stop all ongoing actions before switching commands
 local function StopAll()
     Following = false
     Vanishing = false
+    Floating = false  -- Stop floating when this is called
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = 16
         LocalPlayer.Character.Humanoid.JumpPower = 50
@@ -16,6 +20,9 @@ local function StopAll()
         if LocalPlayer.Character.Humanoid.Sit then
             LocalPlayer.Character.Humanoid.Sit = false
         end
+    end
+    if BodyPosition then
+        BodyPosition:Destroy()  -- Clean up BodyPosition if floating
     end
     print("✅ Stopped all actions")
 end
@@ -30,52 +37,53 @@ local function SetCollisions(character, state)
     end
 end
 
--- Floating movement function
-local function ApplyFloatingMovement(character, targetOffset)
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    for _, obj in ipairs(hrp:GetChildren()) do
-        if obj:IsA("AlignPosition") or obj:IsA("AlignOrientation") then
-            obj:Destroy()
-        end
+-- Float Alt (Float under the Main Account's legs and keep rising up)
+local function FloatAlt()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Float failed: No main account selected")
+        return
     end
 
-    local alignPos = Instance.new("AlignPosition")
-    alignPos.MaxForce = 100000
-    alignPos.Responsiveness = 100
-    alignPos.RigidityEnabled = true
-    alignPos.Parent = hrp
+    local MainChar = SelectedMainAccount.Character
+    local AltChar = LocalPlayer.Character
+    if not MainChar or not AltChar then return end
 
-    local alignOri = Instance.new("AlignOrientation")
-    alignOri.MaxTorque = 100000
-    alignOri.Responsiveness = 100
-    alignOri.RigidityEnabled = true
-    alignOri.Parent = hrp
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
 
-    local attachment0 = Instance.new("Attachment", hrp)
-    local targetAttachment = Instance.new("Attachment")
+    if not MainHRP or not AltHRP then
+        warn("⚠️ Float failed: Missing HumanoidRootPart")
+        return
+    end
 
-    alignPos.Attachment0 = attachment0
-    alignPos.Attachment1 = targetAttachment
-    alignOri.Attachment0 = attachment0
-    alignOri.Attachment1 = targetAttachment
+    print("✅ Floating under the Main Account's legs...")
 
+    -- Position the alt under the main account's legs to start
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)
+
+    -- Create a BodyPosition to control the rising
+    BodyPosition = Instance.new("BodyPosition")
+    BodyPosition.MaxForce = Vector3.new(100000, 100000, 100000)  -- Allow a lot of force for smooth movement
+    BodyPosition.D = 1000  -- Dampening, control how smooth the rise is
+    BodyPosition.P = 10000  -- Power, controls the speed of the movement
+    BodyPosition.Parent = AltHRP
+
+    -- Keep rising the alt upwards
+    Floating = true
     task.spawn(function()
-        while Following and SelectedMainAccount and SelectedMainAccount.Character do
-            local targetHRP = SelectedMainAccount.Character:FindFirstChild("HumanoidRootPart")
-            if targetHRP then
-                targetAttachment.Parent = targetHRP
-                targetAttachment.Position = targetOffset
-            end
-            task.wait(0.1)
+        while Floating do
+            -- Set the desired position above the main account (rising effect)
+            BodyPosition.Position = AltHRP.Position + Vector3.new(0, 1, 0)  -- Rising by 1 stud
+            task.wait(0.1)  -- Wait before updating again for smoothness
         end
 
-        alignPos:Destroy()
-        alignOri:Destroy()
-        targetAttachment:Destroy()
-        attachment0:Destroy()
+        -- When stopping, we remove the BodyPosition to stop movement
+        if BodyPosition then
+            BodyPosition:Destroy()
+        end
     end)
+
+    print("✅ Floating continuously upwards!")
 end
 
 -- Summon Alt
@@ -212,55 +220,6 @@ local function TeleportAlt()
     else
         warn("⚠️ Teleport failed: Missing parts")
     end
-end
-
--- Float Alt (Float under the Main Account's legs and keep rising up)
-local function FloatAlt()
-    if not SelectedMainAccount or not SelectedMainAccount.Character then
-        warn("⚠️ Float failed: No main account selected")
-        return
-    end
-
-    local MainChar = SelectedMainAccount.Character
-    local AltChar = LocalPlayer.Character
-    if not MainChar or not AltChar then return end
-
-    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
-    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
-
-    if not MainHRP or not AltHRP then
-        warn("⚠️ Float failed: Missing HumanoidRootPart")
-        return
-    end
-
-    print("✅ Floating under the Main Account's legs...")
-
-    -- Position the alt under the main account's legs to start
-    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)
-
-    -- Create a BodyPosition to control the rising
-    BodyPosition = Instance.new("BodyPosition")
-    BodyPosition.MaxForce = Vector3.new(100000, 100000, 100000)  -- Allow a lot of force for smooth movement
-    BodyPosition.D = 1000  -- Dampening, control how smooth the rise is
-    BodyPosition.P = 10000  -- Power, controls the speed of the movement
-    BodyPosition.Parent = AltHRP
-
-    -- Keep rising the alt upwards
-    Floating = true
-    task.spawn(function()
-        while Floating do
-            -- Set the desired position above the main account (rising effect)
-            BodyPosition.Position = AltHRP.Position + Vector3.new(0, 1, 0)  -- Rising by 1 stud
-            task.wait(0.1)  -- Wait before updating again for smoothness
-        end
-
-        -- When stopping, we remove the BodyPosition to stop movement
-        if BodyPosition then
-            BodyPosition:Destroy()
-        end
-    end)
-
-    print("✅ Floating continuously upwards!")
 end
 
 -- Command Handling
