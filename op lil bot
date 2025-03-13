@@ -236,7 +236,7 @@ local function FloatAlt()
     print("✅ Floating under the Main Account's legs...")
 
     -- Set the initial position to be under the main account's legs
-    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)  -- Adjust this to the desired position under the legs
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)  -- Position under the legs
 
     -- Gradually rise the Alt above the target (Main Account)
     local riseSpeed = 0.1  -- Speed at which the alt rises (adjust for smoother or faster movement)
@@ -245,9 +245,10 @@ local function FloatAlt()
     task.spawn(function()
         while true do
             if AltHRP then
-                AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, riseSpeed, 0)  -- Keep rising slowly
+                -- Keep rising slowly by incrementing Y position
+                AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, riseSpeed, 0)  -- Rise up by `riseSpeed`
             end
-            task.wait(0.1)  -- Adjust for how fast the rising effect happens
+            task.wait(0.1)  -- Adjust for how fast the rising effect happens (higher value = slower)
         end
     end)
 
