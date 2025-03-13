@@ -214,33 +214,40 @@ local function TeleportAlt()
     end
 end
 
--- Float Alt (Float under the Alt's character)
+-- Float Alt (Float under the Main Account's legs and rise up)
 local function FloatAlt()
-    local AltChar = LocalPlayer.Character
-    if not AltChar then
-        warn("⚠️ Float failed: No character found")
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Float failed: No main account selected")
         return
     end
 
+    local MainChar = SelectedMainAccount.Character
+    local AltChar = LocalPlayer.Character
+    if not MainChar or not AltChar then return end
+
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
     local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
-    if not AltHRP then
+
+    if not MainHRP or not AltHRP then
         warn("⚠️ Float failed: Missing HumanoidRootPart")
         return
     end
 
-    print("✅ Floating the Alt under its own character...")
+    print("✅ Floating under the Main Account's legs...")
 
-    -- Set the target Alt's position under itself
-    AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, -3, 0)  -- You can adjust the offset as needed
+    -- Set the initial position to be under the main account's legs
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)  -- Adjust this to the desired position under the legs
 
-    -- Adjust the floating to remain under the character continuously
+    -- Gradually rise the Alt above the target (Main Account)
+    local riseAmount = 10  -- How high you want the alt to rise
+    local riseSpeed = 0.1  -- Speed at which the alt rises (adjust for smoother or faster movement)
+
     task.spawn(function()
-        while true do
-            -- Keep the alt floating under its own character
+        for i = 1, riseAmount do
             if AltHRP then
-                AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, -3, 0)
+                AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, riseSpeed, 0)  -- Keep rising slowly
             end
-            task.wait(0.1)  -- You can adjust the wait time for smoothness
+            task.wait(0.1)  -- Adjust for how fast the rising effect happens
         end
     end)
 
