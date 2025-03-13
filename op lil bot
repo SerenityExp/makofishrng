@@ -214,7 +214,7 @@ local function TeleportAlt()
     end
 end
 
--- Float Alt (Float under the Main Account's legs and rise up)
+-- Float Alt (Float under the Main Account's legs and keep rising up)
 local function FloatAlt()
     if not SelectedMainAccount or not SelectedMainAccount.Character then
         warn("⚠️ Float failed: No main account selected")
@@ -239,11 +239,11 @@ local function FloatAlt()
     AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)  -- Adjust this to the desired position under the legs
 
     -- Gradually rise the Alt above the target (Main Account)
-    local riseAmount = 10  -- How high you want the alt to rise
     local riseSpeed = 0.1  -- Speed at which the alt rises (adjust for smoother or faster movement)
 
+    -- Continuous loop to keep the alt rising
     task.spawn(function()
-        for i = 1, riseAmount do
+        while true do
             if AltHRP then
                 AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, riseSpeed, 0)  -- Keep rising slowly
             end
@@ -251,7 +251,7 @@ local function FloatAlt()
         end
     end)
 
-    print("✅ Floating completed!")
+    print("✅ Floating continuously upwards!")
 end
 
 -- Command Handling
