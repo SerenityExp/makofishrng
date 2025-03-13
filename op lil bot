@@ -214,30 +214,6 @@ local function TeleportAlt()
     end
 end
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local SelectedMainAccount = nil
-local Following = false
-local Connection = nil
-local Vanishing = false
-local Floating = false  -- Track if floating is active
-
--- Stop all ongoing actions before switching commands
-local function StopAll()
-    Following = false
-    Vanishing = false
-    Floating = false  -- Stop floating
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = 16
-        LocalPlayer.Character.Humanoid.JumpPower = 50
-        -- Stand up if sitting
-        if LocalPlayer.Character.Humanoid.Sit then
-            LocalPlayer.Character.Humanoid.Sit = false
-        end
-    end
-    print("✅ Stopped all actions")
-end
-
 -- Float Alt (Float under the Main Account's legs and keep rising up)
 local function FloatAlt()
     if not SelectedMainAccount or not SelectedMainAccount.Character then
@@ -259,21 +235,28 @@ local function FloatAlt()
 
     print("✅ Floating under the Main Account's legs...")
 
-    -- Set the initial position to be under the main account's legs
-    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)  -- Position under the legs
+    -- Position the alt under the main account's legs to start
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -3, 0)
 
-    -- Gradually rise the Alt above the target (Main Account)
-    local riseSpeed = 0.1  -- Speed at which the alt rises (adjust for smoother or faster movement)
+    -- Create a BodyPosition to control the rising
+    BodyPosition = Instance.new("BodyPosition")
+    BodyPosition.MaxForce = Vector3.new(100000, 100000, 100000)  -- Allow a lot of force for smooth movement
+    BodyPosition.D = 1000  -- Dampening, control how smooth the rise is
+    BodyPosition.P = 10000  -- Power, controls the speed of the movement
+    BodyPosition.Parent = AltHRP
 
-    -- Start floating until stop command is given
+    -- Keep rising the alt upwards
     Floating = true
     task.spawn(function()
         while Floating do
-            if AltHRP then
-                -- Keep rising slowly by incrementing Y position
-                AltHRP.CFrame = AltHRP.CFrame + Vector3.new(0, riseSpeed, 0)  -- Rise up by `riseSpeed`
-            end
-            task.wait(0.1)  -- Adjust for how fast the rising effect happens (higher value = slower)
+            -- Set the desired position above the main account (rising effect)
+            BodyPosition.Position = AltHRP.Position + Vector3.new(0, 1, 0)  -- Rising by 1 stud
+            task.wait(0.1)  -- Wait before updating again for smoothness
+        end
+
+        -- When stopping, we remove the BodyPosition to stop movement
+        if BodyPosition then
+            BodyPosition:Destroy()
         end
     end)
 
