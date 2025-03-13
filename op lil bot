@@ -2,12 +2,12 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local SelectedMainAccount = nil
 local Following = false
-local Connection = nil
 local Vanishing = false
 local Floating = false
 local BodyPosition = nil
+local Connection = nil
 
--- Stop all ongoing actions before switching commands
+-- Stop all ongoing actions
 local function StopAll()
     Following = false
     Vanishing = false
