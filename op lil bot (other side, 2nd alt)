@@ -1,0 +1,219 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local SelectedMainAccount = nil
+local Following = false
+local Vanishing = false
+local Floating = false
+local BodyPosition = nil
+local Connection = nil
+
+-- Stop all ongoing actions
+local function StopAll()
+    Following = false
+    Vanishing = false
+    Floating = false
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        LocalPlayer.Character.Humanoid.JumpPower = 50
+        if LocalPlayer.Character.Humanoid.Sit then
+            LocalPlayer.Character.Humanoid.Sit = false
+        end
+    end
+    print("✅ Stopped all actions")
+end
+
+-- Disable collisions
+local function SetCollisions(character, state)
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = state
+            part.CanTouch = state
+        end
+    end
+end
+
+-- Floating movement function
+local function ApplyFloatingMovement(character, targetOffset)
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    for _, obj in ipairs(hrp:GetChildren()) do
+        if obj:IsA("AlignPosition") or obj:IsA("AlignOrientation") then
+            obj:Destroy()
+        end
+    end
+
+    local alignPos = Instance.new("AlignPosition")
+    alignPos.MaxForce = 100000
+    alignPos.Responsiveness = 100
+    alignPos.RigidityEnabled = true
+    alignPos.Parent = hrp
+
+    local alignOri = Instance.new("AlignOrientation")
+    alignOri.MaxTorque = 100000
+    alignOri.Responsiveness = 100
+    alignOri.RigidityEnabled = true
+    alignOri.Parent = hrp
+
+    local attachment0 = Instance.new("Attachment", hrp)
+    local targetAttachment = Instance.new("Attachment")
+
+    alignPos.Attachment0 = attachment0
+    alignPos.Attachment1 = targetAttachment
+    alignOri.Attachment0 = attachment0
+    alignOri.Attachment1 = targetAttachment
+
+    task.spawn(function()
+        while Following and SelectedMainAccount and SelectedMainAccount.Character do
+            local targetHRP = SelectedMainAccount.Character:FindFirstChild("HumanoidRootPart")
+            if targetHRP then
+                targetAttachment.Parent = targetHRP
+                targetAttachment.Position = targetOffset
+            end
+            task.wait(0.1)
+        end
+
+        alignPos:Destroy()
+        alignOri:Destroy()
+        targetAttachment:Destroy()
+        attachment0:Destroy()
+    end)
+end
+
+-- Summon Alt (On the opposite side of the player)
+local function SummonAlt()
+    StopAll()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Summon failed: No main account selected")
+        return
+    end
+
+    local MainChar = SelectedMainAccount.Character
+    local AltChar = LocalPlayer.Character
+    if not MainChar or not AltChar then return end
+
+    Following = true
+    print("✅ Summoning Alt to the opposite side...")
+
+    AltChar.Humanoid.WalkSpeed = 0
+    AltChar.Humanoid.JumpPower = 0
+
+    ApplyFloatingMovement(AltChar, Vector3.new(-7, 10, 0)) -- Opposite side
+end
+
+-- Float Alt (Continuously moves in a circular motion above the player)
+local function FloatAlt()
+    StopAll()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Float failed: No main account selected")
+        return
+    end
+
+    local MainChar = SelectedMainAccount.Character
+    local AltChar = LocalPlayer.Character
+    if not MainChar or not AltChar then return end
+
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+
+    if not MainHRP or not AltHRP then
+        warn("⚠️ Float failed: Missing HumanoidRootPart")
+        return
+    end
+
+    print("✅ Floating in a circle around the player's head...")
+
+    Floating = true
+    local radius = 7 -- Distance from the player
+    local angle = 0
+
+    task.spawn(function()
+        while Floating do
+            angle = angle + math.rad(5) -- Adjust for speed
+            local xOffset = math.cos(angle) * radius
+            local zOffset = math.sin(angle) * radius
+            AltHRP.CFrame = MainHRP.CFrame * CFrame.new(xOffset, 10, zOffset)
+            task.wait(0.1)
+        end
+    end)
+end
+
+-- Vanish Alt (30 studs underground)
+local function VanishAlt()
+    StopAll()
+    if not SelectedMainAccount or not SelectedMainAccount.Character then
+        warn("⚠️ Vanish failed: No main account selected")
+        return
+    end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = SelectedMainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+
+    if not AltHRP or not MainHRP then
+        warn("⚠️ Vanish failed: Missing HumanoidRootPart")
+        return
+    end
+
+    print("✅ Instantly Vanishing Alt 30 studs underground...")
+    AltHRP.CFrame = MainHRP.CFrame + Vector3.new(0, -30, 0)
+
+    -- Disable movement and collisions
+    AltChar.Humanoid.WalkSpeed = 0
+    AltChar.Humanoid.JumpPower = 0
+    SetCollisions(AltChar, false)
+end
+
+-- Command Handling
+local function HandleChatCommand(message)
+    if message == ".summon" then
+        SummonAlt()
+    elseif message == ".vanish" then
+        VanishAlt()
+    elseif message == ".stop" then
+        StopAll()
+    elseif message == ".float" then
+        FloatAlt()
+    else
+        warn("⚠️ Unknown command:", message)
+    end
+end
+
+-- UI Selection
+local function SetupSelectionUI()
+    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+    local Frame = Instance.new("Frame", ScreenGui)
+    Frame.Size = UDim2.new(0, 200, 0, 300)
+    Frame.Position = UDim2.new(0, 10, 0, 10)
+    Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+
+    local UIList = Instance.new("UIListLayout", Frame)
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local Button = Instance.new("TextButton", Frame)
+            Button.Size = UDim2.new(1, 0, 0, 30)
+            Button.Text = player.Name
+            Button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+            Button.TextColor3 = Color3.new(1, 1, 1)
+
+            Button.MouseButton1Click:Connect(function()
+                SelectedMainAccount = player
+                print("✅ Main Account Selected: " .. player.Name)
+
+                if Connection then
+                    Connection:Disconnect()
+                end
+
+                Connection = player.Chatted:Connect(function(msg)
+                    HandleChatCommand(msg)
+                end)
+            end)
+        end
+    end
+end
+
+SetupSelectionUI()
