@@ -1,0 +1,6 @@
+while true do
+    for i = 1, 100 do
+        print("‎ ")
+    end
+    wait(0.1)
+end
