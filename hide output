@@ -1,4 +1,4 @@
-for i = 1, 110 do
+for i = 1, 450 do
     print("‎ ") -- Change this message if needed
     task.wait(0.01) -- Small delay to prevent lag (optional)
 end
