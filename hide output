@@ -1,6 +1,4 @@
-while true do
-    for i = 1, 100 do
-        print("‎ ")
-    end
-    wait(0.1)
+for i = 1, 110 do
+    print("‎ ") -- Change this message if needed
+    task.wait(0.01) -- Small delay to prevent lag (optional)
 end
