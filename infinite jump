@@ -1,0 +1,52 @@
+-- Variables
+local player = game.Players.LocalPlayer
+local userInputService = game:GetService("UserInputService")
+local textLabel = Instance.new("TextLabel")
+local infiniteJumpEnabled = false
+local canJump = true -- To handle jump cooldown
+
+-- Create a ScreenGui to hold the text label
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "InfiniteJumpGui"
+screenGui.Parent = player.PlayerGui
+
+-- Create the text label
+textLabel.Size = UDim2.new(0, 200, 0, 50)
+textLabel.Position = UDim2.new(1, -210, 0, 10) -- Top right corner
+textLabel.AnchorPoint = Vector2.new(1, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.TextColor3 = Color3.new(1, 1, 1)
+textLabel.TextScaled = true
+textLabel.Font = Enum.Font.SourceSansBold
+textLabel.Text = "Infinite Jump: OFF"
+textLabel.Parent = screenGui
+
+-- Function to toggle infinite jump
+local function toggleInfiniteJump()
+    infiniteJumpEnabled = not infiniteJumpEnabled
+    textLabel.Text = "Infinite Jump: " .. (infiniteJumpEnabled and "ON" or "OFF")
+end
+
+-- Keybind to toggle infinite jump
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end -- Ignore if the game is processing the input
+    if input.KeyCode == Enum.KeyCode.Z then
+        toggleInfiniteJump()
+    end
+end)
+
+-- Infinite jump logic with cooldown
+userInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled and player.Character and canJump then
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- Perform the jump
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            
+            -- Enable jump cooldown
+            canJump = false
+            wait(humanoid.JumpPower / 100) -- Adjust cooldown based on JumpPower
+            canJump = true
+        end
+    end
+end)
