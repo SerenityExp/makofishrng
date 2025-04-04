@@ -1,0 +1,194 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+-- Create ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "OverseerGUI"
+
+-- Create Main Frame
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 300, 0, 170)
+Frame.Position = UDim2.new(0.5, -150, 0.2, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+Frame.Active = true
+Frame.Draggable = true
+
+-- UI Corner (Rounded Corners)
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = Frame
+
+-- UI Stroke (Outline)
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(255, 255, 255)
+UIStroke.Thickness = 2
+UIStroke.Parent = Frame
+
+-- Title Label
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.Text = "👁️ Overseer GUI"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1
+Title.Parent = Frame
+
+-- Create Tooltip Frame
+local Tooltip = Instance.new("TextLabel")
+Tooltip.Size = UDim2.new(0, 260, 0, 40) -- made wider and taller
+Tooltip.Position = UDim2.new(0.5, -130, 1, 10)
+Tooltip.Text = ""
+Tooltip.Font = Enum.Font.Gotham
+Tooltip.TextSize = 14
+Tooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
+Tooltip.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Tooltip.Visible = false
+Tooltip.TextWrapped = true -- wrap long text
+Tooltip.Parent = Frame
+
+local TooltipCorner = Instance.new("UICorner")
+TooltipCorner.CornerRadius = UDim.new(0, 8)
+TooltipCorner.Parent = Tooltip
+
+-- Function to Show Tooltips
+local function showTooltip(text)
+    Tooltip.Text = text
+    Tooltip.Visible = true
+    wait(2)
+    Tooltip.Visible = false
+end
+
+-- Godmode Button
+local GodmodeButton = Instance.new("TextButton")
+GodmodeButton.Size = UDim2.new(0.8, -20, 0, 40)
+GodmodeButton.Position = UDim2.new(0, 10, 0, 40)
+GodmodeButton.Text = "☠️ Godmode: OFF"
+GodmodeButton.Font = Enum.Font.Gotham
+GodmodeButton.TextSize = 14
+GodmodeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+GodmodeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+GodmodeButton.Parent = Frame
+
+local UICorner2 = Instance.new("UICorner")
+UICorner2.CornerRadius = UDim.new(0, 8)
+UICorner2.Parent = GodmodeButton
+
+-- Godmode Info Button
+local GodmodeInfo = Instance.new("TextButton")
+GodmodeInfo.Size = UDim2.new(0, 30, 0, 30)
+GodmodeInfo.Position = UDim2.new(1, -40, 0, 45)
+GodmodeInfo.Text = "❓"
+GodmodeInfo.Font = Enum.Font.GothamBold
+GodmodeInfo.TextSize = 14
+GodmodeInfo.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+GodmodeInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
+GodmodeInfo.Parent = Frame
+
+local UICornerInfo1 = Instance.new("UICorner")
+UICornerInfo1.CornerRadius = UDim.new(1, 0)
+UICornerInfo1.Parent = GodmodeInfo
+
+-- The All Being Button
+local AllBeingButton = Instance.new("TextButton")
+AllBeingButton.Size = UDim2.new(0.8, -20, 0, 40)
+AllBeingButton.Position = UDim2.new(0, 10, 0, 90)
+AllBeingButton.Text = "👁️ The All Being"
+AllBeingButton.Font = Enum.Font.Gotham
+AllBeingButton.TextSize = 14
+AllBeingButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+AllBeingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AllBeingButton.Parent = Frame
+
+local UICorner3 = Instance.new("UICorner")
+UICorner3.CornerRadius = UDim.new(0, 8)
+UICorner3.Parent = AllBeingButton
+
+-- The All Being Info Button
+local AllBeingInfo = Instance.new("TextButton")
+AllBeingInfo.Size = UDim2.new(0, 30, 0, 30)
+AllBeingInfo.Position = UDim2.new(1, -40, 0, 95)
+AllBeingInfo.Text = "❓"
+AllBeingInfo.Font = Enum.Font.GothamBold
+AllBeingInfo.TextSize = 14
+AllBeingInfo.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+AllBeingInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
+AllBeingInfo.Parent = Frame
+
+local UICornerInfo2 = Instance.new("UICorner")
+UICornerInfo2.CornerRadius = UDim.new(1, 0)
+UICornerInfo2.Parent = AllBeingInfo
+
+-- Godmode Toggle Logic
+local GodmodeEnabled = false
+GodmodeButton.MouseButton1Click:Connect(function()
+    GodmodeEnabled = not GodmodeEnabled
+    if GodmodeEnabled then
+        GodmodeButton.Text = "☠️ Godmode: ON"
+        GodmodeButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+        if Character then
+            Character.Humanoid.MaxHealth = math.huge
+            Character.Humanoid.Health = math.huge
+        end
+    else
+        GodmodeButton.Text = "☠️ Godmode: OFF"
+        GodmodeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+        if Character then
+            Character.Humanoid.MaxHealth = 100
+            Character.Humanoid.Health = 100
+        end
+    end
+end)
+
+-- The All Being Logic
+AllBeingButton.MouseButton1Click:Connect(function()
+    if Character then
+        for _, part in ipairs(Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 1
+                part.CanCollide = false
+            elseif part:IsA("Decal") then
+                part.Transparency = 1
+            end
+        end
+
+        if Character:FindFirstChildOfClass("Humanoid") then
+            local hum = Character:FindFirstChildOfClass("Humanoid")
+            hum.PlatformStand = true
+        end
+
+        if not Character:FindFirstChild("IgnoreByNPC") then
+            local ignoreTag = Instance.new("BoolValue")
+            ignoreTag.Name = "IgnoreByNPC"
+            ignoreTag.Value = true
+            ignoreTag.Parent = Character
+        end
+    end
+
+    for _, npc in pairs(workspace:GetDescendants()) do
+        if npc:IsA("Model") and npc:FindFirstChildOfClass("Humanoid") then
+            local target = npc:FindFirstChild("Target")
+            if target and target:IsA("ObjectValue") and target.Value == LocalPlayer.Character then
+                target.Value = nil
+            end
+        end
+    end
+
+    AllBeingButton.Text = "✅ You're beyond perception..."
+    wait(2)
+    AllBeingButton.Text = "👁️ The All Being"
+end)
+
+-- Info Button Logic
+GodmodeInfo.MouseButton1Click:Connect(function()
+    showTooltip("Godmode: Makes you invincible to all damage.")
+end)
+
+AllBeingInfo.MouseButton1Click:Connect(function()
+    showTooltip("The All Being: NPCs will not see or attack you.")
+end)
