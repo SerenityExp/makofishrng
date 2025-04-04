@@ -9,7 +9,7 @@ ScreenGui.Name = "OverseerGUI"
 
 -- Create Main Frame
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 300, 0, 170)
+Frame.Size = UDim2.new(0, 200, 0, 200)
 Frame.Position = UDim2.new(0.5, -150, 0.2, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.BorderSizePixel = 0
@@ -17,12 +17,10 @@ Frame.Parent = ScreenGui
 Frame.Active = true
 Frame.Draggable = true
 
--- UI Corner (Rounded Corners)
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = Frame
 
--- UI Stroke (Outline)
 local UIStroke = Instance.new("UIStroke")
 UIStroke.Color = Color3.fromRGB(255, 255, 255)
 UIStroke.Thickness = 2
@@ -39,9 +37,9 @@ Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.BackgroundTransparency = 1
 Title.Parent = Frame
 
--- Create Tooltip Frame
+-- Tooltip
 local Tooltip = Instance.new("TextLabel")
-Tooltip.Size = UDim2.new(0, 260, 0, 40) -- made wider and taller
+Tooltip.Size = UDim2.new(0, 260, 0, 40)
 Tooltip.Position = UDim2.new(0.5, -130, 1, 10)
 Tooltip.Text = ""
 Tooltip.Font = Enum.Font.Gotham
@@ -49,18 +47,17 @@ Tooltip.TextSize = 14
 Tooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
 Tooltip.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 Tooltip.Visible = false
-Tooltip.TextWrapped = true -- wrap long text
+Tooltip.TextWrapped = true
 Tooltip.Parent = Frame
 
 local TooltipCorner = Instance.new("UICorner")
 TooltipCorner.CornerRadius = UDim.new(0, 8)
 TooltipCorner.Parent = Tooltip
 
--- Function to Show Tooltips
 local function showTooltip(text)
     Tooltip.Text = text
     Tooltip.Visible = true
-    wait(2)
+    task.wait(2)
     Tooltip.Visible = false
 end
 
@@ -79,26 +76,11 @@ local UICorner2 = Instance.new("UICorner")
 UICorner2.CornerRadius = UDim.new(0, 8)
 UICorner2.Parent = GodmodeButton
 
--- Godmode Info Button
-local GodmodeInfo = Instance.new("TextButton")
-GodmodeInfo.Size = UDim2.new(0, 30, 0, 30)
-GodmodeInfo.Position = UDim2.new(1, -40, 0, 45)
-GodmodeInfo.Text = "❓"
-GodmodeInfo.Font = Enum.Font.GothamBold
-GodmodeInfo.TextSize = 14
-GodmodeInfo.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-GodmodeInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
-GodmodeInfo.Parent = Frame
-
-local UICornerInfo1 = Instance.new("UICorner")
-UICornerInfo1.CornerRadius = UDim.new(1, 0)
-UICornerInfo1.Parent = GodmodeInfo
-
--- The All Being Button
+-- All Being Button
 local AllBeingButton = Instance.new("TextButton")
 AllBeingButton.Size = UDim2.new(0.8, -20, 0, 40)
 AllBeingButton.Position = UDim2.new(0, 10, 0, 90)
-AllBeingButton.Text = "👁️ The All Being"
+AllBeingButton.Text = "👁️ The All Being: OFF"
 AllBeingButton.Font = Enum.Font.Gotham
 AllBeingButton.TextSize = 14
 AllBeingButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
@@ -109,86 +91,190 @@ local UICorner3 = Instance.new("UICorner")
 UICorner3.CornerRadius = UDim.new(0, 8)
 UICorner3.Parent = AllBeingButton
 
--- The All Being Info Button
-local AllBeingInfo = Instance.new("TextButton")
-AllBeingInfo.Size = UDim2.new(0, 30, 0, 30)
-AllBeingInfo.Position = UDim2.new(1, -40, 0, 95)
-AllBeingInfo.Text = "❓"
-AllBeingInfo.Font = Enum.Font.GothamBold
-AllBeingInfo.TextSize = 14
-AllBeingInfo.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-AllBeingInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
-AllBeingInfo.Parent = Frame
+-- Hyperwarp Button
+local HyperwarpButton = Instance.new("TextButton")
+HyperwarpButton.Size = UDim2.new(0.8, -20, 0, 40)
+HyperwarpButton.Position = UDim2.new(0, 10, 0, 140)
+HyperwarpButton.Text = "🚀 Hyperwarp: OFF"
+HyperwarpButton.Font = Enum.Font.Gotham
+HyperwarpButton.TextSize = 14
+HyperwarpButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+HyperwarpButton.TextColor3 = Color3.fromRGB(0, 255, 255)
+HyperwarpButton.Parent = Frame
 
-local UICornerInfo2 = Instance.new("UICorner")
-UICornerInfo2.CornerRadius = UDim.new(1, 0)
-UICornerInfo2.Parent = AllBeingInfo
+local UICorner4 = Instance.new("UICorner")
+UICorner4.CornerRadius = UDim.new(0, 8)
+UICorner4.Parent = HyperwarpButton
 
--- Godmode Toggle Logic
-local GodmodeEnabled = false
-GodmodeButton.MouseButton1Click:Connect(function()
-    GodmodeEnabled = not GodmodeEnabled
-    if GodmodeEnabled then
-        GodmodeButton.Text = "☠️ Godmode: ON"
-        GodmodeButton.TextColor3 = Color3.fromRGB(0, 255, 0)
-        if Character then
-            Character.Humanoid.MaxHealth = math.huge
-            Character.Humanoid.Health = math.huge
+-- Hyperwarp Logic
+local HyperwarpEnabled = false
+local HyperwarpPlatform = nil
+local teleporting = false
+
+local function createHyperwarpPlatform()
+    if HyperwarpPlatform then return end
+    -- Create the Hyperwarp Platform
+    HyperwarpPlatform = Instance.new("Part")
+    HyperwarpPlatform.Size = Vector3.new(200, 1, 200)
+    HyperwarpPlatform.Position = Character.HumanoidRootPart.Position + Vector3.new(0, 5, 0)
+    HyperwarpPlatform.Anchored = true
+    HyperwarpPlatform.CanCollide = false
+    HyperwarpPlatform.BrickColor = BrickColor.new("Bright blue")
+    HyperwarpPlatform.Parent = workspace
+end
+
+local function removeHyperwarpPlatform()
+    if HyperwarpPlatform then
+        HyperwarpPlatform:Destroy()
+        HyperwarpPlatform = nil
+    end
+end
+
+local function randomTeleport()
+    if not HyperwarpEnabled then return end
+    -- Teleport player to random points within the platform
+    local platformCenter = HyperwarpPlatform.Position
+    local platformSize = HyperwarpPlatform.Size
+
+    -- Random positions within the platform bounds
+    local randomX = platformCenter.X + math.random(-platformSize.X/2, platformSize.X/2)
+    local randomZ = platformCenter.Z + math.random(-platformSize.Z/2, platformSize.Z/2)
+    local randomPosition = Vector3.new(randomX, platformCenter.Y, randomZ)
+
+    Character:SetPrimaryPartCFrame(CFrame.new(randomPosition))
+end
+
+HyperwarpButton.MouseButton1Click:Connect(function()
+    HyperwarpEnabled = not HyperwarpEnabled
+    if HyperwarpEnabled then
+        -- Enable Hyperwarp
+        HyperwarpButton.Text = "🚀 Hyperwarp: ON"
+        createHyperwarpPlatform()
+        teleporting = true
+        -- Start teleporting constantly
+        while teleporting do
+            randomTeleport()
+            wait(0.01)  -- Adjust this time for faster/slower teleportation speed
         end
     else
-        GodmodeButton.Text = "☠️ Godmode: OFF"
-        GodmodeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
-        if Character then
-            Character.Humanoid.MaxHealth = 100
-            Character.Humanoid.Health = 100
-        end
+        -- Disable Hyperwarp
+        HyperwarpButton.Text = "🚀 Hyperwarp: OFF"
+        teleporting = false
+        removeHyperwarpPlatform()
     end
 end)
 
--- The All Being Logic
-AllBeingButton.MouseButton1Click:Connect(function()
-    if Character then
-        for _, part in ipairs(Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Transparency = 1
-                part.CanCollide = false
-            elseif part:IsA("Decal") then
-                part.Transparency = 1
+-- Godmode Logic
+local GodmodeEnabled = false
+GodmodeButton.MouseButton1Click:Connect(function()
+    GodmodeEnabled = not GodmodeEnabled
+    if GodmodeEnabled and Character then
+        GodmodeButton.Text = "☠️ Godmode: ON"
+        GodmodeButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+        Character.Humanoid.MaxHealth = math.huge
+        Character.Humanoid.Health = math.huge
+    else
+        GodmodeButton.Text = "☠️ Godmode: OFF"
+        GodmodeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+        Character.Humanoid.MaxHealth = 100
+        Character.Humanoid.Health = 100
+    end
+end)
+
+-- All Being Logic
+local AllBeingEnabled = false
+
+local function applyAllBeingEffects(char)
+    if not AllBeingEnabled then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Transparency = 1
+            part.CanCollide = false
+        elseif part:IsA("Decal") then
+            part.Transparency = 1
+        end
+    end
+    if hum then
+        hum.PlatformStand = true
+        hum:GetPropertyChangedSignal("Health"):Connect(function()
+            if AllBeingEnabled then
+                hum.Health = hum.MaxHealth
             end
-        end
+        end)
+        hum.Health = hum.MaxHealth
+    end
 
-        if Character:FindFirstChildOfClass("Humanoid") then
-            local hum = Character:FindFirstChildOfClass("Humanoid")
-            hum.PlatformStand = true
-        end
-
-        if not Character:FindFirstChild("IgnoreByNPC") then
-            local ignoreTag = Instance.new("BoolValue")
-            ignoreTag.Name = "IgnoreByNPC"
-            ignoreTag.Value = true
-            ignoreTag.Parent = Character
-        end
+    if not char:FindFirstChild("IgnoreByNPC") then
+        local ignoreTag = Instance.new("BoolValue")
+        ignoreTag.Name = "IgnoreByNPC"
+        ignoreTag.Value = true
+        ignoreTag.Parent = char
     end
 
     for _, npc in pairs(workspace:GetDescendants()) do
         if npc:IsA("Model") and npc:FindFirstChildOfClass("Humanoid") then
             local target = npc:FindFirstChild("Target")
-            if target and target:IsA("ObjectValue") and target.Value == LocalPlayer.Character then
+            if target and target:IsA("ObjectValue") and target.Value == char then
                 target.Value = nil
             end
         end
     end
+end
 
-    AllBeingButton.Text = "✅ You're beyond perception..."
-    wait(2)
-    AllBeingButton.Text = "👁️ The All Being"
+local function removeAllBeingEffects(char)
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Transparency = 0
+            part.CanCollide = true
+        elseif part:IsA("Decal") then
+            part.Transparency = 0
+        end
+    end
+    if hum then
+        hum.PlatformStand = false
+    end
+    local ignoreTag = char:FindFirstChild("IgnoreByNPC")
+    if ignoreTag then
+        ignoreTag:Destroy()
+    end
+end
+
+AllBeingButton.MouseButton1Click:Connect(function()
+    AllBeingEnabled = not AllBeingEnabled
+    Character = LocalPlayer.Character
+    if AllBeingEnabled then
+        AllBeingButton.Text = "👁️ The All Being: ON"
+        applyAllBeingEffects(Character)
+    else
+        AllBeingButton.Text = "👁️ The All Being: OFF"
+        removeAllBeingEffects(Character)
+    end
 end)
 
--- Info Button Logic
+-- Reapply after respawn
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Character = char
+    char:WaitForChild("Humanoid")
+    if GodmodeEnabled then
+        char.Humanoid.MaxHealth = math.huge
+        char.Humanoid.Health = math.huge
+    end
+    if AllBeingEnabled then
+        applyAllBeingEffects(char)
+    end
+end)
+
+-- Tooltip Buttons
 GodmodeInfo.MouseButton1Click:Connect(function()
     showTooltip("Godmode: Makes you invincible to all damage.")
 end)
 
 AllBeingInfo.MouseButton1Click:Connect(function()
     showTooltip("The All Being: NPCs will not see or attack you.")
+end)
+
+HyperwarpButton.MouseButton1Click:Connect(function()
+    showTooltip("Hyperwarp: Teleports you across a non-collidable platform.")
 end)
