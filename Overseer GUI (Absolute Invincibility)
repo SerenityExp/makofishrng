@@ -137,8 +137,8 @@ local function randomTeleport()
     local platformSize = HyperwarpPlatform.Size
 
     -- Random positions within the platform bounds
-    local randomX = platformCenter.X + math.random(-platformSize.X/1.8, platformSize.X/1.8)
-    local randomZ = platformCenter.Z + math.random(-platformSize.Z/1.8, platformSize.Z/1.8)
+    local randomX = platformCenter.X + math.random(-platformSize.X/2, platformSize.X/2)
+    local randomZ = platformCenter.Z + math.random(-platformSize.Z/2, platformSize.Z/2)
     local randomPosition = Vector3.new(randomX, platformCenter.Y, randomZ)
 
     Character:SetPrimaryPartCFrame(CFrame.new(randomPosition))
