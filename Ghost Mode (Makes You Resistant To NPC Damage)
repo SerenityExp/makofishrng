@@ -1,0 +1,131 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- Create GUI
+local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+gui.Name = "GhostButtonGUI"
+
+local button = Instance.new("TextButton", gui)
+button.Size = UDim2.new(0, 200, 0, 50)
+button.Position = UDim2.new(0.5, -100, 0.85, 0)
+button.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+button.TextColor3 = Color3.new(1, 1, 1)
+button.TextScaled = true
+button.Text = "Ghost Mode"
+button.Font = Enum.Font.GothamBold
+button.BorderSizePixel = 0
+
+-- Functions
+local active = false
+local loopConn = nil
+local respawnConn = nil
+
+local function fullGhostMode()
+	if active then return end
+	active = true
+
+	local function applyStealth()
+		local char = LocalPlayer.Character
+		if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+		-- 1. Transparency & Collision
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Transparency = 1
+				part.CanCollide = false
+				part.Anchored = true
+			elseif part:IsA("Decal") then
+				part.Transparency = 1
+			elseif part:IsA("ParticleEmitter") or part:IsA("Trail") then
+				part.Enabled = false
+			elseif part:IsA("Beam") then
+				part.Enabled = false
+			elseif part:IsA("BillboardGui") or part:IsA("SurfaceGui") then
+				part.Enabled = false
+			elseif part:IsA("Highlight") then
+				part.Enabled = false
+			end
+		end
+
+		-- 2. Remove from workspace
+		if not ReplicatedStorage:FindFirstChild("Ghost_"..LocalPlayer.Name) then
+			local ghostFolder = Instance.new("Folder")
+			ghostFolder.Name = "Ghost_"..LocalPlayer.Name
+			ghostFolder.Parent = ReplicatedStorage
+			char.Parent = ghostFolder
+		else
+			char.Parent = ReplicatedStorage:FindFirstChild("Ghost_"..LocalPlayer.Name)
+		end
+
+		-- 3. Remove from targeting
+		if not LocalPlayer:FindFirstChild("Untargetable") then
+			local flag = Instance.new("BoolValue")
+			flag.Name = "Untargetable"
+			flag.Parent = LocalPlayer
+		end
+
+		-- 4. Physics & Animations
+		local humanoid = char:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+			humanoid.WalkSpeed = 0
+			humanoid.JumpPower = 0
+			humanoid.AutoRotate = false
+		end
+
+		-- 5. SetNetworkOwnershipAuto false
+		if char:FindFirstChild("HumanoidRootPart") then
+			char.HumanoidRootPart:SetNetworkOwnershipAuto(false)
+		end
+
+		-- 6. Hide from PlayerList GUI
+		pcall(function()
+			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
+		end)
+
+		-- 7. Suppress death sounds, scripts, visuals
+		for _, obj in ipairs(char:GetDescendants()) do
+			if obj:IsA("Sound") then obj:Stop() end
+			if obj:IsA("LocalScript") or obj:IsA("Script") then
+				obj.Disabled = true
+			end
+		end
+
+		-- 8. Blur effect (thematic)
+		if not Lighting:FindFirstChild("GhostBlur") then
+			local blur = Instance.new("BlurEffect")
+			blur.Size = 24
+			blur.Name = "GhostBlur"
+			blur.Parent = Lighting
+		end
+
+		-- 9. Prevent reparenting by server
+		if char.Parent ~= ReplicatedStorage:FindFirstChild("Ghost_"..LocalPlayer.Name) then
+			char.Parent = ReplicatedStorage:FindFirstChild("Ghost_"..LocalPlayer.Name)
+		end
+
+		-- 10. Constantly remove accessories/gear
+		for _, acc in ipairs(char:GetChildren()) do
+			if acc:IsA("Accessory") or acc:IsA("Tool") then
+				acc:Destroy()
+			end
+		end
+	end
+
+	-- Main infinite loop
+	loopConn = RunService.RenderStepped:Connect(applyStealth)
+	applyStealth()
+
+	-- On Respawn
+	respawnConn = LocalPlayer.CharacterAdded:Connect(function()
+		task.wait(1)
+		applyStealth()
+	end)
+end
+
+button.MouseButton1Click:Connect(fullGhostMode)
