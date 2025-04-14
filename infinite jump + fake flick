@@ -1,0 +1,110 @@
+-- Services
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- Character / RootPart
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+-- Flick Config
+local flickEnabled = true
+local knockbackForce = 60
+local flickDuration = 0.2
+local flickCooldown = 0.5
+local canFlick = true
+
+-- Infinite Jump Config
+local infiniteJumpEnabled = false
+local canJump = true
+
+-- UI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "WallhopAndJumpGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- Flick Label
+local flickLabel = Instance.new("TextLabel")
+flickLabel.Size = UDim2.new(0, 200, 0, 25)
+flickLabel.Position = UDim2.new(1, -210, 0, 10)
+flickLabel.AnchorPoint = Vector2.new(1, 0)
+flickLabel.BackgroundTransparency = 1
+flickLabel.TextColor3 = Color3.new(1, 1, 1)
+flickLabel.TextStrokeTransparency = 0.5
+flickLabel.Font = Enum.Font.GothamBold
+flickLabel.TextSize = 18
+flickLabel.Text = "Flick: ON"
+flickLabel.Parent = screenGui
+
+-- Jump Label
+local jumpLabel = Instance.new("TextLabel")
+jumpLabel.Size = UDim2.new(0, 200, 0, 25)
+jumpLabel.Position = UDim2.new(1, -210, 0, 40)
+jumpLabel.AnchorPoint = Vector2.new(1, 0)
+jumpLabel.BackgroundTransparency = 1
+jumpLabel.TextColor3 = Color3.new(1, 1, 1)
+jumpLabel.TextStrokeTransparency = 0.5
+jumpLabel.Font = Enum.Font.GothamBold
+jumpLabel.TextSize = 18
+jumpLabel.Text = "Infinite Jump: OFF"
+jumpLabel.Parent = screenGui
+
+-- Flick Function
+local function flickBack()
+	if not flickEnabled or not canFlick or not root then return end
+	canFlick = false
+
+	local bodyVelocity = Instance.new("BodyVelocity")
+	bodyVelocity.Velocity = -root.CFrame.LookVector * knockbackForce
+	bodyVelocity.MaxForce = Vector3.new(1e5, 0, 1e5) -- Horizontal only
+	bodyVelocity.P = 1e4
+	bodyVelocity.Parent = root
+
+	task.delay(flickDuration, function()
+		bodyVelocity:Destroy()
+	end)
+
+	task.delay(flickCooldown, function()
+		canFlick = true
+	end)
+end
+
+-- Toggle Flick
+local function toggleFlick()
+	flickEnabled = not flickEnabled
+	flickLabel.Text = "Flick: " .. (flickEnabled and "ON" or "OFF")
+end
+
+-- Toggle Infinite Jump
+local function toggleInfiniteJump()
+	infiniteJumpEnabled = not infiniteJumpEnabled
+	jumpLabel.Text = "Infinite Jump: " .. (infiniteJumpEnabled and "ON" or "OFF")
+end
+
+-- Input Bindings
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	if input.KeyCode == Enum.KeyCode.F then
+		flickBack()
+	elseif input.KeyCode == Enum.KeyCode.T then
+		toggleFlick()
+	elseif input.KeyCode == Enum.KeyCode.Z then
+		toggleInfiniteJump()
+	end
+end)
+
+-- Infinite Jump Logic
+UIS.JumpRequest:Connect(function()
+	if infiniteJumpEnabled and player.Character and canJump then
+		local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+			canJump = false
+			task.wait(humanoid.JumpPower / 100) -- Basic cooldown
+			canJump = true
+		end
+	end
+end)
