@@ -10,7 +10,7 @@ local root = character:WaitForChild("HumanoidRootPart")
 
 -- Flick Config
 local flickEnabled = true
-local knockbackForce = 60
+local knockbackForce = 30
 local flickDuration = 0.2
 local flickCooldown = 0.5
 local canFlick = true
