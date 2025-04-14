@@ -85,7 +85,7 @@ end
 
 -- Input Bindings
 UIS.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
+	if gameProcessed or UIS:GetFocusedTextBox() then return end
 
 	if input.KeyCode == Enum.KeyCode.F then
 		flickBack()
@@ -93,8 +93,11 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
 		toggleFlick()
 	elseif input.KeyCode == Enum.KeyCode.Z then
 		toggleInfiniteJump()
+	elseif input.KeyCode == Enum.KeyCode.P then
+		screenGui.Enabled = not screenGui.Enabled
 	end
 end)
+
 
 -- Infinite Jump Logic
 UIS.JumpRequest:Connect(function()
