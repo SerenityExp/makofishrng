@@ -1,8 +1,8 @@
 -- Services
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
-local player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
 
 -- Character / RootPart
 local character = player.Character or player.CharacterAdded:Wait()
@@ -10,6 +10,7 @@ local root = character:WaitForChild("HumanoidRootPart")
 
 -- Flick Config
 local flickEnabled = true
+local flickMode = "Default" -- "Default", "BackUp", "Up"
 local knockbackForce = 30
 local flickDuration = 0.2
 local flickCooldown = 0.5
@@ -51,14 +52,46 @@ jumpLabel.TextSize = 18
 jumpLabel.Text = "Infinite Jump: OFF"
 jumpLabel.Parent = screenGui
 
+-- Flick Mode Buttons
+local function createFlickButton(text, posY, mode)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(0, 140, 0, 25)
+	button.Position = UDim2.new(1, -150, 0, posY)
+	button.AnchorPoint = Vector2.new(1, 0)
+	button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+	button.BorderSizePixel = 0
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.Font = Enum.Font.Gotham
+	button.TextSize = 14
+	button.Text = text
+	button.Parent = screenGui
+
+	button.MouseButton1Click:Connect(function()
+		flickMode = mode
+	end)
+end
+
+createFlickButton("Default Flick", 70, "Default")
+createFlickButton("Back + Up Flick", 100, "BackUp")
+createFlickButton("Up Flick", 130, "Up")
+
 -- Flick Function
 local function flickBack()
 	if not flickEnabled or not canFlick or not root then return end
 	canFlick = false
 
+	local velocityVector = Vector3.zero
+	if flickMode == "Default" then
+		velocityVector = -root.CFrame.LookVector * knockbackForce
+	elseif flickMode == "BackUp" then
+		velocityVector = (-root.CFrame.LookVector * knockbackForce * 0.7) + Vector3.new(0, knockbackForce * 0.5, 0)
+	elseif flickMode == "Up" then
+		velocityVector = Vector3.new(0, knockbackForce, 0)
+	end
+
 	local bodyVelocity = Instance.new("BodyVelocity")
-	bodyVelocity.Velocity = -root.CFrame.LookVector * knockbackForce
-	bodyVelocity.MaxForce = Vector3.new(1e5, 0, 1e5) -- Horizontal only
+	bodyVelocity.Velocity = velocityVector
+	bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
 	bodyVelocity.P = 1e4
 	bodyVelocity.Parent = root
 
@@ -98,7 +131,6 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
 	end
 end)
 
-
 -- Infinite Jump Logic
 UIS.JumpRequest:Connect(function()
 	if infiniteJumpEnabled and player.Character and canJump then
@@ -106,8 +138,14 @@ UIS.JumpRequest:Connect(function()
 		if humanoid then
 			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 			canJump = false
-			task.wait(humanoid.JumpPower / 100) -- Basic cooldown
+			task.wait(humanoid.JumpPower / 100)
 			canJump = true
 		end
 	end
+end)
+
+-- 🛠 Character Respawn Fix
+player.CharacterAdded:Connect(function(char)
+	character = char
+	root = char:WaitForChild("HumanoidRootPart")
 end)
