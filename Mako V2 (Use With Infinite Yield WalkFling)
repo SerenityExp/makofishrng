@@ -194,3 +194,74 @@ enterButton.MouseButton1Click:Connect(function()
         end
     end
 end)
+-- Speed Knob UI (Slider)
+local speedSlider = Instance.new("TextButton", mainFrame)
+speedSlider.Size = UDim2.new(0, 350, 0, 30)
+speedSlider.Position = UDim2.new(0, 25, 0, 170)
+speedSlider.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+speedSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedSlider.TextScaled = true
+speedSlider.Text = "Vehicle Speed: 0"
+
+-- Stabilize Button
+local stabilizeButton = Instance.new("TextButton", mainFrame)
+stabilizeButton.Size = UDim2.new(0, 180, 0, 30)
+stabilizeButton.Position = UDim2.new(0, 10, 0, 210)
+stabilizeButton.Text = "Stabilize & Teleport"
+stabilizeButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+stabilizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+stabilizeButton.TextScaled = true
+
+-- Slider logic
+local draggingSlider = false
+local maxSpeed = 500
+
+speedSlider.MouseButton1Down:Connect(function()
+	draggingSlider = true
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		draggingSlider = false
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local x = math.clamp((input.Position.X - speedSlider.AbsolutePosition.X) / speedSlider.AbsoluteSize.X, 0, 1)
+		local speed = math.floor(x * maxSpeed)
+
+		speedSlider.Text = "Vehicle Speed: " .. speed
+
+		local character = player.Character
+		if character then
+			for _, part in pairs(character:GetChildren()) do
+				if part:IsA("VehicleSeat") then
+					part.MaxSpeed = speed
+				end
+			end
+		end
+	end
+end)
+
+-- Stabilize & Teleport logic
+stabilizeButton.MouseButton1Click:Connect(function()
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	-- Stabilize physics
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Velocity = Vector3.zero
+			part.RotVelocity = Vector3.zero
+		end
+	end
+
+	-- Teleport to fixed position
+	root.CFrame = CFrame.new(Vector3.new(-15, 13, -251))
+end)
+
+
