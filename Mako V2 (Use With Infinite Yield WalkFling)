@@ -213,12 +213,12 @@ local function startTeleporting()
                         local character = player.Character or player.CharacterAdded:Wait()
                         character:SetPrimaryPartCFrame(targetPlayer.Character.PrimaryPart.CFrame)
                     end
-                    wait(0.01)
+                    wait(0.001)
                 end
             end)
 
             -- Wait 0.6 seconds before switching to the next player
-            wait(0.6)
+            wait(0.9)
             spam = false -- Stop spamming for this player
         end
     end
