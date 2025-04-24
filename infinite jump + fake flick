@@ -11,7 +11,9 @@ local root = character:WaitForChild("HumanoidRootPart")
 -- Flick Config
 local flickEnabled = true
 local flickMode = "Default" -- "Default", "BackUp", "Up"
-local knockbackForce = 30
+local flickModes = {"Default", "BackUp", "Up"}
+local flickModeIndex = 1
+local knockbackForce = 40
 local flickDuration = 0.2
 local flickCooldown = 0.5
 local canFlick = true
@@ -39,6 +41,19 @@ flickLabel.TextSize = 18
 flickLabel.Text = "Flick: ON"
 flickLabel.Parent = screenGui
 
+-- Flick Mode Label
+local flickModeLabel = Instance.new("TextLabel")
+flickModeLabel.Size = UDim2.new(0, 200, 0, 25)
+flickModeLabel.Position = UDim2.new(1, -210, 0, 70)
+flickModeLabel.AnchorPoint = Vector2.new(1, 0)
+flickModeLabel.BackgroundTransparency = 1
+flickModeLabel.TextColor3 = Color3.new(1, 1, 1)
+flickModeLabel.TextStrokeTransparency = 0.5
+flickModeLabel.Font = Enum.Font.GothamBold
+flickModeLabel.TextSize = 18
+flickModeLabel.Text = "Flick Mode: " .. flickMode
+flickModeLabel.Parent = screenGui
+
 -- Jump Label
 local jumpLabel = Instance.new("TextLabel")
 jumpLabel.Size = UDim2.new(0, 200, 0, 25)
@@ -52,7 +67,7 @@ jumpLabel.TextSize = 18
 jumpLabel.Text = "Infinite Jump: OFF"
 jumpLabel.Parent = screenGui
 
--- Flick Mode Buttons
+-- Flick Mode Buttons (Optional manual select)
 local function createFlickButton(text, posY, mode)
 	local button = Instance.new("TextButton")
 	button.Size = UDim2.new(0, 140, 0, 25)
@@ -68,12 +83,13 @@ local function createFlickButton(text, posY, mode)
 
 	button.MouseButton1Click:Connect(function()
 		flickMode = mode
+		flickModeLabel.Text = "Flick Mode: " .. flickMode
 	end)
 end
 
-createFlickButton("Default Flick", 70, "Default")
-createFlickButton("Back + Up Flick", 100, "BackUp")
-createFlickButton("Up Flick", 130, "Up")
+createFlickButton("Default Flick", 100, "Default")
+createFlickButton("Back + Up Flick", 130, "BackUp")
+createFlickButton("Up Flick", 160, "Up")
 
 -- Flick Function
 local function flickBack()
@@ -116,6 +132,13 @@ local function toggleInfiniteJump()
 	jumpLabel.Text = "Infinite Jump: " .. (infiniteJumpEnabled and "ON" or "OFF")
 end
 
+-- Cycle Flick Mode
+local function cycleFlickMode()
+	flickModeIndex = flickModeIndex % #flickModes + 1
+	flickMode = flickModes[flickModeIndex]
+	flickModeLabel.Text = "Flick Mode: " .. flickMode
+end
+
 -- Input Bindings
 UIS.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed or UIS:GetFocusedTextBox() then return end
@@ -128,6 +151,8 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
 		toggleInfiniteJump()
 	elseif input.KeyCode == Enum.KeyCode.P then
 		screenGui.Enabled = not screenGui.Enabled
+	elseif input.KeyCode == Enum.KeyCode.R then
+		cycleFlickMode()
 	end
 end)
 
