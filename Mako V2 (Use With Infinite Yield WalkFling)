@@ -205,7 +205,7 @@ local function startTeleporting()
             if targetPlayer.Character then
                 teleportToPlayer(targetPlayer)
             end
-            wait(0.3)
+            wait(0.6)
         end
 
         -- Rebuild the player list dynamically on each loop to handle join/leave
