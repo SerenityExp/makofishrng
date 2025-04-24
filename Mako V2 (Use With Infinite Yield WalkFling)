@@ -1,84 +1,89 @@
--- Place this script inside a LocalScript in StarterGui
+-- LocalScript inside StarterGui
 
--- GUI Setup
-local player = game.Players.LocalPlayer
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = player:WaitForChild("PlayerGui")
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
--- Main Frame Setup
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 200)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
-mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40) -- Dark grey color for background
-mainFrame.Parent = screenGui
+-- Player setup
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- GUI setup
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 400, 0, 250)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 mainFrame.BorderSizePixel = 0
 
--- Add a smooth, animated background (fading colors)
-local background = Instance.new("Frame")
+local background = Instance.new("Frame", mainFrame)
 background.Size = UDim2.new(1, 0, 1, 0)
-background.Position = UDim2.new(0, 0, 0, 0)
-background.BackgroundColor3 = Color3.fromRGB(20, 20, 20) -- Super dark grey
-background.Parent = mainFrame
+background.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 
--- TweenService for smooth animations
-local TweenService = game:GetService("TweenService")
 local frameTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true)
-
--- Create a background color fading effect (subtle color shift)
 local colorTween = TweenService:Create(background, frameTweenInfo, {
-    BackgroundColor3 = Color3.fromRGB(10, 10, 10) -- Subtle shift to black
+    BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 })
 colorTween:Play()
 
--- Add a separator line that will remain visible
-local separatorLine = Instance.new("Frame")
-separatorLine.Size = UDim2.new(1, 0, 0, 2) -- Thin line separating the header
-separatorLine.Position = UDim2.new(0, 0, 0, 40) -- Line position after the title bar
-separatorLine.BackgroundColor3 = Color3.fromRGB(100, 100, 100) -- Light grey color for the separator
-separatorLine.Parent = mainFrame
+local separatorLine = Instance.new("Frame", mainFrame)
+separatorLine.Size = UDim2.new(1, 0, 0, 2)
+separatorLine.Position = UDim2.new(0, 0, 0, 40)
+separatorLine.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 
--- Label on the Bar that says "Mako V2"
-local titleLabel = Instance.new("TextLabel")
+local titleLabel = Instance.new("TextLabel", mainFrame)
 titleLabel.Size = UDim2.new(0, 200, 0, 30)
 titleLabel.Position = UDim2.new(0, 5, 0, 5)
 titleLabel.Text = "Mako V2"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.BackgroundTransparency = 1
 titleLabel.TextScaled = true
-titleLabel.Parent = mainFrame
 
--- Minimize Button Setup
-local minimizeButton = Instance.new("TextButton")
+local minimizeButton = Instance.new("TextButton", mainFrame)
 minimizeButton.Size = UDim2.new(0, 30, 0, 30)
 minimizeButton.Position = UDim2.new(1, -35, 0, 5)
 minimizeButton.Text = "-"
 minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 minimizeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 minimizeButton.TextScaled = true
-minimizeButton.Parent = mainFrame
 
--- Teleport Button Setup ("Annoy All")
-local teleportButton = Instance.new("TextButton")
-teleportButton.Size = UDim2.new(0, 120, 0, 30) -- Smaller size for "Annoy All"
-teleportButton.Position = UDim2.new(0, 10, 0.5, -15) -- Position at the left corner
+local teleportButton = Instance.new("TextButton", mainFrame)
+teleportButton.Size = UDim2.new(0, 120, 0, 30)
+teleportButton.Position = UDim2.new(0, 10, 0.5, -15)
 teleportButton.Text = "Annoy All"
 teleportButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 teleportButton.TextScaled = true
-teleportButton.Parent = mainFrame
 
--- Draggable GUI Logic
+-- New DisplayName Box
+local nameBox = Instance.new("TextBox", mainFrame)
+nameBox.Size = UDim2.new(0, 200, 0, 30)
+nameBox.Position = UDim2.new(0, 10, 1, -40)
+nameBox.PlaceholderText = "Enter Display Name"
+nameBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+nameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+nameBox.TextScaled = true
+
+local enterButton = Instance.new("TextButton", mainFrame)
+enterButton.Size = UDim2.new(0, 120, 0, 30)
+enterButton.Position = UDim2.new(1, -130, 1, -40)
+enterButton.Text = "Enter"
+enterButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+enterButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+enterButton.TextScaled = true
+
+-- Drag logic
 local dragging = false
 local dragInput, dragStart, startPos
 
--- Function to start dragging
 local function onDragStart(input)
     dragging = true
     dragStart = input.Position
     startPos = mainFrame.Position
 end
 
--- Function to update the position while dragging
 local function onDragMove(input)
     if dragging then
         local delta = input.Position - dragStart
@@ -86,12 +91,6 @@ local function onDragMove(input)
     end
 end
 
--- Function to stop dragging
-local function onDragEnd()
-    dragging = false
-end
-
--- Connect the dragging functions to the GUI frame
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         onDragStart(input)
@@ -106,135 +105,92 @@ end)
 
 mainFrame.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        onDragEnd()
+        dragging = false
     end
 end)
 
--- Function to handle Minimize and Restore actions
+-- Minimize logic
 local isMinimized = false
-local function toggleMinimize()
+minimizeButton.MouseButton1Click:Connect(function()
     if isMinimized then
-        -- Restore the frame size and minimize button position
-        TweenService:Create(mainFrame, TweenInfo.new(0.3), {Size = UDim2.new(0, 400, 0, 200)}):Play()
+        TweenService:Create(mainFrame, TweenInfo.new(0.3), {Size = UDim2.new(0, 400, 0, 250)}):Play()
         minimizeButton.Text = "-"
-        
-        -- Make teleport button and other content visible
         teleportButton.Visible = true
+        nameBox.Visible = true
+        enterButton.Visible = true
     else
-        -- Minimize the frame size and hide the content
         TweenService:Create(mainFrame, TweenInfo.new(0.3), {Size = UDim2.new(0, 400, 0, 50)}):Play()
         minimizeButton.Text = "+"
-        
-        -- Hide teleport button
         teleportButton.Visible = false
+        nameBox.Visible = false
+        enterButton.Visible = false
     end
     isMinimized = not isMinimized
-end
+end)
 
--- Minimize Button Functionality
-minimizeButton.MouseButton1Click:Connect(toggleMinimize)
-
--- Smooth Button Animations for Hover
-local buttonHoverIn = TweenService:Create(teleportButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 255, 0)})
-local buttonHoverOut = TweenService:Create(teleportButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 0, 0)})
-
--- Button hover effects
+-- Hover effects
 teleportButton.MouseEnter:Connect(function()
-    buttonHoverIn:Play()
+    TweenService:Create(teleportButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 255, 0)}):Play()
 end)
 
 teleportButton.MouseLeave:Connect(function()
-    buttonHoverOut:Play()
+    TweenService:Create(teleportButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 0, 0)}):Play()
 end)
 
--- Function to teleport the player (Teleportation Logic)
-local function teleportToMousePosition()
-    local character = player.Character or player.CharacterAdded:Wait()
-    local mousePosition = player:GetMouse().Hit.Position
-    
-    -- Teleport the player to the mouse position
-    character:SetPrimaryPartCFrame(CFrame.new(mousePosition))
-end
-
--- Teleportation Logic when Control is held
-local UserInputService = game:GetService("UserInputService")
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-
-    -- Check if Control key is held and if MouseButton1 (Left Click) is pressed
-    if input.UserInputType == Enum.UserInputType.MouseButton1 and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-        teleportToMousePosition()
-    end
-end)
-
--- Function to teleport the player to another player's position (Annoy All Logic)
-local function teleportToPlayer(targetPlayer)
-    local character = player.Character or player.CharacterAdded:Wait()
-    local targetCharacter = targetPlayer.Character or targetPlayer.CharacterAdded:Wait()
-    
-    -- Teleport the player to the target's position
-    character:SetPrimaryPartCFrame(targetCharacter.PrimaryPart.CFrame)
-end
-
--- Teleportation Logic
+-- Annoy All logic
 local teleporting = false
-local playersList = {}
-
--- Function to start the teleporting process (Annoy All)
-local function startTeleporting()
-    teleporting = true
-    teleportButton.Text = "Stop Teleporting"
-
-    while teleporting do
-        -- Rebuild the player list each time for dynamic updates
-        playersList = {}
-        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer ~= player then
-                table.insert(playersList, otherPlayer)
-            end
-        end
-
-        table.sort(playersList, function(a, b)
-            local aScore = a:FindFirstChild("leaderstats") and a.leaderstats:FindFirstChild("Score") and a.leaderstats.Score.Value or 0
-            local bScore = b:FindFirstChild("leaderstats") and b.leaderstats:FindFirstChild("Score") and b.leaderstats.Score.Value or 0
-            return aScore > bScore
-        end)
-
-        -- Loop through each player with 0.6s per player
-        for _, targetPlayer in ipairs(playersList) do
-            if not teleporting then return end
-
-            -- Start a background spam teleport for this player
-            local spam = true
-            task.spawn(function()
-                while spam and teleporting do
-                    if targetPlayer.Character and targetPlayer.Character.PrimaryPart then
-                        local character = player.Character or player.CharacterAdded:Wait()
-                        character:SetPrimaryPartCFrame(targetPlayer.Character.PrimaryPart.CFrame)
-                    end
-                    wait(0.001)
-                end
-            end)
-
-            -- Wait 0.6 seconds before switching to the next player
-            wait(0.9)
-            spam = false -- Stop spamming for this player
-        end
-    end
-end
-
--- Function to stop the teleporting
-local function stopTeleporting()
-    teleporting = false
-    teleportButton.Text = "Annoy All"
-end
-
--- Button click handling
 teleportButton.MouseButton1Click:Connect(function()
+    teleporting = not teleporting
+    teleportButton.Text = teleporting and "Stop" or "Annoy All"
+
     if teleporting then
-        stopTeleporting()
-    else
-        startTeleporting()
+        task.spawn(function()
+            while teleporting do
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p ~= player then
+                        local myChar = player.Character or player.CharacterAdded:Wait()
+                        local targetChar = p.Character
+                        if myChar and targetChar and targetChar:FindFirstChild("HumanoidRootPart") then
+                            local spam = true
+                            task.spawn(function()
+                                while spam and teleporting do
+                                    myChar:SetPrimaryPartCFrame(targetChar.HumanoidRootPart.CFrame)
+                                    task.wait(0.001)
+                                end
+                            end)
+                            task.wait(0.9)
+                            spam = false
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- One-time spam teleport to display name
+enterButton.MouseButton1Click:Connect(function()
+    local targetName = nameBox.Text:lower()
+    if targetName == "" then return end
+
+    for _, p in pairs(Players:GetPlayers()) do
+        if p.DisplayName:lower() == targetName then
+            local myChar = player.Character or player.CharacterAdded:Wait()
+            local root = myChar:FindFirstChild("HumanoidRootPart")
+            local targetChar = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+
+            if root and targetChar then
+                local originalPos = root.CFrame
+                local endTime = tick() + 0.9
+
+                while tick() < endTime do
+                    root.CFrame = targetChar.CFrame
+                    task.wait(0.001)
+                end
+
+                root.CFrame = originalPos -- Return back
+            end
+            break
+        end
     end
 end)
