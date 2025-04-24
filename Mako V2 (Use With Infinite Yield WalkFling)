@@ -185,41 +185,42 @@ local playersList = {}
 local function startTeleporting()
     teleporting = true
     teleportButton.Text = "Stop Teleporting"
-    
-    -- Get all players in the server sorted by leaderboard position (top to bottom)
-    playersList = {}
-    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-        if otherPlayer ~= player then
-            table.insert(playersList, otherPlayer)
-        end
-    end
-    table.sort(playersList, function(a, b)
-        local aScore = a:FindFirstChild("leaderstats") and a.leaderstats:FindFirstChild("Score") and a.leaderstats.Score.Value or 0
-        local bScore = b:FindFirstChild("leaderstats") and b.leaderstats:FindFirstChild("Score") and b.leaderstats.Score.Value or 0
-        return aScore > bScore
-    end)
-    
-    -- Teleport every 0.1 seconds to a new player, dynamically updating as players join/leave
-    while teleporting do
-        for _, targetPlayer in ipairs(playersList) do
-            if targetPlayer.Character then
-                teleportToPlayer(targetPlayer)
-            end
-            wait(0.6)
-        end
 
-        -- Rebuild the player list dynamically on each loop to handle join/leave
+    while teleporting do
+        -- Rebuild the player list each time for dynamic updates
         playersList = {}
         for _, otherPlayer in pairs(game.Players:GetPlayers()) do
             if otherPlayer ~= player then
                 table.insert(playersList, otherPlayer)
             end
         end
+
         table.sort(playersList, function(a, b)
             local aScore = a:FindFirstChild("leaderstats") and a.leaderstats:FindFirstChild("Score") and a.leaderstats.Score.Value or 0
             local bScore = b:FindFirstChild("leaderstats") and b.leaderstats:FindFirstChild("Score") and b.leaderstats.Score.Value or 0
             return aScore > bScore
         end)
+
+        -- Loop through each player with 0.6s per player
+        for _, targetPlayer in ipairs(playersList) do
+            if not teleporting then return end
+
+            -- Start a background spam teleport for this player
+            local spam = true
+            task.spawn(function()
+                while spam and teleporting do
+                    if targetPlayer.Character and targetPlayer.Character.PrimaryPart then
+                        local character = player.Character or player.CharacterAdded:Wait()
+                        character:SetPrimaryPartCFrame(targetPlayer.Character.PrimaryPart.CFrame)
+                    end
+                    wait(0.01)
+                end
+            end)
+
+            -- Wait 0.6 seconds before switching to the next player
+            wait(0.6)
+            spam = false -- Stop spamming for this player
+        end
     end
 end
 
