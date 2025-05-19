@@ -1,0 +1,681 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+-- States
+local killAuraEnabled = false
+local spinbotEnabled = false
+local killAuraRadius = 20
+local spinbotDistance = 10
+local clicking = false
+local uiVisible = true
+local lastTarget = nil
+local lastTargetTime = 0
+
+local GuiFrames = {} -- Add this line
+
+-- GUI setup
+local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+screenGui.Name = "DuelEnhancerGUI"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+
+local topLabel = Instance.new("TextLabel")
+topLabel.Name = "MakosEnhanceLabel"
+topLabel.Size = UDim2.new(0, 400, 0, 40)
+topLabel.Position = UDim2.new(0.5, -200, 0, 10) -- Centered top
+topLabel.BackgroundTransparency = 1
+topLabel.Text = "Makos Duel Enhancements"
+topLabel.TextColor3 = Color3.new(1, 1, 1)
+topLabel.Font = Enum.Font.Garamond
+topLabel.TextScaled = true
+topLabel.ZIndex = 10
+topLabel.Parent = screenGui
+
+
+-- Dark background
+local darkBackground = Instance.new("Frame", screenGui)
+darkBackground.Size = UDim2.new(1, 0, 1, 0)
+darkBackground.Position = UDim2.new(0, 0, 0, 0)
+darkBackground.BackgroundColor3 = Color3.new(0, 0, 0)
+darkBackground.BackgroundTransparency = 0.5 -- Immediately visible
+darkBackground.ZIndex = 0
+
+-- Show notification on load
+StarterGui:SetCore("SendNotification", {
+	Title = "GUI Loaded",
+	Text = "Hit P To Hide Gui",
+	Duration = 5
+})
+
+-- Helper: fade tween
+local function fade(obj, targetTransparency, duration)
+	TweenService:Create(obj, TweenInfo.new(duration), {BackgroundTransparency = targetTransparency}):Play()
+end
+
+-- Create main frame
+local function createDraggableFrame(name, size, position, labelText)
+	local frame = Instance.new("Frame", screenGui)
+	frame.Name = name
+	frame.Size = size
+	frame.Position = position
+	frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	frame.BorderSizePixel = 0
+	frame.Visible = true
+	frame.Active = true
+	frame.Draggable = true
+
+	local gradient = Instance.new("UIGradient", frame)
+	gradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 0))
+	}
+	task.spawn(function()
+		while true do
+			for i = 0, 360, 1 do
+				gradient.Rotation = i
+				task.wait(0.03)
+			end
+		end
+	end)
+
+	local layout = Instance.new("UIListLayout", frame)
+	layout.Padding = UDim.new(0, 12) -- more space between items
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+	local label = Instance.new("TextLabel", frame)
+	label.Size = UDim2.new(0.95, 0, 0, 40)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextScaled = true
+	label.Font = Enum.Font.Code -- closest cursive-like font in Roblox
+	label.Text = labelText
+
+	return frame
+end
+
+local function createButton(text)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(0.9, 0, 0, 40)
+	button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.TextScaled = true
+	button.Font = Enum.Font.Garamond -- Cursive-like
+	button.Text = text
+	button.AutoButtonColor = true
+	return button
+end
+
+local function createLabel(text)
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0.9, 0, 0, 30)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextScaled = true
+	label.Font = Enum.Font.Garamond -- Cursive-like
+	label.Text = text
+	return label
+end
+
+
+
+-- GUI frames
+local mainFrame = createDraggableFrame("MainFrame", UDim2.new(0, 320, 0, 500), UDim2.new(0.1, 0, 0.3, 0), "Mako's Duel Enhancer")
+local extraFrame = createDraggableFrame("ExtraFrame", UDim2.new(0, 320, 0, 240), UDim2.new(0.6, 0, 0.3, 0), "Extra Enhancements")
+
+-- Spacer function
+local function addSpacer(parent, height)
+	local spacer = Instance.new("Frame")
+	spacer.Size = UDim2.new(1, 0, 0, height)
+	spacer.BackgroundTransparency = 1
+	spacer.BorderSizePixel = 0
+	spacer.Parent = parent
+end
+
+-- Add spacing at the top
+addSpacer(mainFrame, 20)
+addSpacer(extraFrame, 20)
+
+-- Buttons & labels
+local btn1 = createButton("Expand Hitbox - Method 1")
+local btn2 = createButton("Expand Hitbox - Method 2")
+local btn3 = createButton("MASSIVE Hitbox - Method 3")
+local toggleBtn = createButton("Toggle Hitbox Visuals")
+local killAuraBtn = createButton("Toggle Kill Aura")
+
+local radiusLabel = createLabel("Kill Aura Radius: 20")
+local radiusInc = createButton("Increase Aura Radius")
+local radiusDec = createButton("Decrease Aura Radius")
+
+local spinbotBtn = createButton("Toggle Spinbot Aura")
+local spinbotInc = createButton("Increase Spin Distance")
+local spinbotDec = createButton("Decrease Spin Distance")
+
+-- Add buttons to frames
+btn1.Parent = mainFrame
+btn2.Parent = mainFrame
+btn3.Parent = mainFrame
+toggleBtn.Parent = mainFrame
+killAuraBtn.Parent = mainFrame
+radiusLabel.Parent = mainFrame
+radiusInc.Parent = mainFrame
+radiusDec.Parent = mainFrame
+
+spinbotBtn.Parent = extraFrame
+spinbotInc.Parent = extraFrame
+spinbotDec.Parent = extraFrame
+
+-- Hitbox visuals
+local showHitboxes = false
+local function createAdornment(part)
+	local adornment = Instance.new("BoxHandleAdornment")
+	adornment.Name = "HitboxVisual"
+	adornment.Adornee = part
+	adornment.Size = part.Size
+	adornment.AlwaysOnTop = true
+	adornment.ZIndex = 1
+	adornment.Transparency = 0.5
+	adornment.Color3 = Color3.fromRGB(0, 255, 0)
+	adornment.Visible = showHitboxes
+	adornment.Parent = part
+end
+
+local function applyHitboxToCharacter(character, method)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	if method == 1 then
+		root.Size = root.Size * 2
+	elseif method == 2 then
+		root.Size = Vector3.new(root.Size.X * 3, root.Size.Y * 1.5, root.Size.Z * 3)
+	elseif method == 3 then
+		root.Size = Vector3.new(100, 100, 100)
+	end
+	root.Massless = true
+	root.CanCollide = false
+	for _, child in ipairs(root:GetChildren()) do
+		if child:IsA("BoxHandleAdornment") and child.Name == "HitboxVisual" then
+			child:Destroy()
+		end
+	end
+	createAdornment(root)
+end
+
+local function applyToAllPlayers(method)
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr.Character then
+			applyHitboxToCharacter(plr.Character, method)
+		end
+		plr.CharacterAdded:Connect(function(char)
+			char:WaitForChild("HumanoidRootPart", 5)
+			applyHitboxToCharacter(char, method)
+		end)
+	end
+end
+
+-- Button logic
+btn1.MouseButton1Click:Connect(function() applyToAllPlayers(1) end)
+btn2.MouseButton1Click:Connect(function() applyToAllPlayers(2) end)
+btn3.MouseButton1Click:Connect(function() applyToAllPlayers(3) end)
+
+toggleBtn.MouseButton1Click:Connect(function()
+	showHitboxes = not showHitboxes
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr.Character then
+			local root = plr.Character:FindFirstChild("HumanoidRootPart")
+			if root then
+				for _, adorn in ipairs(root:GetChildren()) do
+					if adorn:IsA("BoxHandleAdornment") and adorn.Name == "HitboxVisual" then
+						adorn.Visible = showHitboxes
+					end
+				end
+			end
+		end
+	end
+end)
+
+killAuraBtn.MouseButton1Click:Connect(function()
+	killAuraEnabled = not killAuraEnabled
+	killAuraBtn.Text = killAuraEnabled and "Kill Aura: ON" or "Kill Aura: OFF"
+end)
+
+radiusInc.MouseButton1Click:Connect(function()
+	killAuraRadius += 5
+	if killAuraRadius > 100 then killAuraRadius = 10 end
+	radiusLabel.Text = "Kill Aura Radius: " .. killAuraRadius
+end)
+
+radiusDec.MouseButton1Click:Connect(function()
+	killAuraRadius -= 5
+	if killAuraRadius < 5 then killAuraRadius = 5 end
+	radiusLabel.Text = "Kill Aura Radius: " .. killAuraRadius
+end)
+
+spinbotBtn.MouseButton1Click:Connect(function()
+	if not killAuraEnabled then return end
+	spinbotEnabled = not spinbotEnabled
+	spinbotBtn.Text = spinbotEnabled and "Spinbot: ON" or "Spinbot: OFF"
+end)
+
+spinbotInc.MouseButton1Click:Connect(function()
+	spinbotDistance += 2
+end)
+
+spinbotDec.MouseButton1Click:Connect(function()
+	spinbotDistance = math.max(2, spinbotDistance - 2)
+end)
+
+-- Auto-click
+local function startClickSpam()
+	if clicking then return end
+	clicking = true
+	task.spawn(function()
+		while clicking and killAuraEnabled do
+			mouse1click()
+			task.wait(0.1)
+		end
+	end)
+end
+
+-- Main loop
+RunService.RenderStepped:Connect(function()
+	local char = LocalPlayer.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+	local root = char.HumanoidRootPart
+
+	if killAuraEnabled then
+		local currentTime = tick()
+		local selectedEnemy = nil
+		local closestDist = killAuraRadius
+
+		if not lastTarget or currentTime - lastTargetTime >= 5 then
+			-- Look for a new target only if 5 seconds passed or no target yet
+			for _, plr in ipairs(Players:GetPlayers()) do
+				if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+					local enemyRoot = plr.Character.HumanoidRootPart
+					local dist = (root.Position - enemyRoot.Position).Magnitude
+					if dist <= killAuraRadius and dist < closestDist then
+						selectedEnemy = enemyRoot
+						closestDist = dist
+					end
+				end
+			end
+
+			if selectedEnemy then
+				lastTarget = selectedEnemy
+				lastTargetTime = currentTime
+			end
+		end
+
+		-- Start clicking if target exists
+		if lastTarget and lastTarget.Parent and (root.Position - lastTarget.Position).Magnitude <= killAuraRadius then
+			startClickSpam()
+
+			if spinbotEnabled then
+				local time = tick()
+				local angle = time * 2 -- Spin speed
+				local offset = Vector3.new(math.cos(angle), 0, math.sin(angle)) * spinbotDistance
+				local targetPos = lastTarget.Position + offset
+				local currentY = root.Position.Y
+				root.CFrame = CFrame.new(Vector3.new(targetPos.X, currentY, targetPos.Z), lastTarget.Position)
+			end
+		else
+			clicking = false
+		end
+	else
+		clicking = false
+	end
+end)
+
+-- Toggle GUI with fade effect on P key
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.KeyCode == Enum.KeyCode.P and not gameProcessed then
+		uiVisible = not uiVisible
+
+		mainFrame.Visible = true
+		extraFrame.Visible = true
+
+		local targetTransparency = uiVisible and 0.5 or 1
+		local frameGoal = uiVisible and 1 or 0
+
+		fade(darkBackground, targetTransparency, 0.25)
+		mainFrame:TweenSize(mainFrame.Size, "Out", "Quad", 0.25, true)
+		extraFrame:TweenSize(extraFrame.Size, "Out", "Quad", 0.25, true)
+
+		for _, gui in {mainFrame, extraFrame} do
+			gui.Visible = true
+			for _, child in ipairs(gui:GetChildren()) do
+				if child:IsA("GuiObject") then
+					child.Visible = uiVisible
+				end
+			end
+		end
+
+		task.delay(0.3, function()
+			if not uiVisible then
+				mainFrame.Visible = false
+				extraFrame.Visible = false
+			end
+		end)
+	end
+end)
+
+-- Legit Frame (taller and properly labeled)
+local legitFrame = createDraggableFrame("LegitFrame", UDim2.new(0, 320, 0, 310), UDim2.new(0.35, 0, 0.3, 0), "Legit Enhancements")
+addSpacer(legitFrame, 20)
+
+local triggerBotEnabled = false
+local aimLockEnabled = false
+local aimLockKey = Enum.KeyCode.C
+local aimLockTarget = nil
+
+-- Create UI buttons
+local triggerBotBtn = createButton("Triggerbot: OFF")
+local aimLockToggleBtn = createButton("Aimlock: OFF")
+local aimLockKeyBtn = createButton("Set Aimlock Key (Current: C)")
+
+-- Aimlock Key Input TextBox
+local aimLockInput = Instance.new("TextBox")
+aimLockInput.Size = UDim2.new(0.9, 0, 0, 40)
+aimLockInput.Position = UDim2.new(0.05, 0, 0, 0)
+aimLockInput.PlaceholderText = "Press Enter after typing"
+aimLockInput.Text = ""
+aimLockInput.TextScaled = true
+aimLockInput.Font = Enum.Font.Garamond
+aimLockInput.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+aimLockInput.TextColor3 = Color3.new(1, 1, 1)
+aimLockInput.ClearTextOnFocus = false
+aimLockInput.Visible = true
+aimLockInput.Parent = legitFrame
+
+-- Parent buttons
+triggerBotBtn.Parent = legitFrame
+aimLockToggleBtn.Parent = legitFrame
+aimLockKeyBtn.Parent = legitFrame
+
+-- Add Legit Frame to toggle group
+table.insert(GuiFrames, legitFrame)
+
+-- === Triggerbot ===
+RunService.RenderStepped:Connect(function()
+	if triggerBotEnabled then
+		local target = Mouse.Target
+		if target and target.Parent and target.Parent:FindFirstChild("Humanoid") then
+			mouse1click()
+			task.wait(0.1)
+		end
+	end
+end)
+
+-- === Aimlock Follow Logic ===
+RunService.RenderStepped:Connect(function()
+	if aimLockEnabled and aimLockTarget and aimLockTarget:FindFirstChild("Head") then
+		local cam = workspace.CurrentCamera
+		local headPos = aimLockTarget.Head.Position
+		local direction = (headPos - cam.CFrame.Position).Unit
+		cam.CFrame = CFrame.new(cam.CFrame.Position, cam.CFrame.Position + direction)
+	end
+end)
+
+-- === Triggerbot Button ===
+triggerBotBtn.MouseButton1Click:Connect(function()
+	triggerBotEnabled = not triggerBotEnabled
+	triggerBotBtn.Text = "Triggerbot: " .. (triggerBotEnabled and "ON" or "OFF")
+end)
+
+-- === Aimlock Button (optional manual toggle) ===
+aimLockToggleBtn.MouseButton1Click:Connect(function()
+	aimLockEnabled = not aimLockEnabled
+	aimLockTarget = nil
+	aimLockToggleBtn.Text = "Aimlock: " .. (aimLockEnabled and "ON" or "OFF")
+end)
+
+-- === Set Aimlock Key Button ===
+aimLockKeyBtn.MouseButton1Click:Connect(function()
+	aimLockInput:CaptureFocus()
+end)
+
+-- === Capture Aimlock Key Input ===
+aimLockInput.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		local key = aimLockInput.Text:upper()
+		if Enum.KeyCode[key] then
+			aimLockKey = Enum.KeyCode[key]
+			aimLockKeyBtn.Text = "Set Aimlock Key (Current: " .. key .. ")"
+		end
+	end
+end)
+
+-- === Input Listener ===
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	-- Hide GUI with "P"
+	if input.KeyCode == Enum.KeyCode.P then
+		for _, f in ipairs(GuiFrames) do
+			f.Visible = not f.Visible
+		end
+	end
+
+	-- Aimlock Toggle Key
+	if input.KeyCode == aimLockKey then
+		aimLockEnabled = not aimLockEnabled
+		aimLockToggleBtn.Text = "Aimlock: " .. (aimLockEnabled and "ON" or "OFF")
+
+		if aimLockEnabled then
+			-- Find closest player on toggle ON
+			local closest, minDist = nil, math.huge
+			for _, plr in pairs(Players:GetPlayers()) do
+				if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+					local head = plr.Character.Head
+					local screenPoint, onScreen = workspace.CurrentCamera:WorldToViewportPoint(head.Position)
+					if onScreen then
+						local dist = (Vector2.new(screenPoint.X, screenPoint.Y) - UserInputService:GetMouseLocation()).Magnitude
+						if dist < minDist then
+							closest = plr
+							minDist = dist
+						end
+					end
+				end
+			end
+			aimLockTarget = closest and closest.Character or nil
+		else
+			aimLockTarget = nil
+		end
+	end
+end)
+
+-- Experimental Frame (bottom screen with BUGGY labels)
+local experimentalFrame = createDraggableFrame("ExperimentalFrame", UDim2.new(0, 320, 0, 350), UDim2.new(0.5, -160, 1, -330), "Experimental Features")
+addSpacer(experimentalFrame, 20)
+
+-- Flags
+local flyEnabled = false
+local clickTeleportEnabled = false
+
+-- Create Buttons (with BUGGY tag)
+local teleportBtn = createButton("Teleport To Random Player (BUGGY)")
+local rejoinBtn = createButton("Rejoin Game (BUGGY)")
+local flyBtn = createButton("Fly: OFF (BUGGY)")
+local tweenBtn = createButton("Tween To Random Player (BUGGY)")
+local clickTeleportBtn = createButton("Click To Teleport: OFF (BUGGY)")
+
+-- Parent buttons to frame
+teleportBtn.Parent = experimentalFrame
+rejoinBtn.Parent = experimentalFrame
+flyBtn.Parent = experimentalFrame
+tweenBtn.Parent = experimentalFrame
+clickTeleportBtn.Parent = experimentalFrame
+
+-- Add to toggleable GUI frames
+table.insert(GuiFrames, experimentalFrame)
+
+-- Teleport to random player
+teleportBtn.MouseButton1Click:Connect(function()
+	local others = {}
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			table.insert(others, p)
+		end
+	end
+	local random = others[math.random(1, #others)]
+	if random then
+		LocalPlayer.Character:MoveTo(random.Character.HumanoidRootPart.Position)
+	end
+end)
+
+-- Rejoin game
+rejoinBtn.MouseButton1Click:Connect(function()
+	TeleportService:Teleport(game.PlaceId, LocalPlayer)
+end)
+
+-- Fly toggle
+flyBtn.MouseButton1Click:Connect(function()
+	flyEnabled = not flyEnabled
+	flyBtn.Text = "Fly: " .. (flyEnabled and "ON" or "OFF") .. " (BUGGY)"
+
+	if flyEnabled then
+		local hrp = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+		local bodyGyro = Instance.new("BodyGyro", hrp)
+		bodyGyro.MaxTorque = Vector3.new(400000, 400000, 400000)
+		bodyGyro.P = 10000
+
+		local bodyVel = Instance.new("BodyVelocity", hrp)
+		bodyVel.Velocity = Vector3.zero
+		bodyVel.MaxForce = Vector3.new(400000, 400000, 400000)
+
+		local flyConn = RunService.RenderStepped:Connect(function()
+			if not flyEnabled then
+				bodyGyro:Destroy()
+				bodyVel:Destroy()
+				flyConn:Disconnect()
+				return
+			end
+
+			local move = Vector3.zero
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += workspace.CurrentCamera.CFrame.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then move -= workspace.CurrentCamera.CFrame.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then move -= workspace.CurrentCamera.CFrame.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += workspace.CurrentCamera.CFrame.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
+			if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0, 1, 0) end
+
+			bodyVel.Velocity = move.Unit * 50
+			bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+		end)
+	end
+end)
+
+-- Tween to random player
+tweenBtn.MouseButton1Click:Connect(function()
+	local others = {}
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			table.insert(others, p)
+		end
+	end
+	local target = others[math.random(1, #others)]
+	if target then
+		local hrp = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+		local goal = target.Character.HumanoidRootPart.Position
+		local tween = TweenService:Create(hrp, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+			CFrame = CFrame.new(goal)
+		})
+		tween:Play()
+	end
+end)
+
+-- Click to Teleport toggle
+clickTeleportBtn.MouseButton1Click:Connect(function()
+	clickTeleportEnabled = not clickTeleportEnabled
+	clickTeleportBtn.Text = "Click To Teleport: " .. (clickTeleportEnabled and "ON" or "OFF") .. " (BUGGY)"
+end)
+
+-- CTRL + click teleport
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if clickTeleportEnabled and input.UserInputType == Enum.UserInputType.MouseButton1 and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+		local mouseRay = workspace.CurrentCamera:ScreenPointToRay(Mouse.X, Mouse.Y)
+		local raycastParams = RaycastParams.new()
+		raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+		raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+		local result = workspace:Raycast(mouseRay.Origin, mouseRay.Direction * 500, raycastParams)
+		if result and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(result.Position + Vector3.new(0, 5, 0))
+		end
+	end
+end)
+
+-- Disabler Frame (next to Experimental)
+local disablerFrame = createDraggableFrame("DisablerFrame", UDim2.new(0, 320, 0, 200), UDim2.new(0.5, 180, 1, -180), "Disabler Tools")
+addSpacer(disablerFrame, 20)
+
+-- States
+local antiLagbackEnabled = false
+local acDisablerRan = false
+
+-- Buttons
+local antiLagbackBtn = createButton("Anti Lagback: OFF (BUGGY)")
+local acDisablerBtn = createButton("Run AC Disabler (BUGGY)")
+
+-- Add buttons
+antiLagbackBtn.Parent = disablerFrame
+acDisablerBtn.Parent = disablerFrame
+
+-- Add frame to toggleable GUI frames
+table.insert(GuiFrames, disablerFrame)
+
+-- Anti Lagback logic (CFrame override)
+antiLagbackBtn.MouseButton1Click:Connect(function()
+	antiLagbackEnabled = not antiLagbackEnabled
+	antiLagbackBtn.Text = "Anti Lagback: " .. (antiLagbackEnabled and "ON" or "OFF") .. " (BUGGY)"
+
+	if antiLagbackEnabled then
+		local lastPosition = nil
+		local conn
+		conn = RunService.Heartbeat:Connect(function()
+			if not antiLagbackEnabled then conn:Disconnect() return end
+			local char = LocalPlayer.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local hrp = char.HumanoidRootPart
+				if lastPosition and (hrp.Position - lastPosition).Magnitude > 5 then
+					hrp.CFrame = CFrame.new(lastPosition) -- restore position
+				else
+					lastPosition = hrp.Position
+				end
+			end
+		end)
+	end
+end)
+
+-- AC Disabler (basic dummy method)
+acDisablerBtn.MouseButton1Click:Connect(function()
+	if acDisablerRan then return end
+	acDisablerRan = true
+	acDisablerBtn.Text = "AC Disabler: RAN (BUGGY)"
+
+	-- Attempt to disable common anti-cheat elements
+	for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+		if v:IsA("Script") or v:IsA("LocalScript") then
+			pcall(function() v.Disabled = true end)
+		end
+	end
+
+	for _, conn in pairs(getconnections or debug.getregistry()) do
+		if typeof(conn) == "table" and rawget(conn, "Disable") then
+			pcall(function() conn:Disable() end)
+		end
+	end
+
+	if workspace:FindFirstChild("Anticheat") then
+		workspace.Anticheat:Destroy()
+	end
+
+	-- Warning: effectiveness varies by game and is not guaranteed
+end)
