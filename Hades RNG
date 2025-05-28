@@ -1,0 +1,230 @@
+-- SERVICES
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local cam = Workspace.CurrentCamera
+
+-- GUI SETUP
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "VelumGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local gui = Instance.new("Frame")
+gui.Name = "MainFrame"
+gui.Size = UDim2.new(0, 600, 0, 400)
+gui.Position = UDim2.new(0.5, -300, 0.5, -200)
+gui.BackgroundTransparency = 0.1
+gui.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+gui.Parent = ScreenGui
+gui.Active = true
+gui.Draggable = true
+
+local gradient = Instance.new("UIGradient")
+gradient.Rotation = 0
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 128)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 128)),
+}
+gradient.Parent = gui
+
+task.spawn(function()
+	while gui.Parent do
+		gradient.Rotation = (gradient.Rotation + 1) % 360
+		RunService.RenderStepped:Wait()
+	end
+end)
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Text = "Velum.lol"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextStrokeTransparency = 0.7
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 24
+titleLabel.BackgroundTransparency = 1
+titleLabel.Size = UDim2.new(0, 150, 0, 30)
+titleLabel.Position = UDim2.new(0, 10, 0, 10)
+titleLabel.Parent = gui
+
+local tabsFrame = Instance.new("Frame")
+tabsFrame.Name = "TabsFrame"
+tabsFrame.Size = UDim2.new(0, 120, 0, 350)
+tabsFrame.Position = UDim2.new(0, 10, 0, 50)
+tabsFrame.BackgroundTransparency = 0.15
+tabsFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+tabsFrame.Parent = gui
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 5)
+UIListLayout.Parent = tabsFrame
+
+local contentFrame = Instance.new("Frame")
+contentFrame.Name = "ContentFrame"
+contentFrame.Size = UDim2.new(1, -140, 1, -60)
+contentFrame.Position = UDim2.new(0, 130, 0, 50)
+contentFrame.BackgroundTransparency = 0.15
+contentFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+contentFrame.Parent = gui
+
+local tabs = {}
+local currentTab = nil
+
+local function createTab(name)
+	local tabButton = Instance.new("TextButton")
+	tabButton.Name = name .. "Tab"
+	tabButton.Text = name
+	tabButton.Font = Enum.Font.GothamBold
+	tabButton.TextSize = 18
+	tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	tabButton.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+	tabButton.Size = UDim2.new(1, -10, 0, 40)
+	tabButton.Parent = tabsFrame
+
+	local tabContent = Instance.new("ScrollingFrame")
+	tabContent.Name = name .. "Content"
+	tabContent.Size = UDim2.new(1, 0, 1, 0)
+	tabContent.Position = UDim2.new(0, 0, 0, 0)
+	tabContent.BackgroundTransparency = 1
+	tabContent.ScrollBarThickness = 6
+	tabContent.Visible = false
+	tabContent.Parent = contentFrame
+
+	local contentLayout = Instance.new("UIListLayout")
+	contentLayout.Padding = UDim.new(0, 10)
+	contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	contentLayout.Parent = tabContent
+
+	tabs[name] = {
+		button = tabButton,
+		content = tabContent,
+	}
+
+	tabButton.MouseButton1Click:Connect(function()
+		for _, v in pairs(tabs) do
+			v.content.Visible = false
+			v.button.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+		end
+		tabContent.Visible = true
+		tabButton.BackgroundColor3 = Color3.fromRGB(85, 85, 85)
+		currentTab = name
+	end)
+
+	return tabs[name]
+end
+
+-- MAIN TAB SETUP
+createTab("Main")
+tabs["Main"].button.BackgroundColor3 = Color3.fromRGB(85, 85, 85)
+tabs["Main"].content.Visible = true
+currentTab = "Main"
+
+local function createToggleButton(tabName, text, order, default, callback)
+	local tab = tabs[tabName]
+	if not tab then return end
+
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -20, 0, 35)
+	btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.AutoButtonColor = false
+	btn.Parent = tab.content
+	btn.LayoutOrder = order
+
+	local statusLabel = Instance.new("TextLabel")
+	statusLabel.Size = UDim2.new(0, 50, 1, 0)
+	statusLabel.Position = UDim2.new(1, -55, 0, 0)
+	statusLabel.BackgroundTransparency = 1
+	statusLabel.Font = Enum.Font.GothamBold
+	statusLabel.TextSize = 16
+	statusLabel.TextColor3 = default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+	statusLabel.Text = default and " : On" or " : Off"
+	statusLabel.Parent = btn
+
+	local isOn = default
+	btn.Text = text
+
+	btn.MouseButton1Click:Connect(function()
+		isOn = not isOn
+		statusLabel.Text = isOn and " : On" or " : Off"
+		statusLabel.TextColor3 = isOn and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+		if callback then
+			callback(isOn)
+		end
+	end)
+	return btn
+end
+
+-- AUTO FINDER FUNCTION
+local autoFinderRunning = false
+local function autoFinder(enabled)
+	autoFinderRunning = enabled
+
+	if enabled then
+		cam.CameraType = Enum.CameraType.Scriptable
+
+		-- Keep camera locked down
+		task.spawn(function()
+			while autoFinderRunning do
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+					local root = LocalPlayer.Character.HumanoidRootPart
+					cam.CFrame = CFrame.new(root.Position + Vector3.new(0, 5, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
+				end
+				RunService.RenderStepped:Wait()
+			end
+			cam.CameraType = Enum.CameraType.Custom
+		end)
+
+		-- Item finder logic
+		task.spawn(function()
+			while autoFinderRunning do
+				local character = LocalPlayer.Character
+				local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+				if not rootPart then break end
+
+				local itemsMain = Workspace:FindFirstChild("Items") and Workspace.Items:FindFirstChild("Main")
+				if itemsMain then
+					for _, obj in pairs(itemsMain:GetDescendants()) do
+						if obj:IsA("BasePart") and obj.Name == "Handle" then
+							rootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 3, 0))
+							wait(0.2)
+							local prompt = obj:FindFirstChildWhichIsA("ProximityPrompt", true)
+							if prompt then fireproximityprompt(prompt) end
+							local click = obj:FindFirstChildWhichIsA("ClickDetector", true)
+							if click then fireclickdetector(click) end
+							wait(0.5)
+						end
+					end
+				end
+				wait(1)
+			end
+		end)
+	end
+end
+
+
+-- MAIN TAB FEATURES
+createToggleButton("Main", "Auto Finder", 1, false, autoFinder)
+
+
+
+
+-- CREDITS TAB SETUP
+local creditsTab = createTab("Credits")
+
+local creditsLabel = Instance.new("TextLabel")
+creditsLabel.Size = UDim2.new(1, -20, 0, 100)
+creditsLabel.Position = UDim2.new(0, 10, 0, 10)
+creditsLabel.BackgroundTransparency = 1
+creditsLabel.Font = Enum.Font.GothamSemibold
+creditsLabel.TextSize = 18
+creditsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+creditsLabel.TextWrapped = true
+creditsLabel.Text = "Made by: Mako\nThank you for using Velum.lol GUI!\nHave fun cheating in Hades RNG"
+creditsLabel.Parent = creditsTab.content
