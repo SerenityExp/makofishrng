@@ -1,0 +1,157 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- Create GUI
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "FloatModeGui"
+screenGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 80)
+frame.Position = UDim2.new(0.05, 0, 0.8, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = false
+frame.Parent = screenGui
+
+local gradient = Instance.new("UIGradient", frame)
+gradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 100, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 255))
+})
+gradient.Rotation = 45
+
+-- Drag Bar
+local dragBar = Instance.new("TextLabel")
+dragBar.Size = UDim2.new(1, 0, 0, 20)
+dragBar.BackgroundTransparency = 1
+dragBar.Text = "Float Mode"
+dragBar.Font = Enum.Font.GothamBold
+dragBar.TextColor3 = Color3.new(1, 1, 1)
+dragBar.TextSize = 14
+dragBar.Parent = frame
+
+-- Drag logic
+local UIS = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+
+dragBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+-- Button
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(1, 0, 0, 60)
+button.Position = UDim2.new(0, 0, 0, 20)
+button.Text = "Enable Float Mode"
+button.BackgroundTransparency = 1
+button.TextColor3 = Color3.new(1, 1, 1)
+button.TextScaled = true
+button.Font = Enum.Font.GothamBold
+button.Parent = frame
+
+-- State control
+local enabled = false
+local originalGravity = workspace.Gravity
+local originalWalkSpeed = humanoid.WalkSpeed
+local originalJumpPower = humanoid.JumpPower
+local spinVelocity
+local animationScript
+
+-- Control variables
+local floatingDirection = Vector3.new(0, 0, 0)
+local moveSpeed = 2  -- How fast you can guide yourself (don't directly accelerate)
+
+-- Toggle logic
+button.MouseButton1Click:Connect(function()
+	character = player.Character or player.CharacterAdded:Wait()
+	hrp = character:WaitForChild("HumanoidRootPart")
+	humanoid = character:WaitForChild("Humanoid")
+
+	enabled = not enabled
+	button.Text = enabled and "Disable Float Mode" or "Enable Float Mode"
+
+	if enabled then
+		-- Float mode ON
+		workspace.Gravity = 1
+		humanoid.WalkSpeed = 2
+		humanoid.JumpPower = 120
+
+		-- Spin
+		spinVelocity = Instance.new("BodyAngularVelocity")
+		spinVelocity.AngularVelocity = Vector3.new(1, 1, 1) * 2
+		spinVelocity.MaxTorque = Vector3.new(1, 1, 1) * math.huge
+		spinVelocity.P = 1250
+		spinVelocity.Name = "SpinBall"
+		spinVelocity.Parent = hrp
+
+		-- Disable character animations
+		for _, obj in pairs(character:GetChildren()) do
+			if obj:IsA("LocalScript") and obj.Name == "Animate" then
+				animationScript = obj
+				obj.Disabled = true
+			end
+		end
+	else
+		-- Float mode OFF
+		workspace.Gravity = originalGravity
+		humanoid.WalkSpeed = originalWalkSpeed
+		humanoid.JumpPower = originalJumpPower
+
+		if hrp:FindFirstChild("SpinBall") then
+			hrp.SpinBall:Destroy()
+		end
+
+		-- Re-enable animations
+		if animationScript then
+			animationScript.Disabled = false
+		end
+	end
+end)
+
+-- Guide movement logic
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if enabled and not gameProcessed then
+		if input.UserInputType == Enum.UserInputType.Keyboard then
+			-- Get movement input (W, A, S, D or Arrow Keys)
+			if input.KeyCode == Enum.KeyCode.W then
+				floatingDirection = Vector3.new(0, 0, -1) -- Move forward
+			elseif input.KeyCode == Enum.KeyCode.S then
+				floatingDirection = Vector3.new(0, 0, 1) -- Move backward
+			elseif input.KeyCode == Enum.KeyCode.A then
+				floatingDirection = Vector3.new(-1, 0, 0) -- Move left
+			elseif input.KeyCode == Enum.KeyCode.D then
+				floatingDirection = Vector3.new(1, 0, 0) -- Move right
+			end
+		end
+	end
+end)
+
+-- Update floating direction continuously
+game:GetService("RunService").Heartbeat:Connect(function()
+	if enabled then
+		local direction = floatingDirection * moveSpeed
+		hrp.Velocity = Vector3.new(direction.X, hrp.Velocity.Y, direction.Z)  -- Keep Y velocity for floatiness
+	end
+end)
