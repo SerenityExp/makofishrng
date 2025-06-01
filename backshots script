@@ -1,0 +1,131 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+screenGui.Name = "TargetGUI"
+screenGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 300, 0, 150)
+frame.Position = UDim2.new(0.5, -150, 0.5, -75)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.Active = true
+frame.Draggable = true -- GUI is draggable
+
+local corner = Instance.new("UICorner", frame)
+corner.CornerRadius = UDim.new(0, 12)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "Target Back & Forth"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+
+local input = Instance.new("TextBox", frame)
+input.Size = UDim2.new(1, -20, 0, 30)
+input.Position = UDim2.new(0, 10, 0, 40)
+input.PlaceholderText = "Enter Display Name"
+input.Text = ""
+input.Font = Enum.Font.Gotham
+input.TextSize = 14
+input.TextColor3 = Color3.new(1, 1, 1)
+input.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+local startBtn = Instance.new("TextButton", frame)
+startBtn.Size = UDim2.new(0.45, 0, 0, 30)
+startBtn.Position = UDim2.new(0.05, 0, 0, 90)
+startBtn.Text = "Start"
+startBtn.Font = Enum.Font.GothamBold
+startBtn.TextSize = 14
+startBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+startBtn.TextColor3 = Color3.new(1, 1, 1)
+
+local stopBtn = Instance.new("TextButton", frame)
+stopBtn.Size = UDim2.new(0.45, 0, 0, 30)
+stopBtn.Position = UDim2.new(0.5, 0, 0, 90)
+stopBtn.Text = "Stop"
+stopBtn.Font = Enum.Font.GothamBold
+stopBtn.TextSize = 14
+stopBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+stopBtn.TextColor3 = Color3.new(1, 1, 1)
+
+-- Logic
+local running = false
+local targetPlayer = nil
+local tweenBack = nil
+
+local function findPlayerByDisplayName(displayName)
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr.DisplayName:lower() == displayName:lower() and plr ~= LocalPlayer then
+			return plr
+		end
+	end
+	return nil
+end
+
+local function tweenToPosition(pos, lookAt)
+	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	local cf = CFrame.new(pos, lookAt)
+	local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+	local tween = TweenService:Create(hrp, tweenInfo, {CFrame = cf})
+	tween:Play()
+	return tween
+end
+
+local function startTracking()
+	local inputName = input.Text
+	targetPlayer = findPlayerByDisplayName(inputName)
+
+	if not targetPlayer then
+		warn("Target not found")
+		return
+	end
+
+	if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		warn("Target has no character")
+		return
+	end
+
+	running = true
+
+	task.spawn(function()
+		local forwardOffset = 5 -- further back
+		local backOffset = 2 -- closer to target
+		local toggle = true
+
+		while running and targetPlayer and targetPlayer.Character and LocalPlayer.Character do
+			local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+			local localHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+			if targetHRP and localHRP then
+				local offset = toggle and backOffset or forwardOffset
+				local behindPos = targetHRP.Position - targetHRP.CFrame.LookVector * offset
+				local lookAt = targetHRP.Position
+
+				tweenBack = tweenToPosition(behindPos, lookAt)
+				tweenBack.Completed:Wait()
+				toggle = not toggle
+			end
+			task.wait(0.05)
+		end
+	end)
+end
+
+local function stopTracking()
+	running = false
+	if tweenBack then
+		tweenBack:Cancel()
+	end
+end
+
+-- Button Hooks
+startBtn.MouseButton1Click:Connect(startTracking)
+stopBtn.MouseButton1Click:Connect(stopTracking)
