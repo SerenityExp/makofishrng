@@ -81,7 +81,7 @@ local animationScript
 
 -- Control variables
 local floatingDirection = Vector3.new(0, 0, 0)
-local moveSpeed = 2  -- How fast you can guide yourself (don't directly accelerate)
+local moveSpeed = 8  -- How fast you can guide yourself (don't directly accelerate)
 
 -- Toggle logic
 button.MouseButton1Click:Connect(function()
