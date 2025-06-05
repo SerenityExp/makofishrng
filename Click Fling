@@ -1,0 +1,140 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local hiddenfling = false
+
+local function fling()
+    local lp = Players.LocalPlayer
+    local c, hrp, vel, movel = nil, nil, nil, 0.1
+
+    while hiddenfling do
+        RunService.Heartbeat:Wait()
+        c = lp.Character
+        hrp = c and c:FindFirstChild("HumanoidRootPart")
+
+        if hrp then
+            vel = hrp.Velocity
+            hrp.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
+            RunService.RenderStepped:Wait()
+            hrp.Velocity = vel
+            RunService.Stepped:Wait()
+            hrp.Velocity = vel + Vector3.new(0, movel, 0)
+            movel = -movel
+        else
+            break
+        end
+    end
+end
+
+local function flingAtTarget(targetChar)
+    if not targetChar then return end
+    local targetHrp = targetChar:FindFirstChild("HumanoidRootPart")
+    local char = player.Character
+    if not (targetHrp and char) then return end
+    local playerHrp = char:FindFirstChild("HumanoidRootPart")
+    if not playerHrp then return end
+
+    hiddenfling = true
+    local originalCFrame = playerHrp.CFrame
+
+    spawn(fling)
+
+  local startTime = tick()
+while tick() - startTime < 2 and hiddenfling do
+    -- Teleport slightly under the target (0.5 studs down)
+    playerHrp.CFrame = targetHrp.CFrame * CFrame.new(0, -0.5, 0)
+    RunService.RenderStepped:Wait()
+end
+
+    hiddenfling = false
+    playerHrp.CFrame = originalCFrame
+
+    -- Freeze in place for 0.5 seconds to stabilize
+    playerHrp.Anchored = true
+    wait(2.5)
+    playerHrp.Anchored = false
+end
+
+
+-- GUI Setup
+
+local playerGui = player:WaitForChild("PlayerGui")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FlingGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = playerGui
+ScreenGui.Enabled = true
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 250, 0, 70)
+Frame.Position = UDim2.new(0.5, -125, 0.85, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 0, 40)
+Frame.BackgroundTransparency = 0.1
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+Frame.Active = true
+Frame.Draggable = true
+
+local Gradient = Instance.new("UIGradient")
+Gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(128, 0, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 0, 30)),
+}
+Gradient.Rotation = 45
+Gradient.Parent = Frame
+
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(1, -30, 1, -30)
+Button.Position = UDim2.new(0, 15, 0, 15)
+Button.BackgroundColor3 = Color3.fromRGB(40, 0, 50)
+Button.BackgroundTransparency = 0.3
+Button.TextColor3 = Color3.new(1, 1, 1)
+Button.TextScaled = true
+Button.Font = Enum.Font.GothamBold
+Button.Text = "Toggle Fling Mode"
+Button.Parent = Frame
+
+local flingMode = false
+
+Button.MouseButton1Click:Connect(function()
+    flingMode = not flingMode
+    if flingMode then
+        Button.Text = "Fling Mode: ON (Click Player)"
+    else
+        Button.Text = "Toggle Fling Mode"
+    end
+end)
+
+local function getTargetFromMouse()
+    local target = mouse.Target
+    if not target then return nil end
+
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr.Character and target:IsDescendantOf(plr.Character) and plr ~= player then
+            return plr.Character
+        end
+    end
+    return nil
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and flingMode and input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local targetChar = getTargetFromMouse()
+        if targetChar then
+            flingAtTarget(targetChar)
+        end
+    end
+
+    if input.KeyCode == Enum.KeyCode.Insert then
+        ScreenGui.Enabled = not ScreenGui.Enabled
+    end
+end)
+
+player.CharacterAdded:Connect(function(char)
+    player.Character = char
+end)
