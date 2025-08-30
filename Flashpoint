@@ -23,8 +23,6 @@ mainFrame.Size = UDim2.new(0, 280, 0, 60)
 mainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
 mainFrame.BackgroundColor3 = DARK1
 mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Draggable = true -- draggable gui
 mainFrame.Parent = gui
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
 
@@ -152,68 +150,7 @@ end
 local getMethod = makeDropdown("Speed Method", {"WalkSpeed","CFrame","BodyVelocity","HRP Velocity"})
 local getInputType = makeDropdown("Input Mode", {"Slider","NumberBox"})
 
--- Slider + NumberBox holder
-local valueFrame = Instance.new("Frame")
-valueFrame.Size = UDim2.new(1,0,0,0)
-valueFrame.AutomaticSize = Enum.AutomaticSize.Y
-valueFrame.BackgroundTransparency = 1
-valueFrame.Parent = content
-
--- Slider
-local sliderFrame = Instance.new("Frame")
-sliderFrame.Size = UDim2.new(1, 0, 0, 35)
-sliderFrame.BackgroundColor3 = DARK2
-sliderFrame.Parent = valueFrame
-Instance.new("UICorner", sliderFrame).CornerRadius = UDim.new(0,8)
-
-local sliderBar = Instance.new("Frame")
-sliderBar.Size = UDim2.new(0.8, 0, 0.3, 0)
-sliderBar.Position = UDim2.new(0.1,0,0.35,0)
-sliderBar.BackgroundColor3 = DARK3
-sliderBar.Parent = sliderFrame
-Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(0,8)
-
-local fillBar = Instance.new("Frame")
-fillBar.Size = UDim2.new(0,0,1,0)
-fillBar.BackgroundColor3 = LAVENDER
-fillBar.Parent = sliderBar
-Instance.new("UICorner", fillBar).CornerRadius = UDim.new(0,8)
-
-local sliderValue = 100
-local dragging = false
-sliderBar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
-uis.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
-uis.InputChanged:Connect(function(i)
-    if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-        local rel = math.clamp((i.Position.X - sliderBar.AbsolutePosition.X)/sliderBar.AbsoluteSize.X,0,1)
-        fillBar.Size = UDim2.new(rel,0,1,0)
-        sliderValue = math.floor(rel*20000)
-    end
-end)
-
--- NumberBox
-local inputBox = Instance.new("TextBox")
-inputBox.Size = UDim2.new(0, 80, 0, 28)
-inputBox.Position = UDim2.new(0.5, -38, 0.5, -14)
-inputBox.Text = "100"
-inputBox.Visible = false
-inputBox.Font = Enum.Font.Gotham
-inputBox.TextSize = 14
-inputBox.TextColor3 = LAVENDER
-inputBox.BackgroundColor3 = DARK3
-inputBox.Parent = valueFrame
-Instance.new("UICorner", inputBox).CornerRadius = UDim.new(0,6)
-
-inputBox.FocusLost:Connect(function()
-    local v = tonumber(inputBox.Text)
-    if v then
-        v = math.clamp(v,0,150000)
-        sliderValue = v
-        inputBox.Text = tostring(v)
-    end
-end)
-
--- Enable Speed toggle
+-- Toggle Button
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(1, 0, 0, 35)
 toggleBtn.BackgroundColor3 = DARK3
@@ -232,7 +169,173 @@ toggleBtn.MouseButton1Click:Connect(function()
     toggleBtn.TextColor3 = enabled and DARK1 or LAVENDER
 end)
 
--- Instant Stop button
+-- Slider + NumberBox Frame
+local valueFrame = Instance.new("Frame")
+valueFrame.Size = UDim2.new(1, 0, 0, 50)
+valueFrame.BackgroundColor3 = DARK2
+valueFrame.Parent = content
+Instance.new("UICorner", valueFrame).CornerRadius = UDim.new(0, 8)
+
+local sliderBar = Instance.new("Frame")
+sliderBar.Size = UDim2.new(1, -20, 0, 6)
+sliderBar.Position = UDim2.new(0, 10, 0.5, -3)
+sliderBar.BackgroundColor3 = DARK3
+sliderBar.Parent = valueFrame
+
+local sliderFill = Instance.new("Frame")
+sliderFill.Size = UDim2.new(0, 0, 1, 0)
+sliderFill.BackgroundColor3 = LAVENDER
+sliderFill.Parent = sliderBar
+
+local sliderBtn = Instance.new("TextButton")
+sliderBtn.Size = UDim2.new(0, 12, 0, 12)
+sliderBtn.Position = UDim2.new(0, -6, 0.5, -6)
+sliderBtn.BackgroundColor3 = LAVENDER
+sliderBtn.Text = ""
+sliderBtn.Parent = sliderBar
+
+local inputBox = Instance.new("TextBox")
+inputBox.Size = UDim2.new(0, 100, 0, 30)
+inputBox.Position = UDim2.new(0.5, -50, 0.5, -15)
+inputBox.Text = "100"
+inputBox.Visible = false
+inputBox.Font = Enum.Font.Gotham
+inputBox.TextSize = 14
+inputBox.TextColor3 = LAVENDER
+inputBox.BackgroundColor3 = DARK3
+inputBox.Parent = valueFrame
+Instance.new("UICorner", inputBox).CornerRadius = UDim.new(0,6)
+
+-- Value Logic
+local speedValue = 100
+local dragging = false
+sliderBtn.MouseButton1Down:Connect(function() dragging = true end)
+uis.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
+
+rs.RenderStepped:Connect(function()
+    if dragging then
+        local mouseX = uis:GetMouseLocation().X
+        local startX = sliderBar.AbsolutePosition.X
+        local sizeX = sliderBar.AbsoluteSize.X
+        local percent = math.clamp((mouseX-startX)/sizeX,0,1)
+        sliderFill.Size = UDim2.new(percent,0,1,0)
+        sliderBtn.Position = UDim2.new(percent, -6, 0.5, -6)
+        speedValue = math.floor(percent*20000)
+        inputBox.Text = tostring(speedValue)
+    end
+end)
+
+inputBox.FocusLost:Connect(function()
+    local n = tonumber(inputBox.Text)
+    if n then
+        speedValue = math.clamp(n,0,150000)
+        local percent = math.clamp(speedValue,0,20000) / 20000
+        sliderFill.Size = UDim2.new(percent,0,1,0)
+        sliderBtn.Position = UDim2.new(percent, -6, 0.5, -6)
+    else
+        inputBox.Text = tostring(speedValue)
+    end
+end)
+
+-- Input Type Toggle
+rs.RenderStepped:Connect(function()
+    local mode = getInputType()
+    sliderBar.Visible = (mode=="Slider")
+    sliderBtn.Visible = (mode=="Slider")
+    sliderFill.Visible = (mode=="Slider")
+    inputBox.Visible = (mode=="NumberBox")
+end)
+
+-- Minimize + Fullscreen
+local minimized = false
+local fullscreen = false
+
+minBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    fullscreen = false
+    if minimized then
+        content.Visible=false
+        mainFrame:TweenSize(UDim2.new(0,330,0,40), "Out","Quad",0.25,true)
+        title.Text = "Speed GUI"
+    else
+        content.Visible=true
+        mainFrame:TweenSize(UDim2.new(0,280,0,content.AbsoluteSize.Y+60), "Out","Quad",0.25,true)
+        title.Text = "Speed GUI"
+    end
+end)
+
+fullBtn.MouseButton1Click:Connect(function()
+    if minimized then return end
+    fullscreen = not fullscreen
+    if fullscreen then
+        mainFrame:TweenSize(UDim2.new(0.5,0,0.6,0), "Out","Quad",0.3,true)
+    else
+        mainFrame:TweenSize(UDim2.new(0,280,0,content.AbsoluteSize.Y+60), "Out","Quad",0.3,true)
+    end
+end)
+
+--// Speed Application
+local char,hum,hrp
+local function updateChar()
+    char = plr.Character or plr.CharacterAdded:Wait()
+    hum = char:WaitForChild("Humanoid")
+    hrp = char:WaitForChild("HumanoidRootPart")
+end
+updateChar()
+plr.CharacterAdded:Connect(updateChar)
+
+rs.Heartbeat:Connect(function()
+    if not enabled or not hum or not hrp then return end
+    local method = getMethod()
+
+    if method=="WalkSpeed" then
+        hum.WalkSpeed = speedValue
+    elseif method=="CFrame" then
+        if hum.MoveDirection.Magnitude>0 then
+            hrp.CFrame = hrp.CFrame + (hum.MoveDirection*(speedValue/50))
+        end
+    elseif method=="BodyVelocity" then
+        local bv = hrp:FindFirstChild("SpeedBV") or Instance.new("BodyVelocity")
+        bv.Name="SpeedBV"
+        bv.MaxForce=Vector3.new(1e5,0,1e5)
+        bv.Velocity=hum.MoveDirection*speedValue
+        bv.Parent=hrp
+    elseif method=="HRP Velocity" then
+        if hum.MoveDirection.Magnitude>0 then
+            hrp.Velocity = hum.MoveDirection*speedValue
+        end
+    end
+end)
+
+--// Dragging System
+local draggingGui, dragStart, startPos
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingGui = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
+end)
+topBar.InputChanged:Connect(function(input)
+    if draggingGui and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+topBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingGui = false
+    end
+end)
+
+-- // Instant Stop Feature
+local instantStopEnabled = false
+local instantStopKey = Enum.KeyCode.X -- default key
+
+-- Button
 local stopBtn = Instance.new("TextButton")
 stopBtn.Size = UDim2.new(1, 0, 0, 35)
 stopBtn.BackgroundColor3 = DARK3
@@ -243,7 +346,20 @@ stopBtn.TextColor3 = LAVENDER
 stopBtn.Parent = content
 Instance.new("UICorner", stopBtn).CornerRadius = UDim.new(0, 8)
 
-local instantStopEnabled = false
+-- Keybind label (smaller + shifted)
+local keyLabel = Instance.new("TextButton")
+keyLabel.Size = UDim2.new(0, 70, 0, 24) -- smaller size
+keyLabel.Position = UDim2.new(1, -80, 0.5, -12) -- nudged right
+keyLabel.AnchorPoint = Vector2.new(0,0)
+keyLabel.BackgroundColor3 = DARK2
+keyLabel.Text = "Key: X"
+keyLabel.Font = Enum.Font.Gotham
+keyLabel.TextSize = 13
+keyLabel.TextColor3 = LAVENDER
+keyLabel.Parent = stopBtn
+Instance.new("UICorner", keyLabel).CornerRadius = UDim.new(0,6)
+
+-- Toggle instant stop
 stopBtn.MouseButton1Click:Connect(function()
     instantStopEnabled = not instantStopEnabled
     stopBtn.Text = "Instant Stop: " .. (instantStopEnabled and "ON" or "OFF")
@@ -251,18 +367,7 @@ stopBtn.MouseButton1Click:Connect(function()
     stopBtn.TextColor3 = instantStopEnabled and DARK1 or LAVENDER
 end)
 
--- Keybind for instant stop
-local keyLabel = Instance.new("TextButton")
-keyLabel.Size = UDim2.new(1, 0, 0, 24)
-keyLabel.BackgroundColor3 = DARK2
-keyLabel.Text = "Key: X"
-keyLabel.Font = Enum.Font.Gotham
-keyLabel.TextSize = 13
-keyLabel.TextColor3 = LAVENDER
-keyLabel.Parent = content
-Instance.new("UICorner", keyLabel).CornerRadius = UDim.new(0,6)
-
-local instantStopKey = Enum.KeyCode.X
+-- Change keybind
 local waitingForKey = false
 keyLabel.MouseButton1Click:Connect(function()
     keyLabel.Text = "Press Key..."
@@ -276,74 +381,11 @@ uis.InputBegan:Connect(function(input, gpe)
         keyLabel.Text = "Key: " .. input.KeyCode.Name
         waitingForKey = false
     elseif instantStopEnabled and input.KeyCode == instantStopKey then
-        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = plr.Character.HumanoidRootPart
+        if hrp then
             hrp.Velocity = Vector3.zero
             hrp.RotVelocity = Vector3.zero
             local bv = hrp:FindFirstChild("SpeedBV")
             if bv then bv.Velocity = Vector3.zero end
         end
-    end
-end)
-
---// Speed application
-rs.RenderStepped:Connect(function()
-    if not enabled then return end
-    local char = plr.Character
-    if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hum or not hrp then return end
-
-    local spd = sliderValue
-    if getInputType()=="NumberBox" then
-        local v = tonumber(inputBox.Text)
-        if v then spd = math.clamp(v,0,150000) end
-    end
-
-    local method = getMethod()
-    if method=="WalkSpeed" then
-        hum.WalkSpeed = spd/10
-    elseif method=="CFrame" then
-        if hum.MoveDirection.Magnitude > 0 then
-            hrp.CFrame = hrp.CFrame + hum.MoveDirection * (spd/500)
-        end
-    elseif method=="BodyVelocity" then
-        local bv = hrp:FindFirstChild("SpeedBV") or Instance.new("BodyVelocity")
-        bv.Name = "SpeedBV"
-        bv.MaxForce = Vector3.new(1,0,1)*1e5
-        bv.Velocity = hum.MoveDirection * (spd/10)
-        bv.Parent = hrp
-    elseif method=="HRP Velocity" then
-        hrp.Velocity = hum.MoveDirection * (spd/10)
-    end
-end)
-
---// Minimize & Fullscreen
-local minimized = false
-local fullscreen = false
-
-minBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        content.Visible = false
-        mainFrame.Size = UDim2.new(0, 300, 0, 50)
-        fullBtn.Active = false
-        fullBtn.AutoButtonColor = false
-    else
-        content.Visible = true
-        mainFrame.Size = UDim2.new(0, 280, 0, content.AbsoluteSize.Y+60)
-        fullBtn.Active = true
-        fullBtn.AutoButtonColor = true
-    end
-end)
-
-fullBtn.MouseButton1Click:Connect(function()
-    if minimized then return end
-    fullscreen = not fullscreen
-    if fullscreen then
-        mainFrame.Size = UDim2.new(0.6,0,0.7,0)
-    else
-        mainFrame.Size = UDim2.new(0,280,0,content.AbsoluteSize.Y+60)
     end
 end)
