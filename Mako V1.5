@@ -1,0 +1,1073 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+-- Create Intro ScreenGui
+local introGui = Instance.new("ScreenGui")
+introGui.Name = "MakoIntro"
+introGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+introGui.ResetOnSpawn = false
+
+-- Create Intro Text
+local introText = Instance.new("TextLabel")
+introText.Size = UDim2.new(0, 400, 0, 100)
+introText.Position = UDim2.new(0.5, -200, 0.5, -50)
+introText.BackgroundTransparency = 1
+introText.Text = "Mako V1.5"
+introText.TextColor3 = Color3.fromRGB(0, 0, 255) -- Blue
+introText.TextSize = 48
+introText.Font = Enum.Font.GothamBold
+introText.TextTransparency = 1
+introText.Parent = introGui
+
+-- Intro Animation
+local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+-- Fade in
+TweenService:Create(introText, tweenInfo, {TextTransparency = 0}):Play()
+task.wait(2) -- Display for 2 seconds
+-- Fade out
+TweenService:Create(introText, tweenInfo, {TextTransparency = 1}):Play()
+task.wait(1) -- Wait for fade out
+introGui:Destroy() -- Remove intro GUI
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "Mako"
+screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false
+screenGui.Enabled = true -- Ensure GUI is visible by default
+
+-- Define Colors
+local primaryColor = Color3.fromRGB(25, 25, 112) -- Dark navy blue
+local accentColor = Color3.fromRGB(0, 0, 50) -- Darker navy for accents
+local backgroundColor = Color3.fromRGB(30, 30, 30) -- Blackish background
+local textColor = Color3.fromRGB(255, 255, 255) -- White text for contrast
+local dotColor = Color3.fromRGB(100, 100, 255) -- Brighter navy blue for dots
+local contentBgColor = Color3.fromRGB(25, 25, 25) -- Darker content background
+
+-- Create Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 300, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+mainFrame.BackgroundColor3 = backgroundColor
+mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true -- Ensure dots don't extend outside
+mainFrame.Parent = screenGui
+
+-- Add UI Corner
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.Parent = mainFrame
+
+-- Add UI Gradient for background
+local uiGradient = Instance.new("UIGradient")
+uiGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
+}
+uiGradient.Parent = mainFrame
+
+-- Add UI Stroke
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Color = primaryColor -- Dark navy blue
+uiStroke.Thickness = 2
+uiStroke.Transparency = 0.5
+uiStroke.Parent = mainFrame
+
+-- Background Design: Animated Dots
+local bgDotsFrame = Instance.new("Frame")
+bgDotsFrame.Size = UDim2.new(1, 0, 1, 0)
+bgDotsFrame.BackgroundTransparency = 1
+bgDotsFrame.ClipsDescendants = true -- Clip dots to frame
+bgDotsFrame.ZIndex = 0 -- Behind other content
+bgDotsFrame.Parent = mainFrame
+
+local numDots = 20
+for i = 1, numDots do
+    local dot = Instance.new("Frame")
+    dot.Size = UDim2.new(0, 10, 0, 10)
+    dot.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    dot.BackgroundColor3 = dotColor
+    dot.Transparency = 1
+    local dotCorner = Instance.new("UICorner")
+    dotCorner.CornerRadius = UDim.new(1, 0)
+    dotCorner.Parent = dot
+    dot.Parent = bgDotsFrame
+    
+    coroutine.wrap(function()
+        while true do
+            -- Reposition randomly
+            dot.Position = UDim2.new(math.random(), 0, math.random(), 0)
+            -- Fade in (transparency to 0)
+            local fadeTime = math.random(5, 15) / 10
+            local ti = TweenInfo.new(fadeTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+            TweenService:Create(dot, ti, {Transparency = 0}):Play()
+            task.wait(fadeTime)
+            -- Pause visible
+            task.wait(math.random(1, 5) / 10)
+            -- Fade out (transparency to 1)
+            TweenService:Create(dot, ti, {Transparency = 1}):Play()
+            task.wait(fadeTime)
+            -- Pause invisible
+            task.wait(math.random(10, 30) / 10)
+        end
+    end)()
+end
+
+-- Create Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 40)
+titleBar.BackgroundColor3 = accentColor
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleBarCorner = Instance.new("UICorner")
+titleBarCorner.CornerRadius = UDim.new(0, 8)
+titleBarCorner.Parent = titleBar
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -80, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "Mako"
+title.TextColor3 = textColor
+title.TextSize = 20
+title.Font = Enum.Font.GothamBold
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = titleBar
+
+-- Create Minimize Button (parented to mainFrame for easy repositioning)
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 30, 0, 30)
+minimizeButton.Position = UDim2.new(1, -70, 0, 5) -- Absolute position equivalent to title bar placement
+minimizeButton.BackgroundColor3 = primaryColor
+minimizeButton.Text = "-"
+minimizeButton.TextColor3 = textColor
+minimizeButton.TextSize = 16
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.Parent = mainFrame
+
+local minimizeCorner = Instance.new("UICorner")
+minimizeCorner.CornerRadius = UDim.new(0, 6)
+minimizeCorner.Parent = minimizeButton
+
+-- Create Close Button
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0.5, -15)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red for close
+closeButton.Text = "X"
+closeButton.TextColor3 = textColor
+closeButton.TextSize = 16
+closeButton.Font = Enum.Font.GothamBold
+closeButton.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = closeButton
+
+-- Content Scrolling Frame
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, 0, 1, -40)
+scrollingFrame.Position = UDim2.new(0, 0, 0, 40)
+scrollingFrame.BackgroundTransparency = 1
+scrollingFrame.ScrollBarThickness = 6
+scrollingFrame.ScrollBarImageColor3 = primaryColor
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Auto-adjust
+scrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollingFrame.Parent = mainFrame
+
+-- Content Frame inside ScrollingFrame
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, 0, 1, 0)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = scrollingFrame
+
+local contentLayout = Instance.new("UIListLayout")
+contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+contentLayout.Padding = UDim.new(0, 10)
+contentLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+contentLayout.Parent = contentFrame
+
+local contentPadding = Instance.new("UIPadding")
+contentPadding.PaddingTop = UDim.new(0, 10) -- Tiny bit down
+contentPadding.Parent = contentFrame
+
+-- Create Basic Dropdown Header (Button)
+local basicHeader = Instance.new("TextButton")
+basicHeader.Size = UDim2.new(0.9, 0, 0, 40)
+basicHeader.BackgroundColor3 = accentColor
+basicHeader.Text = "Basic ▶"
+basicHeader.TextColor3 = textColor
+basicHeader.TextSize = 16
+basicHeader.Font = Enum.Font.GothamSemibold
+basicHeader.TextXAlignment = Enum.TextXAlignment.Left
+basicHeader.LayoutOrder = 1
+basicHeader.Parent = contentFrame
+
+local basicHeaderCorner = Instance.new("UICorner")
+basicHeaderCorner.CornerRadius = UDim.new(0, 6)
+basicHeaderCorner.Parent = basicHeader
+
+-- Create Basic Content Frame (initially collapsed)
+local basicContent = Instance.new("Frame")
+basicContent.Size = UDim2.new(0.9, 0, 0, 0) -- Start collapsed
+basicContent.BackgroundColor3 = contentBgColor -- Darker
+basicContent.ClipsDescendants = true
+basicContent.LayoutOrder = 2
+basicContent.Parent = contentFrame
+
+local basicContentCorner = Instance.new("UICorner")
+basicContentCorner.CornerRadius = UDim.new(0, 6)
+basicContentCorner.Parent = basicContent
+
+local basicContentLayout = Instance.new("UIListLayout")
+basicContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+basicContentLayout.Padding = UDim.new(0, 10)
+basicContentLayout.Parent = basicContent
+
+-- Add Fly Toggle to Basic
+local flyButton = Instance.new("TextButton")
+flyButton.Size = UDim2.new(1, 0, 0, 40)
+flyButton.BackgroundColor3 = primaryColor
+flyButton.Text = "Fly: OFF"
+flyButton.TextColor3 = textColor
+flyButton.TextSize = 14
+flyButton.Font = Enum.Font.Gotham
+flyButton.Parent = basicContent
+
+local flyCorner = Instance.new("UICorner")
+flyCorner.CornerRadius = UDim.new(0, 6)
+flyCorner.Parent = flyButton
+
+-- Add Noclip Toggle to Basic
+local noclipButton = Instance.new("TextButton")
+noclipButton.Size = UDim2.new(1, 0, 0, 40)
+noclipButton.BackgroundColor3 = primaryColor
+noclipButton.Text = "Noclip: OFF"
+noclipButton.TextColor3 = textColor
+noclipButton.TextSize = 14
+noclipButton.Font = Enum.Font.Gotham
+noclipButton.Parent = basicContent
+
+local noclipCorner = Instance.new("UICorner")
+noclipCorner.CornerRadius = UDim.new(0, 6)
+noclipCorner.Parent = noclipButton
+
+-- Add Speedboost Slider to Basic
+local speedSliderFrame = Instance.new("Frame")
+speedSliderFrame.Size = UDim2.new(1, 0, 0, 40)
+speedSliderFrame.BackgroundColor3 = accentColor
+speedSliderFrame.Parent = basicContent
+
+local speedSliderCorner = Instance.new("UICorner")
+speedSliderCorner.CornerRadius = UDim.new(0, 6)
+speedSliderCorner.Parent = speedSliderFrame
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(1, 0, 0, 20)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Speed: 16"
+speedLabel.TextColor3 = textColor
+speedLabel.TextSize = 14
+speedLabel.Font = Enum.Font.Gotham
+speedLabel.Parent = speedSliderFrame
+
+local sliderBar = Instance.new("Frame")
+sliderBar.Size = UDim2.new(1, -20, 0, 10)
+sliderBar.Position = UDim2.new(0, 10, 0, 25)
+sliderBar.BackgroundColor3 = primaryColor
+sliderBar.Parent = speedSliderFrame
+
+local sliderBarCorner = Instance.new("UICorner")
+sliderBarCorner.CornerRadius = UDim.new(0, 5)
+sliderBarCorner.Parent = sliderBar
+
+local sliderKnob = Instance.new("TextButton")
+sliderKnob.Size = UDim2.new(0, 20, 0, 20)
+sliderKnob.Position = UDim2.new(0, 0, -0.5, 0)
+sliderKnob.BackgroundColor3 = textColor
+sliderKnob.Text = ""
+sliderKnob.Parent = sliderBar
+
+local sliderKnobCorner = Instance.new("UICorner")
+sliderKnobCorner.CornerRadius = UDim.new(1, 0)
+sliderKnobCorner.Parent = sliderKnob
+
+-- Dropdown Functionality for Basic
+local isBasicExpanded = false
+local basicExpandedHeight = 170 -- Adjusted for 3 buttons + slider + paddings
+local collapsedHeight = 0
+
+basicHeader.MouseButton1Click:Connect(function()
+    isBasicExpanded = not isBasicExpanded
+    basicHeader.Text = "Basic " .. (isBasicExpanded and "▼" or "▶")
+    
+    local targetHeight = isBasicExpanded and UDim2.new(0.9, 0, 0, basicExpandedHeight) or UDim2.new(0.9, 0, 0, collapsedHeight)
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    local tween = TweenService:Create(basicContent, tweenInfo, {Size = targetHeight})
+    tween:Play()
+end)
+
+-- Create Flings Dropdown Header (Button)
+local flingsHeader = Instance.new("TextButton")
+flingsHeader.Size = UDim2.new(0.9, 0, 0, 40)
+flingsHeader.BackgroundColor3 = accentColor
+flingsHeader.Text = "Flings ▶"
+flingsHeader.TextColor3 = textColor
+flingsHeader.TextSize = 16
+flingsHeader.Font = Enum.Font.GothamSemibold
+flingsHeader.TextXAlignment = Enum.TextXAlignment.Left
+flingsHeader.LayoutOrder = 3
+flingsHeader.Parent = contentFrame
+
+local flingsHeaderCorner = Instance.new("UICorner")
+flingsHeaderCorner.CornerRadius = UDim.new(0, 6)
+flingsHeaderCorner.Parent = flingsHeader
+
+-- Create Flings Content Frame (initially collapsed)
+local flingsContent = Instance.new("Frame")
+flingsContent.Size = UDim2.new(0.9, 0, 0, 0) -- Start collapsed
+flingsContent.BackgroundColor3 = contentBgColor -- Darker
+flingsContent.ClipsDescendants = true
+flingsContent.LayoutOrder = 4
+flingsContent.Parent = contentFrame
+
+local flingsContentCorner = Instance.new("UICorner")
+flingsContentCorner.CornerRadius = UDim.new(0, 6)
+flingsContentCorner.Parent = flingsContent
+
+local flingsContentLayout = Instance.new("UIListLayout")
+flingsContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+flingsContentLayout.Padding = UDim.new(0, 10)
+flingsContentLayout.Parent = flingsContent
+
+-- Create Walk Fling Button inside flings content
+local walkFlingButton = Instance.new("TextButton")
+walkFlingButton.Size = UDim2.new(1, 0, 0, 40)
+walkFlingButton.BackgroundColor3 = primaryColor
+walkFlingButton.Text = "Walk Fling: OFF"
+walkFlingButton.TextColor3 = textColor
+walkFlingButton.TextSize = 14
+walkFlingButton.Font = Enum.Font.Gotham
+walkFlingButton.Parent = flingsContent
+
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 6)
+buttonCorner.Parent = walkFlingButton
+
+-- Add Player Fling Feature
+local playerFlingFrame = Instance.new("Frame")
+playerFlingFrame.Size = UDim2.new(1, 0, 0, 40)
+playerFlingFrame.BackgroundTransparency = 1
+playerFlingFrame.Parent = flingsContent
+
+local playerTextBox = Instance.new("TextBox")
+playerTextBox.Size = UDim2.new(0.7, 0, 1, 0)
+playerTextBox.BackgroundColor3 = primaryColor
+playerTextBox.Text = "Player Name"
+playerTextBox.TextColor3 = textColor
+playerTextBox.TextSize = 14
+playerTextBox.Font = Enum.Font.Gotham
+playerTextBox.Parent = playerFlingFrame
+
+local textBoxCorner = Instance.new("UICorner")
+textBoxCorner.CornerRadius = UDim.new(0, 6)
+textBoxCorner.Parent = playerTextBox
+
+local enterButton = Instance.new("TextButton")
+enterButton.Size = UDim2.new(0.3, -10, 1, 0)
+enterButton.Position = UDim2.new(0.7, 5, 0, 0)
+enterButton.BackgroundColor3 = primaryColor
+enterButton.Text = "Enter"
+enterButton.TextColor3 = textColor
+enterButton.TextSize = 14
+enterButton.Font = Enum.Font.Gotham
+enterButton.Parent = playerFlingFrame
+
+local enterCorner = Instance.new("UICorner")
+enterCorner.CornerRadius = UDim.new(0, 6)
+enterCorner.Parent = enterButton
+
+-- Add Fling All Button
+local flingAllButton = Instance.new("TextButton")
+flingAllButton.Size = UDim2.new(1, 0, 0, 40)
+flingAllButton.BackgroundColor3 = primaryColor
+flingAllButton.Text = "Fling All: OFF"
+flingAllButton.TextColor3 = textColor
+flingAllButton.TextSize = 14
+flingAllButton.Font = Enum.Font.Gotham
+flingAllButton.Parent = flingsContent
+
+local flingAllCorner = Instance.new("UICorner")
+flingAllCorner.CornerRadius = UDim.new(0, 6)
+flingAllCorner.Parent = flingAllButton
+
+-- Dropdown Functionality for Flings
+local isFlingsExpanded = false
+local flingsExpandedHeight = 150 -- Adjusted for new elements
+
+flingsHeader.MouseButton1Click:Connect(function()
+    isFlingsExpanded = not isFlingsExpanded
+    flingsHeader.Text = "Flings " .. (isFlingsExpanded and "▼" or "▶")
+    
+    local targetHeight = isFlingsExpanded and UDim2.new(0.9, 0, 0, flingsExpandedHeight) or UDim2.new(0.9, 0, 0, collapsedHeight)
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    local tween = TweenService:Create(flingsContent, tweenInfo, {Size = targetHeight})
+    tween:Play()
+end)
+
+-- Create ESP Dropdown Header (Button)
+local espHeader = Instance.new("TextButton")
+espHeader.Size = UDim2.new(0.9, 0, 0, 40)
+espHeader.BackgroundColor3 = accentColor
+espHeader.Text = "ESP ▶"
+espHeader.TextColor3 = textColor
+espHeader.TextSize = 16
+espHeader.Font = Enum.Font.GothamSemibold
+espHeader.TextXAlignment = Enum.TextXAlignment.Left
+espHeader.LayoutOrder = 5
+espHeader.Parent = contentFrame
+
+local espHeaderCorner = Instance.new("UICorner")
+espHeaderCorner.CornerRadius = UDim.new(0, 6)
+espHeaderCorner.Parent = espHeader
+
+-- Create ESP Content Frame (initially collapsed)
+local espContent = Instance.new("Frame")
+espContent.Size = UDim2.new(0.9, 0, 0, 0) -- Start collapsed
+espContent.BackgroundColor3 = contentBgColor -- Darker
+espContent.ClipsDescendants = true
+espContent.LayoutOrder = 6
+espContent.Parent = contentFrame
+
+local espContentCorner = Instance.new("UICorner")
+espContentCorner.CornerRadius = UDim.new(0, 6)
+espContentCorner.Parent = espContent
+
+local espContentLayout = Instance.new("UIListLayout")
+espContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+espContentLayout.Padding = UDim.new(0, 10)
+espContentLayout.Parent = espContent
+
+-- Add Box ESP Toggle
+local boxEspButton = Instance.new("TextButton")
+boxEspButton.Size = UDim2.new(1, 0, 0, 40)
+boxEspButton.BackgroundColor3 = primaryColor
+boxEspButton.Text = "Box ESP: OFF"
+boxEspButton.TextColor3 = textColor
+boxEspButton.TextSize = 14
+boxEspButton.Font = Enum.Font.Gotham
+boxEspButton.Parent = espContent
+
+local boxEspCorner = Instance.new("UICorner")
+boxEspCorner.CornerRadius = UDim.new(0, 6)
+boxEspCorner.Parent = boxEspButton
+
+-- Add Name ESP Toggle
+local nameEspButton = Instance.new("TextButton")
+nameEspButton.Size = UDim2.new(1, 0, 0, 40)
+nameEspButton.BackgroundColor3 = primaryColor
+nameEspButton.Text = "Name ESP: OFF"
+nameEspButton.TextColor3 = textColor
+nameEspButton.TextSize = 14
+nameEspButton.Font = Enum.Font.Gotham
+nameEspButton.Parent = espContent
+
+local nameEspCorner = Instance.new("UICorner")
+nameEspCorner.CornerRadius = UDim.new(0, 6)
+nameEspCorner.Parent = nameEspButton
+
+-- Add Distance ESP Toggle
+local distanceEspButton = Instance.new("TextButton")
+distanceEspButton.Size = UDim2.new(1, 0, 0, 40)
+distanceEspButton.BackgroundColor3 = primaryColor
+distanceEspButton.Text = "Distance ESP: OFF"
+distanceEspButton.TextColor3 = textColor
+distanceEspButton.TextSize = 14
+distanceEspButton.Font = Enum.Font.Gotham
+distanceEspButton.Parent = espContent
+
+local distanceEspCorner = Instance.new("UICorner")
+distanceEspCorner.CornerRadius = UDim.new(0, 6)
+distanceEspCorner.Parent = distanceEspButton
+
+-- Add Chams Toggle
+local chamsButton = Instance.new("TextButton")
+chamsButton.Size = UDim2.new(1, 0, 0, 40)
+chamsButton.BackgroundColor3 = primaryColor
+chamsButton.Text = "Chams: OFF"
+chamsButton.TextColor3 = textColor
+chamsButton.TextSize = 14
+chamsButton.Font = Enum.Font.Gotham
+chamsButton.Parent = espContent
+
+local chamsCorner = Instance.new("UICorner")
+chamsCorner.CornerRadius = UDim.new(0, 6)
+chamsCorner.Parent = chamsButton
+
+-- Dropdown Functionality for ESP
+local isEspExpanded = false
+local espExpandedHeight = 190 -- For 4 toggles + paddings
+
+espHeader.MouseButton1Click:Connect(function()
+    isEspExpanded = not isEspExpanded
+    espHeader.Text = "ESP " .. (isEspExpanded and "▼" or "▶")
+    
+    local targetHeight = isEspExpanded and UDim2.new(0.9, 0, 0, espExpandedHeight) or UDim2.new(0.9, 0, 0, collapsedHeight)
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    local tween = TweenService:Create(espContent, tweenInfo, {Size = targetHeight})
+    tween:Play()
+end)
+
+-- Minimize Functionality with Tween
+local isMinimized = false
+local originalSize = mainFrame.Size
+local minimizedSize = UDim2.new(0, 40, 0, 40)
+local normalButtonPos = UDim2.new(1, -70, 0, 5)
+local minimizedButtonPos = UDim2.new(0.5, -15, 0.5, -15)
+
+minimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    minimizeButton.Text = isMinimized and "+" or "-"
+    
+    local targetSize = isMinimized and minimizedSize or originalSize
+    local targetButtonPos = isMinimized and minimizedButtonPos or normalButtonPos
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    
+    local sizeTween = TweenService:Create(mainFrame, tweenInfo, {Size = targetSize})
+    local posTween = TweenService:Create(minimizeButton, tweenInfo, {Position = targetButtonPos})
+    
+    -- Hide or show contents
+    titleBar.Visible = not isMinimized
+    scrollingFrame.Visible = not isMinimized
+    uiStroke.Enabled = not isMinimized
+    bgDotsFrame.Visible = not isMinimized
+    
+    -- Adjust for minimize
+    if isMinimized then
+        mainFrame.BackgroundColor3 = primaryColor
+        uiGradient.Enabled = false
+        uiCorner.CornerRadius = UDim.new(1, 0) -- Circle when minimized
+        closeButton.Visible = false
+    else
+        mainFrame.BackgroundColor3 = backgroundColor
+        uiGradient.Enabled = true
+        uiCorner.CornerRadius = UDim.new(0, 8)
+        closeButton.Visible = true
+    end
+    
+    sizeTween:Play()
+    posTween:Play()
+end)
+
+-- Close Functionality
+closeButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+-- Fling Functionality
+local hiddenfling = false
+
+local function fling()
+    local lp = Players.LocalPlayer
+    local c, hrp, vel, movel = nil, nil, nil, 0.1
+
+    while hiddenfling do
+        RunService.Heartbeat:Wait()
+        c = lp.Character
+        hrp = c and c:FindFirstChild("HumanoidRootPart")
+
+        if hrp then
+            vel = hrp.Velocity
+            hrp.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
+            RunService.RenderStepped:Wait()
+            hrp.Velocity = vel
+            RunService.Stepped:Wait()
+            hrp.Velocity = vel + Vector3.new(0, movel, 0)
+            movel = -movel
+        else
+            break
+        end
+    end
+end
+
+walkFlingButton.MouseButton1Click:Connect(function()
+    hiddenfling = not hiddenfling
+    walkFlingButton.Text = "Walk Fling: " .. (hiddenfling and "ON" or "OFF")
+    walkFlingButton.BackgroundColor3 = hiddenfling and Color3.fromRGB(20, 20, 90) or primaryColor
+    
+    if hiddenfling then
+        coroutine.wrap(fling)()
+    end
+end)
+
+-- Player Fling Functionality
+enterButton.MouseButton1Click:Connect(function()
+    local targetName = playerTextBox.Text
+    local targetPlayer = Players:FindFirstChild(targetName)
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local lp = Players.LocalPlayer
+        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            hiddenfling = true
+            walkFlingButton.Text = "Walk Fling: ON"
+            walkFlingButton.BackgroundColor3 = Color3.fromRGB(20, 20, 90)
+            coroutine.wrap(fling)()
+            
+            coroutine.wrap(function()
+                local endTime = tick() + 3
+                while tick() < endTime do
+                    if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        lp.Character.HumanoidRootPart.Position = targetPlayer.Character.HumanoidRootPart.Position
+                    end
+                    task.wait(0.1)
+                end
+                hiddenfling = false
+                walkFlingButton.Text = "Walk Fling: OFF"
+                walkFlingButton.BackgroundColor3 = primaryColor
+            end)()
+        end
+    end
+end)
+
+-- Fling All Functionality
+local flingAllEnabled = false
+local flingAllCoroutine
+
+flingAllButton.MouseButton1Click:Connect(function()
+    flingAllEnabled = not flingAllEnabled
+    flingAllButton.Text = "Fling All: " .. (flingAllEnabled and "ON" or "OFF")
+    flingAllButton.BackgroundColor3 = flingAllEnabled and Color3.fromRGB(20, 20, 90) or primaryColor
+    
+    if flingAllEnabled then
+        hiddenfling = true
+        walkFlingButton.Text = "Walk Fling: ON"
+        walkFlingButton.BackgroundColor3 = Color3.fromRGB(20, 20, 90)
+        coroutine.wrap(fling)()
+        
+        flingAllCoroutine = coroutine.wrap(function()
+            local lp = Players.LocalPlayer
+            while flingAllEnabled do
+                local allPlayers = Players:GetPlayers()
+                for _, targetPlayer in ipairs(allPlayers) do
+                    if not flingAllEnabled then break end
+                    if targetPlayer ~= lp and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        local endTime = tick() + 3
+                        while tick() < endTime and flingAllEnabled do
+                            if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                                lp.Character.HumanoidRootPart.Position = targetPlayer.Character.HumanoidRootPart.Position
+                            end
+                            task.wait(0.1)
+                        end
+                    end
+                end
+            end
+            hiddenfling = false
+            walkFlingButton.Text = "Walk Fling: OFF"
+            walkFlingButton.BackgroundColor3 = primaryColor
+        end)()
+    else
+        flingAllEnabled = false
+    end
+end)
+
+-- Fly Functionality
+local flying = false
+local flySpeed = 50
+local controls = {forward = false, backward = false, left = false, right = false, up = false, down = false}
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local function startFly()
+    local char = player.Character
+    if not char then return end
+    local hrp = char.HumanoidRootPart
+    local humanoid = char.Humanoid
+    
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.new(0, 0, 0)
+    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bv.Parent = hrp
+    
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bg.P = 100000
+    bg.Parent = hrp
+    
+    humanoid.PlatformStand = true
+    
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        if not flying then connection:Disconnect() return end
+        bg.CFrame = CFrame.new(hrp.Position, mouse.Hit.Position)
+        
+        local moveDir = Vector3.new()
+        if controls.forward then moveDir = moveDir + workspace.CurrentCamera.CFrame.LookVector end
+        if controls.backward then moveDir = moveDir - workspace.CurrentCamera.CFrame.LookVector end
+        if controls.left then moveDir = moveDir - workspace.CurrentCamera.CFrame.RightVector end
+        if controls.right then moveDir = moveDir + workspace.CurrentCamera.CFrame.RightVector end
+        if controls.up then moveDir = moveDir + Vector3.new(0, 1, 0) end
+        if controls.down then moveDir = moveDir - Vector3.new(0, 1, 0) end
+        
+        if moveDir.Magnitude > 0 then
+            bv.Velocity = moveDir.Unit * flySpeed
+        else
+            bv.Velocity = Vector3.new(0, 0, 0)
+        end
+    end)
+    
+    return bv, bg, connection
+end
+
+local function stopFly(bv, bg, connection)
+    if bv then bv:Destroy() end
+    if bg then bg:Destroy() end
+    if connection then connection:Disconnect() end
+    local char = player.Character
+    if char then char.Humanoid.PlatformStand = false end
+end
+
+local flyBV, flyBG, flyConnection
+
+flyButton.MouseButton1Click:Connect(function()
+    flying = not flying
+    flyButton.Text = "Fly: " .. (flying and "ON" or "OFF")
+    flyButton.BackgroundColor3 = flying and Color3.fromRGB(20, 20, 90) or primaryColor
+    
+    if flying then
+        flyBV, flyBG, flyConnection = startFly()
+    else
+        stopFly(flyBV, flyBG, flyConnection)
+    end
+end)
+
+-- Fly Controls
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.W then controls.forward = true end
+    if input.KeyCode == Enum.KeyCode.S then controls.backward = true end
+    if input.KeyCode == Enum.KeyCode.A then controls.left = true end
+    if input.KeyCode == Enum.KeyCode.D then controls.right = true end
+    if input.KeyCode == Enum.KeyCode.Space then controls.up = true end
+    if input.KeyCode == Enum.KeyCode.LeftControl then controls.down = true end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.W then controls.forward = false end
+    if input.KeyCode == Enum.KeyCode.S then controls.backward = false end
+    if input.KeyCode == Enum.KeyCode.A then controls.left = false end
+    if input.KeyCode == Enum.KeyCode.D then controls.right = false end
+    if input.KeyCode == Enum.KeyCode.Space then controls.up = false end
+    if input.KeyCode == Enum.KeyCode.LeftControl then controls.down = false end
+end)
+
+-- Noclip Functionality
+local noclip = false
+local noclipConnection
+
+noclipButton.MouseButton1Click:Connect(function()
+    noclip = not noclip
+    noclipButton.Text = "Noclip: " .. (noclip and "ON" or "OFF")
+    noclipButton.BackgroundColor3 = noclip and Color3.fromRGB(20, 20, 90) or primaryColor
+    
+    if noclip then
+        noclipConnection = RunService.Stepped:Connect(function()
+            local char = player.Character
+            if char then
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        if noclipConnection then noclipConnection:Disconnect() end
+    end
+end)
+
+-- Speedboost Slider Functionality
+local minSpeed = 16
+local maxSpeed = 500
+local currentSpeed = minSpeed
+local draggingSlider = false
+
+local function updateSpeed()
+    local char = player.Character
+    if char and char.Humanoid then
+        char.Humanoid.WalkSpeed = currentSpeed
+    end
+    speedLabel.Text = "Speed: " .. math.floor(currentSpeed)
+end
+
+sliderKnob.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSlider = true
+    end
+end)
+
+sliderKnob.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSlider = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local barAbsPos = sliderBar.AbsolutePosition.X
+        local barAbsSize = sliderBar.AbsoluteSize.X
+        local mouseX = input.Position.X
+        local percent = math.clamp((mouseX - barAbsPos) / barAbsSize, 0, 1)
+        sliderKnob.Position = UDim2.new(percent, 0, -0.5, 0)
+        currentSpeed = minSpeed + percent * (maxSpeed - minSpeed)
+        updateSpeed()
+    end
+end)
+
+-- Handle Character Added for speed
+player.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid").WalkSpeed = currentSpeed
+    if flying then
+        flyBV, flyBG, flyConnection = startFly()
+    end
+end)
+
+-- ESP Functionality
+local espHighlights = {}
+local espBillboards = {}
+local boxEspEnabled = false
+local nameEspEnabled = false
+local distanceEspEnabled = false
+local chamsEnabled = false
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local espColor = Color3.fromRGB(0, 0, 255) -- Blue
+
+local function createEsp(player)
+    if player == localPlayer then return end
+    local char = player.Character
+    if not char then return end
+    
+    -- Highlight for box and chams
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = char
+    highlight.Enabled = false
+    highlight.OutlineColor = espColor
+    highlight.FillColor = espColor
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    espHighlights[player] = highlight
+    
+    -- Billboard for name and distance
+    local billboard = Instance.new("BillboardGui")
+    billboard.Parent = char:FindFirstChild("Head") or char.PrimaryPart
+    billboard.Adornee = billboard.Parent
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = false
+    
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = espColor
+    nameLabel.TextSize = 14
+    nameLabel.Font = Enum.Font.SourceSansBold
+    nameLabel.Parent = billboard
+    
+    local distLabel = Instance.new("TextLabel")
+    distLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    distLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    distLabel.BackgroundTransparency = 1
+    distLabel.TextColor3 = espColor
+    distLabel.TextSize = 14
+    distLabel.Font = Enum.Font.SourceSans
+    distLabel.Parent = billboard
+    
+    espBillboards[player] = {billboard = billboard, nameLabel = nameLabel, distLabel = distLabel}
+end
+
+local function removeEsp(player)
+    if espHighlights[player] then
+        espHighlights[player]:Destroy()
+        espHighlights[player] = nil
+    end
+    if espBillboards[player] then
+        espBillboards[player].billboard:Destroy()
+        espBillboards[player] = nil
+    end
+end
+
+local function updateEsp()
+    for player, highlight in pairs(espHighlights) do
+        local char = player.Character
+        if char then
+            highlight.Adornee = char
+            highlight.Enabled = (boxEspEnabled or chamsEnabled)
+            highlight.OutlineTransparency = boxEspEnabled and 0 or 1
+            highlight.FillTransparency = chamsEnabled and 0.5 or 1
+        else
+            highlight.Enabled = false
+        end
+    end
+    for player, data in pairs(espBillboards) do
+        local char = player.Character
+        local localChar = localPlayer.Character
+        if char and localChar then
+            data.billboard.Adornee = char:FindFirstChild("Head") or char.PrimaryPart
+            data.billboard.Enabled = (nameEspEnabled or distanceEspEnabled)
+            data.nameLabel.Visible = nameEspEnabled
+            if distanceEspEnabled then
+                local distance = (localChar.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                data.distLabel.Text = math.floor(distance) .. " studs"
+                data.distLabel.Visible = true
+            else
+                data.distLabel.Visible = false
+            end
+        else
+            data.billboard.Enabled = false
+        end
+    end
+end
+
+local espConnection
+local function toggleEspLoop(enable)
+    if enable then
+        if not espConnection then
+            espConnection = RunService.RenderStepped:Connect(updateEsp)
+        end
+    else
+        if espConnection then
+            espConnection:Disconnect()
+            espConnection = nil
+        end
+    end
+end
+
+-- Initialize ESP for existing players
+for _, player in ipairs(Players:GetPlayers()) do
+    createEsp(player)
+end
+
+-- Player added/removed
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        createEsp(player)
+    end)
+end)
+
+Players.PlayerRemoving:Connect(removeEsp)
+
+-- Box ESP Toggle
+local boxEsp = false
+boxEspButton.MouseButton1Click:Connect(function()
+    boxEsp = not boxEsp
+    boxEspButton.Text = "Box ESP: " .. (boxEsp and "ON" or "OFF")
+    boxEspButton.BackgroundColor3 = boxEsp and Color3.fromRGB(20, 20, 90) or primaryColor
+    boxEspEnabled = boxEsp
+    toggleEspLoop(boxEspEnabled or nameEspEnabled or distanceEspEnabled or chamsEnabled)
+end)
+
+-- Name ESP Toggle
+local nameEsp = false
+nameEspButton.MouseButton1Click:Connect(function()
+    nameEsp = not nameEsp
+    nameEspButton.Text = "Name ESP: " .. (nameEsp and "ON" or "OFF")
+    nameEspButton.BackgroundColor3 = nameEsp and Color3.fromRGB(20, 20, 90) or primaryColor
+    nameEspEnabled = nameEsp
+    toggleEspLoop(boxEspEnabled or nameEspEnabled or distanceEspEnabled or chamsEnabled)
+end)
+
+-- Distance ESP Toggle
+local distanceEsp = false
+distanceEspButton.MouseButton1Click:Connect(function()
+    distanceEsp = not distanceEsp
+    distanceEspButton.Text = "Distance ESP: " .. (distanceEsp and "ON" or "OFF")
+    distanceEspButton.BackgroundColor3 = distanceEsp and Color3.fromRGB(20, 20, 90) or primaryColor
+    distanceEspEnabled = distanceEsp
+    toggleEspLoop(boxEspEnabled or nameEspEnabled or distanceEspEnabled or chamsEnabled)
+end)
+
+-- Chams Toggle
+local chams = false
+chamsButton.MouseButton1Click:Connect(function()
+    chams = not chams
+    chamsButton.Text = "Chams: " .. (chams and "ON" or "OFF")
+    chamsButton.BackgroundColor3 = chams and Color3.fromRGB(20, 20, 90) or primaryColor
+    chamsEnabled = chams
+    toggleEspLoop(boxEspEnabled or nameEspEnabled or distanceEspEnabled or chamsEnabled)
+end)
+
+-- Draggable GUI (only when not minimized)
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+titleBar.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not isMinimized then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and not isMinimized then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Hover Effects for Interactivity
+local function addHoverEffect(button, normalColor, hoverColor)
+    button.MouseEnter:Connect(function()
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+        TweenService:Create(button, tweenInfo, {BackgroundColor3 = hoverColor}):Play()
+    end)
+    button.MouseLeave:Connect(function()
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+        TweenService:Create(button, tweenInfo, {BackgroundColor3 = normalColor}):Play()
+    end)
+end
+
+addHoverEffect(minimizeButton, primaryColor, Color3.fromRGB(20, 20, 90))
+addHoverEffect(closeButton, Color3.fromRGB(255, 0, 0), Color3.fromRGB(200, 0, 0))
+addHoverEffect(basicHeader, accentColor, Color3.fromRGB(15, 15, 60))
+addHoverEffect(flingsHeader, accentColor, Color3.fromRGB(15, 15, 60))
+addHoverEffect(walkFlingButton, primaryColor, Color3.fromRGB(20, 20, 90))
+addHoverEffect(flyButton, primaryColor, Color3.fromRGB(20, 20, 90))
+addHoverEffect(noclipButton, primaryColor, Color3.fromRGB(20, 20, 90))
+addHoverEffect(espHeader, accentColor, Color3.fromRGB(15, 15, 60))
+addHoverEffect(boxEspButton, primaryColor, Color3.fromRGB(20, 20, 90))
+addHoverEffect(nameEspButton, primaryColor, Color3.fromRGB(20, 20, 90))
+addHoverEffect(distanceEspButton, primaryColor, Color3.fromRGB(20, 20, 90))
+addHoverEffect(chamsButton, primaryColor, Color3.fromRGB(20, 20, 90))
+addHoverEffect(enterButton, primaryColor, Color3.fromRGB(20, 20, 90))
+addHoverEffect(flingAllButton, primaryColor, Color3.fromRGB(20, 20, 90))
+
+-- Toggle GUI Visibility with F4
+local toggleKey = Enum.KeyCode.F4
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == toggleKey then
+        screenGui.Enabled = not screenGui.Enabled
+    end
+end)
