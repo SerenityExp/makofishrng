@@ -7,16 +7,13 @@ local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Lighting = game:GetService("Lighting")
 
--- Debug print to confirm script runs
 print("Magic GUI initializing...")
 
--- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "Magic"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Loading Text
 local loadingText = Instance.new("TextLabel")
 loadingText.Size = UDim2.new(0.5, 0, 0.2, 0)
 loadingText.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -29,20 +26,17 @@ loadingText.Font = Enum.Font.GothamBold
 loadingText.TextTransparency = 1
 loadingText.Parent = screenGui
 
--- Create Click Sound
 local clickSound = Instance.new("Sound")
 clickSound.SoundId = "rbxassetid://500472891"
 clickSound.Volume = 0.5
 clickSound.Parent = screenGui
 
--- Create Snowflake Frame
 local snowflakeFrame = Instance.new("Frame")
 snowflakeFrame.Size = UDim2.new(1, 0, 1, 0)
 snowflakeFrame.BackgroundTransparency = 1
 snowflakeFrame.Parent = screenGui
 snowflakeFrame.Visible = false
 
--- Snowflake Creation
 local function createSnowflake()
     local snowflake = Instance.new("Frame")
     snowflake.Size = UDim2.new(0, 10, 0, 10)
@@ -65,7 +59,6 @@ local function createSnowflake()
     end)
 end
 
--- Create Notification Frame
 local notificationFrame = Instance.new("Frame")
 notificationFrame.Size = UDim2.new(0, 300, 0, 80)
 notificationFrame.Position = UDim2.new(0, 10, 0, 10)
@@ -95,7 +88,6 @@ notifText.TextXAlignment = Enum.TextXAlignment.Left
 notifText.TextWrapped = true
 notifText.Parent = notificationFrame
 
--- Create Header Label
 local headerLabel = Instance.new("TextLabel")
 headerLabel.Size = UDim2.new(1, 0, 0, 50)
 headerLabel.Position = UDim2.new(0, 0, 0, 0)
@@ -109,7 +101,6 @@ headerLabel.TextWrapped = true
 headerLabel.Visible = false
 headerLabel.Parent = screenGui
 
--- Create Main Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 600, 0, 400)
 mainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
@@ -121,7 +112,6 @@ mainFrame.BackgroundTransparency = 1
 mainFrame.Parent = screenGui
 print("Main frame created")
 
--- Fade-in Animation for Main GUI
 local function fadeInGui()
     mainFrame.BackgroundTransparency = 1
     snowflakeFrame.Visible = mainFrame.Visible
@@ -130,12 +120,10 @@ local function fadeInGui()
     tween:Play()
 end
 
--- Rounded Corners
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = mainFrame
 
--- Title Bar
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 40)
 titleBar.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
@@ -157,7 +145,6 @@ titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = titleBar
 
--- Tabs Container
 local tabsContainer = Instance.new("Frame")
 tabsContainer.Size = UDim2.new(1, 0, 0, 40)
 tabsContainer.Position = UDim2.new(0, 0, 0, 40)
@@ -165,7 +152,6 @@ tabsContainer.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
 tabsContainer.BorderSizePixel = 0
 tabsContainer.Parent = mainFrame
 
--- Tab Buttons
 local tabs = {"Basic", "Visuals", "Settings", "Overpowered", "Misc"}
 local tabFrames = {}
 local currentTab = nil
@@ -186,7 +172,6 @@ local function createTabButton(name, position)
     buttonCorner.CornerRadius = UDim.new(0, 5)
     buttonCorner.Parent = button
 
-    -- Hover Animation
     button.MouseEnter:Connect(function()
         TweenService:Create(button, TweenInfo.new(0.2), {
             Size = UDim2.new(0, 125, 1, 5),
@@ -202,7 +187,6 @@ local function createTabButton(name, position)
         end
     end)
 
-    -- Tab Frame
     local tabFrame = Instance.new("Frame")
     tabFrame.Size = UDim2.new(1, 0, 1, -80)
     tabFrame.Position = UDim2.new(0, 0, 0, 80)
@@ -248,19 +232,17 @@ local function createTabButton(name, position)
     return tabFrame
 end
 
--- Create Tabs
 local tabContent = {}
 for i, tabName in ipairs(tabs) do
     tabContent[tabName] = createTabButton(tabName, i - 1)
 end
 
--- Dropdown and Slider Creation
 local function createDropdown(title, parent, items, callback)
     local dropdownFrame = Instance.new("Frame")
     dropdownFrame.Size = UDim2.new(1, -20, 0, 30)
     dropdownFrame.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
     dropdownFrame.Parent = parent
-    dropdownFrame.LayoutOrder = 1000 -- Set high to ensure it appears at the bottom
+    dropdownFrame.LayoutOrder = 1000
 
     local dropdownCorner = Instance.new("UICorner")
     dropdownCorner.CornerRadius = UDim.new(0, 5)
@@ -275,7 +257,6 @@ local function createDropdown(title, parent, items, callback)
     dropdownButton.Font = Enum.Font.Gotham
     dropdownButton.Parent = dropdownFrame
 
-    -- Hover Animation
     dropdownButton.MouseEnter:Connect(function()
         TweenService:Create(dropdownFrame, TweenInfo.new(0.2), {
             BackgroundColor3 = Color3.fromRGB(255, 200, 210)
@@ -544,7 +525,6 @@ local function createTextBox(title, parent, callback)
     parent.CanvasSize = UDim2.new(0, 0, 0, parent.UIListLayout.AbsoluteContentSize.Y + 20)
 end
 
--- Fly Functionality (BodyVelocity-based)
 local flyBodyGyro = nil
 local flyBodyVelocity = nil
 local flyConnection = nil
@@ -619,7 +599,6 @@ local function toggleFly(enabled)
     end
 end
 
--- Noclip Functionality
 local noclipConnection = nil
 local function toggleNoclip(enabled)
     local character = LocalPlayer.Character
@@ -646,7 +625,6 @@ local function toggleNoclip(enabled)
     end
 end
 
--- ESP Functionality
 local espConnections = {}
 local espHighlights = {}
 local espBillboards = {}
@@ -765,7 +743,6 @@ local function toggleESP(enabled, espType)
     end
 end
 
--- Fling Functionality
 local hiddenfling = false
 local function fling()
     local lp = Players.LocalPlayer
@@ -816,10 +793,9 @@ local function targetFling(targetPlayer)
     end)
 end
 
--- Aimbot Functionality
 local aimbotEnabled = false
 local aimbotConnection = nil
-local aimbotKey = Enum.KeyCode.F  -- Bind to F key
+local aimbotKey = Enum.KeyCode.F
 local function toggleAimbot(enabled)
     aimbotEnabled = enabled
     if enabled then
@@ -839,7 +815,7 @@ local function toggleAimbot(enabled)
                     end
                 end
             end
-            if closestPlayer and closestDistance < 50 then  -- Adjust sensitivity
+            if closestPlayer and closestDistance < 50 then
                 local targetHead = closestPlayer.Character.Head
                 local direction = (targetHead.Position - Camera.CFrame.Position).Unit
                 Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + direction)
@@ -859,7 +835,6 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
--- Notification System
 local function showNotification(player)
     if not _G.NotificationsEnabled then return end
     
@@ -877,7 +852,6 @@ local function showNotification(player)
     notificationFrame.Position = UDim2.new(0, 10, 0, 10)
 end
 
--- Global Variables
 _G.FlySpeed = 50
 _G.SpeedBoost = 16
 _G.JumpBoost = 50
@@ -895,7 +869,6 @@ _G.TimeOfDay = 12
 _G.Brightness = 1
 _G.FullBrightEnabled = false
 
--- Function to get player names
 local function getPlayerNames()
     local names = {"None"}
     for _, player in ipairs(Players:GetPlayers()) do
@@ -906,7 +879,6 @@ local function getPlayerNames()
     return names
 end
 
--- Apply cheats on character added
 LocalPlayer.CharacterAdded:Connect(function(character)
     local humanoid = character:WaitForChild("Humanoid")
     if _G.SpeedBoostEnabled then
@@ -923,7 +895,6 @@ LocalPlayer.CharacterAdded:Connect(function(character)
     end
 end)
 
--- Populate Basic Tab
 local basicTab = tabContent["Basic"]
 createToggle("Fly", basicTab.ScrollingFrame, toggleFly)
 createSlider("Fly Speed", basicTab.ScrollingFrame, 0, 500, 50, function(value)
@@ -959,7 +930,6 @@ createSlider("Jump Boost", basicTab.ScrollingFrame, 50, 500, 50, function(value)
 end)
 createToggle("Noclip", basicTab.ScrollingFrame, toggleNoclip)
 
--- Populate Visuals Tab
 local visualsTab = tabContent["Visuals"]
 createToggle("ESP", visualsTab.ScrollingFrame, function(enabled)
     _G.ESPEnabled = enabled
@@ -970,7 +940,6 @@ createDropdown("ESP Type", visualsTab.ScrollingFrame, {"None", "Chams", "Name", 
     toggleESP(_G.ESPEnabled or false, value)
 end)
 
--- Populate Settings Tab
 local settingsTab = tabContent["Settings"]
 createToggle("Notifications", settingsTab.ScrollingFrame, function(enabled)
     _G.NotificationsEnabled = enabled
@@ -1007,7 +976,6 @@ createToggle("Full Bright", settingsTab.ScrollingFrame, function(enabled)
     end
 end)
 
--- Populate Overpowered Tab
 local overpoweredTab = tabContent["Overpowered"]
 createToggle("WalkFling", overpoweredTab.ScrollingFrame, function(enabled)
     hiddenfling = enabled
@@ -1044,7 +1012,6 @@ local function targetFlingCallback(value)
 end
 local targetFlingButton, targetFlingList, targetFlingTitle = createDropdown("Target Fling", overpoweredTab.ScrollingFrame, getPlayerNames(), targetFlingCallback)
 
--- Populate Misc Tab
 local miscTab = tabContent["Misc"]
 local clickTPConnection = nil
 createToggle("Click TP", miscTab.ScrollingFrame, function(enabled)
@@ -1100,12 +1067,10 @@ local function tpPlayerCallback(value)
 end
 local tpPlayerButton, tpPlayerList, tpPlayerTitle = createDropdown("TP to Player", miscTab.ScrollingFrame, getPlayerNames(), tpPlayerCallback)
 
--- Update player dropdowns
 local function updatePlayerDropdowns()
     local names = getPlayerNames()
     updateDropdown(targetFlingButton, targetFlingList, targetFlingTitle, names, targetFlingCallback)
     updateDropdown(tpPlayerButton, tpPlayerList, tpPlayerTitle, names, tpPlayerCallback)
-    -- Update canvas size for tabs containing dropdowns
     for _, tabName in ipairs({"Visuals", "Overpowered", "Misc"}) do
         local scrollFrame = tabContent[tabName].ScrollingFrame
         scrollFrame.CanvasSize = UDim2.new(0, 0, 0, scrollFrame.UIListLayout.AbsoluteContentSize.Y + 20)
@@ -1116,7 +1081,6 @@ Players.PlayerAdded:Connect(updatePlayerDropdowns)
 Players.PlayerAdded:Connect(showNotification)
 Players.PlayerRemoving:Connect(updatePlayerDropdowns)
 
--- Make GUI Draggable
 local dragging
 local dragInput
 local dragStart
@@ -1148,7 +1112,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Toggle GUI Visibility
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.RightBracket then
         mainFrame.Visible = not mainFrame.Visible
@@ -1159,24 +1122,21 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
--- Snowflake Animation Loop
 spawn(function()
     while true do
         if snowflakeFrame.Visible then
             createSnowflake()
         end
-        wait(0.1) -- Increased spawn rate for more snowflakes
+        wait(0.1)
     end
 end)
 
--- Initialize first tab
 tabContent["Basic"].Visible = true
 tabFrames[tabContent["Basic"]].BackgroundColor3 = Color3.fromRGB(255, 182, 193)
 tabFrames[tabContent["Basic"]].TextColor3 = Color3.fromRGB(255, 255, 255)
 currentTab = tabContent["Basic"]
 print("Basic tab initialized")
 
--- Cleanup on player leave
 LocalPlayer.CharacterRemoving:Connect(function()
     toggleFly(false)
     toggleNoclip(false)
@@ -1186,7 +1146,6 @@ LocalPlayer.CharacterRemoving:Connect(function()
     _G.ChatSpamEnabled = false
 end)
 
--- Loading Animation
 local fadeInTween = TweenService:Create(loadingText, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {TextTransparency = 0})
 local fadeOutTween = TweenService:Create(loadingText, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {TextTransparency = 1})
 fadeInTween:Play()
