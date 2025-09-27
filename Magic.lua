@@ -16,6 +16,19 @@ screenGui.Name = "Magic"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+-- Loading Text
+local loadingText = Instance.new("TextLabel")
+loadingText.Size = UDim2.new(0.5, 0, 0.2, 0)
+loadingText.Position = UDim2.new(0.5, 0, 0.5, 0)
+loadingText.AnchorPoint = Vector2.new(0.5, 0.5)
+loadingText.BackgroundTransparency = 1
+loadingText.Text = "Magic V1"
+loadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
+loadingText.TextScaled = true
+loadingText.Font = Enum.Font.GothamBold
+loadingText.TextTransparency = 1
+loadingText.Parent = screenGui
+
 -- Create Click Sound
 local clickSound = Instance.new("Sound")
 clickSound.SoundId = "rbxassetid://500472891"
@@ -103,12 +116,12 @@ mainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
 mainFrame.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
 mainFrame.BorderSizePixel = 0
 mainFrame.ClipsDescendants = true
-mainFrame.Visible = true
+mainFrame.Visible = false
 mainFrame.BackgroundTransparency = 1
 mainFrame.Parent = screenGui
-print("Main frame created and set to visible")
+print("Main frame created")
 
--- Fade-in Animation
+-- Fade-in Animation for Main GUI
 local function fadeInGui()
     mainFrame.BackgroundTransparency = 1
     snowflakeFrame.Visible = mainFrame.Visible
@@ -116,7 +129,6 @@ local function fadeInGui()
     local tween = TweenService:Create(mainFrame, TweenInfo.new(0.5), {BackgroundTransparency = 0})
     tween:Play()
 end
-fadeInGui()
 
 -- Rounded Corners
 local corner = Instance.new("UICorner")
@@ -1174,4 +1186,18 @@ LocalPlayer.CharacterRemoving:Connect(function()
     _G.ChatSpamEnabled = false
 end)
 
-print("Magic GUI fully loaded")
+-- Loading Animation
+local fadeInTween = TweenService:Create(loadingText, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {TextTransparency = 0})
+local fadeOutTween = TweenService:Create(loadingText, TweenInfo.new(1.5, Enum.EasingStyle.Sine), {TextTransparency = 1})
+fadeInTween:Play()
+fadeInTween.Completed:Connect(function()
+    fadeOutTween:Play()
+    fadeOutTween.Completed:Connect(function()
+        loadingText:Destroy()
+        mainFrame.Visible = true
+        fadeInGui()
+        print("Loading animation completed, main GUI loaded")
+    end)
+end)
+
+print("Magic GUI initialization started")
