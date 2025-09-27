@@ -6,6 +6,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Lighting = game:GetService("Lighting")
+local TextChatService = game:GetService("TextChatService")
 
 print("Magic GUI initializing...")
 
@@ -1045,12 +1046,36 @@ createToggle("Spam Chat", miscTab.ScrollingFrame, function(enabled)
     _G.ChatSpamEnabled = enabled
     if enabled then
         spawn(function()
+            local chatEvents = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+            local sayMessageRequest = chatEvents and chatEvents:FindFirstChild("SayMessageRequest")
+            local textChannel = TextChatService.ChatVersion == Enum.ChatVersion.TextChatService and TextChatService:FindFirstChild("TextChannels") and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+            
+            if not sayMessageRequest and not textChannel then
+                print("Chat spam failed: Neither legacy chat nor TextChatService is available")
+                _G.ChatSpamEnabled = false
+                return
+            end
+            
+            print("Chat spam enabled with message: " .. _G.ChatSpamMessage)
             while _G.ChatSpamEnabled do
                 if _G.ChatSpamMessage ~= "" then
-                    ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents"):FindFirstChild("SayMessageRequest"):FireServer(_G.ChatSpamMessage, "All")
+                    if sayMessageRequest then
+                        pcall(function()
+                            sayMessageRequest:FireServer(_G.ChatSpamMessage, "All")
+                            print("Sent legacy chat message: " .. _G.ChatSpamMessage)
+                        end)
+                    elseif textChannel then
+                        pcall(function()
+                            textChannel:SendAsync(_G.ChatSpamMessage)
+                            print("Sent TextChatService message: " .. _G.ChatSpamMessage)
+                        end)
+                    end
+                else
+                    print("Chat spam skipped: Message is empty")
                 end
-                wait(_G.ChatSpamDelay)
+                wait(math.max(1, _G.ChatSpamDelay)) -- Enforce minimum 1-second delay to respect rate limits
             end
+            print("Chat spam disabled")
         end)
     end
 end)
