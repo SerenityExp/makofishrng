@@ -1,8 +1,11 @@
 --[[ ==============================================================
-     ALT‑CONTROL SCRIPT – FINAL + TINY ALPHABETICAL GUI
-     • 25+ players fit
-     • Sorted by DisplayName
-     • All commands work
+     ALT‑CONTROL SCRIPT – FINAL + ALPHABETICAL GUI
+     • .summon  → hover (no collision)
+     • .vanish  → 30 studs under (no collision)
+     • .float   → rise upward (no collision)
+     • .fling   → TP + fling (collisions ON)
+     • .tweak   → spin on ground (collisions ON)
+     • GUI: players sorted alphabetically
    ============================================================== ]]
 
 local Players      = game:GetService("Players")
@@ -272,69 +275,65 @@ local function OnChat(msg)
     end
 end
 
---// UI – TINY + ALPHABETICAL --------------------------------------
+--// UI – PICK MAIN ACCOUNT (ALPHABETICAL ORDER) ------------------
 local function BuildUI()
     local sg = Instance.new("ScreenGui", game:GetService("CoreGui"))
     sg.Name = "AltControlUI"
     local frame = Instance.new("Frame", sg)
-    frame.Size = UDim2.new(0, 220, 0, 500)  -- Taller to fit 25+
-    frame.Position = UDim2.new(0, 10, 0, 10)
-    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    frame.ScrollBarThickness = 6  -- Enable scrolling if needed
+    frame.Size = UDim2.new(0,200,0,300)
+    frame.Position = UDim2.new(0,10,0,10)
+    frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
     local layout = Instance.new("UIListLayout", frame)
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, 1)
+    layout.SortOrder = Enum.SortOrder.Name  -- This ensures alphabetical order
 
     local function addBtn(pl)
         local btn = Instance.new("TextButton", frame)
-        btn.Size = UDim2.new(1, 0, 0, 20)  -- Tiny height
-        btn.Text = pl.DisplayName  -- Show DisplayName
-        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.TextScaled = true
-        btn.Font = Enum.Font.SourceSans
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.LayoutOrder = 0  -- Will be reassigned after sorting
-
+        btn.Size = UDim2.new(1,0,0,30)
+        btn.Name = pl.Name  -- Important: Name drives SortOrder
+        btn.Text = pl.Name
+        btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        btn.TextColor3 = Color3.new(1,1,1)
         btn.MouseButton1Click:Connect(function()
             MainAccount = pl
             if ChatConn then ChatConn:Disconnect() end
             ChatConn = pl.Chatted:Connect(OnChat)
-            print("[ALT] Main set →", pl.DisplayName)
+            print("[ALT] Main set →", pl.Name)
         end)
-        return btn
     end
 
-    -- Sort and add players
-    local function updateList()
-        local playerList = {}
-        for _, pl in ipairs(Players:GetPlayers()) do
-            if pl ~= LocalPlayer then
-                table.insert(playerList, pl)
+    -- Initial players (sorted)
+    local playerList = {}
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= LocalPlayer then
+            table.insert(playerList, pl)
+        end
+    end
+    table.sort(playerList, function(a, b)
+        return a.Name:lower() < b.Name:lower()
+    end)
+    for _, pl in ipairs(playerList) do
+        addBtn(pl)
+    end
+
+    -- New players (inserted in correct order)
+    Players.PlayerAdded:Connect(function(pl)
+        if pl == LocalPlayer then return end
+        addBtn(pl)
+        -- Re-sort all buttons
+        local buttons = {}
+        for _, child in ipairs(frame:GetChildren()) do
+            if child:IsA("TextButton") then
+                table.insert(buttons, child)
             end
         end
-
-        table.sort(playerList, function(a, b)
-            return a.DisplayName:lower() < b.DisplayName:lower()
+        table.sort(buttons, function(a, b)
+            return a.Name:lower() < b.Name:lower()
         end)
-
-        -- Clear old buttons
-        for _, child in ipairs(frame:GetChildren()) do
-            if child:IsA("TextButton") then child:Destroy() end
-        end
-
-        -- Re-add in order
-        for i, pl in ipairs(playerList) do
-            local btn = addBtn(pl)
+        for i, btn in ipairs(buttons) do
             btn.LayoutOrder = i
-            btn.Parent = frame
         end
-    end
-
-    updateList()
-    Players.PlayerAdded:Connect(updateList)
-    Players.PlayerRemoving:Connect(updateList)
+    end)
 end
 
 BuildUI()
