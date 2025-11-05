@@ -1,9 +1,10 @@
 --[[ ==============================================================
-     ALT‑CONTROL SCRIPT – FINAL + .FLOAT RESTORED
+     ALT‑CONTROL SCRIPT – FINAL + .FLOAT & .SHOTGUN RESTORED
      • .summon  → hover (no collision)
      • .vanish  → 30 studs under (no collision)
      • .float   → rise upward under main (no collision)
      • .fling   → TP + fling (collisions ON)
+     • .shotgun → move to arm, fire forward, reset
      • .tweak   → spin on ground, faster (collisions ON)
      • .stop    → reset all + restore collisions
    ============================================================== ]]
@@ -157,6 +158,42 @@ local function Float()
     print("[ALT] Floating – rising upward (no collision)")
 end
 
+--// .shotgun ------------------------------------------------------
+local function Shotgun()
+    StopEverything()
+    if not MainAccount or not MainAccount.Character then warn("[ALT] No main selected"); return end
+
+    local AltChar = LocalPlayer.Character
+    local MainChar = MainAccount.Character
+    if not AltChar or not MainChar then return end
+
+    local MainHRP = MainChar:FindFirstChild("HumanoidRootPart")
+    local AltHRP = AltChar:FindFirstChild("HumanoidRootPart")
+    local RightArm = MainChar:FindFirstChild("Right Arm") or MainChar:FindFirstChild("RightHand")
+    if not MainHRP or not AltHRP or not RightArm then
+        warn("[ALT] Shotgun failed: Missing parts")
+        return
+    end
+
+    print("[ALT] Moving to arm for shotgun...")
+    local AlignPos = Instance.new("AlignPosition", AltHRP)
+    AlignPos.MaxForce = 100000
+    AlignPos.Responsiveness = 100
+    AlignPos.Attachment0 = Instance.new("Attachment", AltHRP)
+    AlignPos.Attachment1 = Instance.new("Attachment", RightArm)
+    task.wait(2)
+
+    print("[ALT] Firing shotgun!")
+    AlignPos:Destroy()
+    local BodyVelocity = Instance.new("BodyVelocity", AltHRP)
+    BodyVelocity.Velocity = MainHRP.CFrame.LookVector * 250
+    BodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+    task.wait(0.5)
+    BodyVelocity:Destroy()
+    task.wait(1)
+    LocalPlayer.Character:BreakJoints()  -- Reset
+end
+
 --// .fling <DisplayName> -----------------------------------------
 local function StartFling(displayName)
     StopEverything()
@@ -265,6 +302,7 @@ local function OnChat(msg)
     if msg == ".summon" then Summon()
     elseif msg == ".vanish" then Vanish()
     elseif msg == ".float" then Float()
+    elseif msg == ".shotgun" then Shotgun()
     elseif msg == ".tp" then Teleport()
     elseif msg == ".stop" then StopEverything()
     elseif msg == ".jump" then Jump()
