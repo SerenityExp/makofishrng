@@ -1,11 +1,8 @@
 --[[ ==============================================================
-     ALT‑CONTROL SCRIPT – FINAL + .FLOAT RESTORED
-     • .summon  → hover (no collision)
-     • .vanish  → 30 studs under (no collision)
-     • .float   → rise upward under main (no collision)
-     • .fling   → TP + fling (collisions ON)
-     • .tweak   → spin on ground, faster (collisions ON)
-     • .stop    → reset all + restore collisions
+     ALT‑CONTROL SCRIPT – FINAL + TINY ALPHABETICAL GUI
+     • 25+ players fit
+     • Sorted by DisplayName
+     • All commands work
    ============================================================== ]]
 
 local Players      = game:GetService("Players")
@@ -103,7 +100,7 @@ local function Summon()
     IsSummoning = true
     char.Humanoid.WalkSpeed = 0
     char.Humanoid.JumpPower = 0
-    NoCollide(char, false)  -- OFF
+    NoCollide(char, false)
     HoverRig(altHRP, mainHRP, Vector3.new(5, 6, 0))
     print("[ALT] Summoned – hovering (no collision)")
 end
@@ -121,7 +118,7 @@ local function Vanish()
     IsVanishing = true
     char.Humanoid.WalkSpeed = 0
     char.Humanoid.JumpPower = 0
-    NoCollide(char, false)  -- OFF
+    NoCollide(char, false)
     HoverRig(altHRP, mainHRP, Vector3.new(0, -30, 0))
     print("[ALT] Vanished – 30 studs under (no collision)")
 end
@@ -139,17 +136,15 @@ local function Float()
     IsFloating = true
     char.Humanoid.WalkSpeed = 0
     char.Humanoid.JumpPower = 0
-    NoCollide(char, false)  -- OFF
+    NoCollide(char, false)
 
-    -- Start under legs
     altHRP.CFrame = mainHRP.CFrame + Vector3.new(0, -3, 0)
 
-    -- Rise continuously
     task.spawn(function()
         local rise = 0
         while IsFloating and altHRP and mainHRP do
             rise = rise + 0.5
-            HoverRig(altHRP, mainHRP, Vector3.new(0, rise, 0))  -- dynamic offset
+            HoverRig(altHRP, mainHRP, Vector3.new(0, rise, 0))
             task.wait(0.1)
         end
     end)
@@ -169,9 +164,6 @@ local function StartFling(displayName)
     FlingTarget = target
     IsFlinging  = true
     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-
-    -- COLLISIONS ON
-    -- (already restored by StopEverything)
 
     task.spawn(function()
         while IsFlinging do
@@ -280,73 +272,69 @@ local function OnChat(msg)
     end
 end
 
---// UI – PICK MAIN ACCOUNT (AUTO‑FIT TEXT) -------------------------
+--// UI – TINY + ALPHABETICAL --------------------------------------
 local function BuildUI()
     local sg = Instance.new("ScreenGui", game:GetService("CoreGui"))
     sg.Name = "AltControlUI"
     local frame = Instance.new("Frame", sg)
-    frame.Size = UDim2.new(0, 220, 0, 300)  -- Slightly wider for safety
+    frame.Size = UDim2.new(0, 220, 0, 500)  -- Taller to fit 25+
     frame.Position = UDim2.new(0, 10, 0, 10)
     frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    frame.BorderSizePixel = 2
-    frame.BorderColor3 = Color3.fromRGB(100, 100, 100)
+    frame.ScrollBarThickness = 6  -- Enable scrolling if needed
 
     local layout = Instance.new("UIListLayout", frame)
-    layout.SortOrder = Enum.SortOrder.Name
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 1)
 
     local function addBtn(pl)
         local btn = Instance.new("TextButton", frame)
-        btn.Size = UDim2.new(1, 0, 0, 30)
+        btn.Size = UDim2.new(1, 0, 0, 20)  -- Tiny height
+        btn.Text = pl.DisplayName  -- Show DisplayName
         btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        btn.BorderSizePixel = 1
-        btn.BorderColor3 = Color3.fromRGB(80, 80, 80)
         btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.Font = Enum.Font.Gotham
-        btn.Text = pl.Name
-        btn.TextTruncate = Enum.TextTruncate.Split  -- Wrap if needed
+        btn.TextScaled = true
+        btn.Font = Enum.Font.SourceSans
         btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.TextYAlignment = Enum.TextYAlignment.Center
-        btn.AutoButtonColor = false
-
-        -- AUTO‑FIT TEXT SIZE
-        local textLabel = btn
-        local function fitText()
-            local text = pl.Name
-            local maxWidth = btn.AbsoluteSize.X - 16  -- padding
-            local font = btn.Font
-            local baseSize = 14
-            local size = baseSize
-
-            -- Reduce size until it fits
-            while size > 8 do
-                local bounds = game:GetService("TextService"):GetTextSize(text, size, font, Vector2.new(maxWidth, 100))
-                if bounds.X <= maxWidth then
-                    textLabel.TextSize = size
-                    break
-                end
-                size = size - 1
-            end
-        end
-
-        fitText()
-        btn:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitText)
-        pl:GetPropertyChangedSignal("Name"):Connect(fitText)
+        btn.LayoutOrder = 0  -- Will be reassigned after sorting
 
         btn.MouseButton1Click:Connect(function()
             MainAccount = pl
             if ChatConn then ChatConn:Disconnect() end
             ChatConn = pl.Chatted:Connect(OnChat)
-            print("[ALT] Main set →", pl.Name)
+            print("[ALT] Main set →", pl.DisplayName)
         end)
+        return btn
     end
 
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= LocalPlayer then addBtn(pl) end
+    -- Sort and add players
+    local function updateList()
+        local playerList = {}
+        for _, pl in ipairs(Players:GetPlayers()) do
+            if pl ~= LocalPlayer then
+                table.insert(playerList, pl)
+            end
+        end
+
+        table.sort(playerList, function(a, b)
+            return a.DisplayName:lower() < b.DisplayName:lower()
+        end)
+
+        -- Clear old buttons
+        for _, child in ipairs(frame:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+
+        -- Re-add in order
+        for i, pl in ipairs(playerList) do
+            local btn = addBtn(pl)
+            btn.LayoutOrder = i
+            btn.Parent = frame
+        end
     end
 
-    Players.PlayerAdded:Connect(function(pl)
-        if pl ~= LocalPlayer then addBtn(pl) end
-    end)
+    updateList()
+    Players.PlayerAdded:Connect(updateList)
+    Players.PlayerRemoving:Connect(updateList)
 end
 
 BuildUI()
