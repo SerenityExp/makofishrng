@@ -280,23 +280,58 @@ local function OnChat(msg)
     end
 end
 
---// UI – PICK MAIN ACCOUNT ----------------------------------------
+--// UI – PICK MAIN ACCOUNT (AUTO‑FIT TEXT) -------------------------
 local function BuildUI()
     local sg = Instance.new("ScreenGui", game:GetService("CoreGui"))
     sg.Name = "AltControlUI"
     local frame = Instance.new("Frame", sg)
-    frame.Size = UDim2.new(0,200,0,300)
-    frame.Position = UDim2.new(0,10,0,10)
-    frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    frame.Size = UDim2.new(0, 220, 0, 300)  -- Slightly wider for safety
+    frame.Position = UDim2.new(0, 10, 0, 10)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.BorderSizePixel = 2
+    frame.BorderColor3 = Color3.fromRGB(100, 100, 100)
 
     local layout = Instance.new("UIListLayout", frame)
+    layout.SortOrder = Enum.SortOrder.Name
 
     local function addBtn(pl)
         local btn = Instance.new("TextButton", frame)
-        btn.Size = UDim2.new(1,0,0,30)
+        btn.Size = UDim2.new(1, 0, 0, 30)
+        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        btn.BorderSizePixel = 1
+        btn.BorderColor3 = Color3.fromRGB(80, 80, 80)
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.Font = Enum.Font.Gotham
         btn.Text = pl.Name
-        btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-        btn.TextColor3 = Color3.new(1,1,1)
+        btn.TextTruncate = Enum.TextTruncate.Split  -- Wrap if needed
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.TextYAlignment = Enum.TextYAlignment.Center
+        btn.AutoButtonColor = false
+
+        -- AUTO‑FIT TEXT SIZE
+        local textLabel = btn
+        local function fitText()
+            local text = pl.Name
+            local maxWidth = btn.AbsoluteSize.X - 16  -- padding
+            local font = btn.Font
+            local baseSize = 14
+            local size = baseSize
+
+            -- Reduce size until it fits
+            while size > 8 do
+                local bounds = game:GetService("TextService"):GetTextSize(text, size, font, Vector2.new(maxWidth, 100))
+                if bounds.X <= maxWidth then
+                    textLabel.TextSize = size
+                    break
+                end
+                size = size - 1
+            end
+        end
+
+        fitText()
+        btn:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitText)
+        pl:GetPropertyChangedSignal("Name"):Connect(fitText)
+
         btn.MouseButton1Click:Connect(function()
             MainAccount = pl
             if ChatConn then ChatConn:Disconnect() end
