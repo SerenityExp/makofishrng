@@ -1,11 +1,11 @@
 --[[ ==============================================================
-     ALT‑CONTROL SCRIPT – FINAL + ALPHABETICAL GUI
+     ALT‑CONTROL SCRIPT – FINAL + .FLOAT RESTORED
      • .summon  → hover (no collision)
      • .vanish  → 30 studs under (no collision)
-     • .float   → rise upward (no collision)
+     • .float   → rise upward under main (no collision)
      • .fling   → TP + fling (collisions ON)
-     • .tweak   → spin on ground (collisions ON)
-     • GUI: players sorted alphabetically
+     • .tweak   → spin on ground, faster (collisions ON)
+     • .stop    → reset all + restore collisions
    ============================================================== ]]
 
 local Players      = game:GetService("Players")
@@ -103,7 +103,7 @@ local function Summon()
     IsSummoning = true
     char.Humanoid.WalkSpeed = 0
     char.Humanoid.JumpPower = 0
-    NoCollide(char, false)
+    NoCollide(char, false)  -- OFF
     HoverRig(altHRP, mainHRP, Vector3.new(5, 6, 0))
     print("[ALT] Summoned – hovering (no collision)")
 end
@@ -121,7 +121,7 @@ local function Vanish()
     IsVanishing = true
     char.Humanoid.WalkSpeed = 0
     char.Humanoid.JumpPower = 0
-    NoCollide(char, false)
+    NoCollide(char, false)  -- OFF
     HoverRig(altHRP, mainHRP, Vector3.new(0, -30, 0))
     print("[ALT] Vanished – 30 studs under (no collision)")
 end
@@ -139,15 +139,17 @@ local function Float()
     IsFloating = true
     char.Humanoid.WalkSpeed = 0
     char.Humanoid.JumpPower = 0
-    NoCollide(char, false)
+    NoCollide(char, false)  -- OFF
 
+    -- Start under legs
     altHRP.CFrame = mainHRP.CFrame + Vector3.new(0, -3, 0)
 
+    -- Rise continuously
     task.spawn(function()
         local rise = 0
         while IsFloating and altHRP and mainHRP do
             rise = rise + 0.5
-            HoverRig(altHRP, mainHRP, Vector3.new(0, rise, 0))
+            HoverRig(altHRP, mainHRP, Vector3.new(0, rise, 0))  -- dynamic offset
             task.wait(0.1)
         end
     end)
@@ -285,15 +287,15 @@ local function BuildUI()
     frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
     local layout = Instance.new("UIListLayout", frame)
-    layout.SortOrder = Enum.SortOrder.Name  -- This ensures alphabetical order
+    layout.SortOrder = Enum.SortOrder.Name  -- Ensures alphabetical order
 
     local function addBtn(pl)
         local btn = Instance.new("TextButton", frame)
         btn.Size = UDim2.new(1,0,0,30)
-        btn.Name = pl.Name  -- Important: Name drives SortOrder
         btn.Text = pl.Name
         btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
         btn.TextColor3 = Color3.new(1,1,1)
+        btn.Name = pl.Name  -- Crucial for SortOrder.Name
         btn.MouseButton1Click:Connect(function()
             MainAccount = pl
             if ChatConn then ChatConn:Disconnect() end
@@ -302,36 +304,35 @@ local function BuildUI()
         end)
     end
 
-    -- Initial players (sorted)
-    local playerList = {}
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= LocalPlayer then
-            table.insert(playerList, pl)
-        end
-    end
-    table.sort(playerList, function(a, b)
+    -- Add existing players in alphabetical order
+    local players = Players:GetPlayers()
+    table.sort(players, function(a, b)
         return a.Name:lower() < b.Name:lower()
     end)
-    for _, pl in ipairs(playerList) do
-        addBtn(pl)
+
+    for _, pl in ipairs(players) do
+        if pl ~= LocalPlayer then
+            addBtn(pl)
+        end
     end
 
-    -- New players (inserted in correct order)
+    -- Add new players and maintain order
     Players.PlayerAdded:Connect(function(pl)
-        if pl == LocalPlayer then return end
-        addBtn(pl)
-        -- Re-sort all buttons
-        local buttons = {}
-        for _, child in ipairs(frame:GetChildren()) do
-            if child:IsA("TextButton") then
-                table.insert(buttons, child)
+        if pl ~= LocalPlayer then
+            addBtn(pl)
+            -- Re-sort all buttons
+            local buttons = {}
+            for _, child in ipairs(frame:GetChildren()) do
+                if child:IsA("TextButton") then
+                    table.insert(buttons, child)
+                end
             end
-        end
-        table.sort(buttons, function(a, b)
-            return a.Name:lower() < b.Name:lower()
-        end)
-        for i, btn in ipairs(buttons) do
-            btn.LayoutOrder = i
+            table.sort(buttons, function(a, b)
+                return a.Name:lower() < b.Name:lower()
+            end)
+            for i, btn in ipairs(buttons) do
+                btn.LayoutOrder = i
+            end
         end
     end)
 end
