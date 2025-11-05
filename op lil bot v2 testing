@@ -1,10 +1,10 @@
 --[[ ==============================================================
-     ALT‑CONTROL SCRIPT – EXECUTOR‑SAFE
-     • .summon  → stable hover 5 studs right / 6 studs up
-     • .vanish  → stay 30 studs under the main (no‑clip)
-     • .fling <DisplayName> → 0.1 s TP spam + hidden‑fling loop
-     • .stop    → kills everything
-     • UI to pick the main account
+     ALT‑CONTROL SCRIPT – FINAL VERSION
+     • .summon  → hover (collisions OFF)
+     • .vanish  → underground (collisions OFF)
+     • .fling   → TP spam + fling loop (collisions ON)
+     • .tweak   → spin on ground, speed increases
+     • .stop    → stop everything
    ============================================================== ]]
 
 local Players      = game:GetService("Players")
@@ -16,13 +16,15 @@ local MainAccount   = nil
 local IsSummoning   = false
 local IsVanishing   = false
 local IsFlinging    = false
+local IsTweaking    = false
 local FlingTarget   = nil
 local ChatConn      = nil
+local TweakSpeed    = 0
 
 --// UTILS ---------------------------------------------------------
 local function StopEverything()
-    IsSummoning = false; IsVanishing = false; IsFlinging = false
-    FlingTarget = nil
+    IsSummoning = false; IsVanishing = false; IsFlinging = false; IsTweaking = false
+    FlingTarget = nil; TweakSpeed = 0
 
     local char = LocalPlayer.Character
     if char and char:FindFirstChildOfClass("Humanoid") then
@@ -45,13 +47,15 @@ end
 
 local function NoCollide(char, bool)
     for _, v in ipairs(char:GetDescendants()) do
-        if v:IsA("BasePart") then v.CanCollide = bool; v.CanTouch = bool end
+        if v:IsA("BasePart") then
+            v.CanCollide = bool
+            v.CanTouch   = bool
+        end
     end
 end
 
 --// HOVER RIG (used by summon & vanish) -------------------------
 local function HoverRig(altHRP, targetHRP, offset)
-    -- clean old rigs
     for _, v in ipairs(altHRP:GetChildren()) do
         if v:IsA("AlignPosition") or v:IsA("AlignOrientation") then v:Destroy() end
     end
@@ -60,7 +64,7 @@ local function HoverRig(altHRP, targetHRP, offset)
     local att1 = Instance.new("Attachment")
 
     local ap = Instance.new("AlignPosition", altHRP)
-    ap.MaxForce        = 1/0   -- math.huge
+    ap.MaxForce        = 1/0
     ap.Responsiveness  = 200
     ap.RigidityEnabled = true
     ap.Attachment0     = att0
@@ -96,8 +100,9 @@ local function Summon()
     IsSummoning = true
     char.Humanoid.WalkSpeed = 0
     char.Humanoid.JumpPower = 0
+    NoCollide(char, false)  -- OFF during summon
     HoverRig(altHRP, mainHRP, Vector3.new(5, 6, 0))
-    print("[ALT] Summoned – hovering")
+    print("[ALT] Summoned – hovering (no collision)")
 end
 
 --// .vanish -------------------------------------------------------
@@ -113,9 +118,9 @@ local function Vanish()
     IsVanishing = true
     char.Humanoid.WalkSpeed = 0
     char.Humanoid.JumpPower = 0
-    NoCollide(char, false)
+    NoCollide(char, false)  -- OFF during vanish
     HoverRig(altHRP, mainHRP, Vector3.new(0, -30, 0))
-    print("[ALT] Vanished – 30 studs under")
+    print("[ALT] Vanished – 30 studs under (no collision)")
 end
 
 --// .fling <DisplayName> -----------------------------------------
@@ -130,9 +135,9 @@ local function StartFling(displayName)
     FlingTarget = target
     IsFlinging  = true
     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    NoCollide(char, false)
+    NoCollide(char, true)  -- COLLISIONS ON during fling
 
-    -- 0.1 s TP spam
+    -- 0.1s TP spam
     task.spawn(function()
         while IsFlinging do
             local lpHRP = char:FindFirstChild("HumanoidRootPart")
@@ -144,7 +149,7 @@ local function StartFling(displayName)
         end
     end)
 
-    -- hidden‑fling loop (your original code)
+    -- hidden-fling loop
     task.spawn(function()
         local c, hrp, vel, movel = nil, nil, nil, 0.1
         while IsFlinging do
@@ -165,7 +170,32 @@ local function StartFling(displayName)
         end
     end)
 
-    print("[ALT] Flinging ->", target.DisplayName)
+    print("[ALT] Flinging ->", target.DisplayName, "(collisions ON)")
+end
+
+--// .tweak – spin on ground, faster over time --------------------
+local function Tweak()
+    StopEverything()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    IsTweaking = true
+    TweakSpeed = 100
+
+    -- Keep on ground
+    task.spawn(function()
+        while IsTweaking do
+            if hrp and hrp.Parent then
+                local pos = hrp.Position
+                hrp.CFrame = CFrame.new(pos.X, pos.Y, pos.Z) * CFrame.Angles(0, math.rad(TweakSpeed), 0)
+                TweakSpeed = TweakSpeed + 15  -- accelerate
+            end
+            RunService.Heartbeat:Wait()
+        end
+    end)
+
+    print("[ALT] Tweak started – spinning faster...")
 end
 
 --// OTHER COMMANDS ------------------------------------------------
@@ -197,7 +227,7 @@ end
 
 --// CHAT HANDLER --------------------------------------------------
 local function OnChat(msg)
-    msg = msg:lower():gsub("^%s*(.-)%s*$", "%1")   -- trim
+    msg = msg:lower():gsub("^%s*(.-)%s*$", "%1")
 
     if msg == ".summon" then Summon()
     elseif msg == ".vanish" then Vanish()
@@ -206,6 +236,7 @@ local function OnChat(msg)
     elseif msg == ".jump" then Jump()
     elseif msg == ".sit" then Sit()
     elseif msg == ".fall" then Fall()
+    elseif msg == ".tweak" then Tweak()
     elseif msg:find("^%.fling ") then
         local name = msg:match("^%.fling%s+(.+)")
         if name then StartFling(name) end
