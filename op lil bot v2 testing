@@ -1,57 +1,57 @@
---// Services
+--[[ ==============================================================
+     ALT‑CONTROL SCRIPT – EXECUTOR‑SAFE
+     • .summon  → stable hover 5 studs right / 6 studs up
+     • .vanish  → stay 30 studs under the main (no‑clip)
+     • .fling <DisplayName> → 0.1 s TP spam + hidden‑fling loop
+     • .stop    → kills everything
+     • UI to pick the main account
+   ============================================================== ]]
+
 local Players      = game:GetService("Players")
 local RunService   = game:GetService("RunService")
 local LocalPlayer  = Players.LocalPlayer
 
---// State
-local SelectedMainAccount = nil
-local Following   = false
-local Vanishing   = false
-local Flinging    = false
-local hiddenfling = false
-local TargetFling = nil
-local Connection  = nil
+--// STATE ---------------------------------------------------------
+local MainAccount   = nil
+local IsSummoning   = false
+local IsVanishing   = false
+local IsFlinging    = false
+local FlingTarget   = nil
+local ChatConn      = nil
 
---------------------------------------------------------------------
---// Utility
-local function StopAll()
-    Following   = false
-    Vanishing   = false
-    Flinging    = false
-    hiddenfling = false
-    TargetFling = nil
+--// UTILS ---------------------------------------------------------
+local function StopEverything()
+    IsSummoning = false; IsVanishing = false; IsFlinging = false
+    FlingTarget = nil
 
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        local hum = LocalPlayer.Character.Humanoid
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        local hum = char.Humanoid
         hum.WalkSpeed = 16
         hum.JumpPower = 50
         hum.Sit = false
     end
 
-    if LocalPlayer.Character then
-        for _, v in ipairs(LocalPlayer.Character:GetDescendants()) do
+    if char then
+        for _, v in ipairs(char:GetDescendants()) do
             if v:IsA("BasePart") then
                 v.CanCollide = true
                 v.CanTouch   = true
             end
         end
     end
-    print("Stopped all actions")
+    print("[ALT] Stopped all actions")
 end
 
-local function SetCollisions(char, state)
+local function NoCollide(char, bool)
     for _, v in ipairs(char:GetDescendants()) do
-        if v:IsA("BasePart") then
-            v.CanCollide = state
-            v.CanTouch   = state
-        end
+        if v:IsA("BasePart") then v.CanCollide = bool; v.CanTouch = bool end
     end
 end
 
---------------------------------------------------------------------
---// Stable Hover Rig (used by summon & vanish)
-local function CreateHoverRig(altHRP, targetHRP, offset)
-    -- Clean old rigs
+--// HOVER RIG (used by summon & vanish) -------------------------
+local function HoverRig(altHRP, targetHRP, offset)
+    -- clean old rigs
     for _, v in ipairs(altHRP:GetChildren()) do
         if v:IsA("AlignPosition") or v:IsA("AlignOrientation") then v:Destroy() end
     end
@@ -60,100 +60,94 @@ local function CreateHoverRig(altHRP, targetHRP, offset)
     local att1 = Instance.new("Attachment")
 
     local ap = Instance.new("AlignPosition", altHRP)
-    ap.MaxForce        = math.huge
+    ap.MaxForce        = 1/0   -- math.huge
     ap.Responsiveness  = 200
     ap.RigidityEnabled = true
     ap.Attachment0     = att0
     ap.Attachment1     = att1
 
     local ao = Instance.new("AlignOrientation", altHRP)
-    ao.MaxTorque       = math.huge
+    ao.MaxTorque       = 1/0
     ao.Responsiveness  = 200
     ao.RigidityEnabled = true
     ao.Attachment0     = att0
     ao.Attachment1     = att1
 
-    return function()
-        while (Following or Vanishing) and targetHRP.Parent do
-            att1.Parent     = targetHRP
-            att1.CFrame     = CFrame.new(offset)
+    return task.spawn(function()
+        while (IsSummoning or IsVanishing) and targetHRP and targetHRP.Parent do
+            att1.Parent = targetHRP
+            att1.CFrame = CFrame.new(offset)
             RunService.Heartbeat:Wait()
         end
-        ap:Destroy()
-        ao:Destroy()
-        att1:Destroy()
-        att0:Destroy()
-    end
+        ap:Destroy(); ao:Destroy(); att1:Destroy(); att0:Destroy()
+    end)
 end
 
---------------------------------------------------------------------
---// .summon  (stable hover, a bit closer)
-local function SummonAlt()
-    StopAll()
-    if not SelectedMainAccount or not SelectedMainAccount.Character then
-        warn("No main account selected")
-        return
-    end
+--// .summon -------------------------------------------------------
+local function Summon()
+    StopEverything()
+    if not MainAccount or not MainAccount.Character then warn("[ALT] No main selected"); return end
 
-    local altChar = LocalPlayer.Character
-    local mainHRP = SelectedMainAccount.Character:FindFirstChild("HumanoidRootPart")
-    local altHRP  = altChar and altChar:FindFirstChild("HumanoidRootPart")
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local altHRP  = char:FindFirstChild("HumanoidRootPart")
+    local mainHRP = MainAccount.Character:FindFirstChild("HumanoidRootPart")
     if not (altHRP and mainHRP) then return end
 
-    Following = true
-    altChar.Humanoid.WalkSpeed = 0
-    altChar.Humanoid.JumpPower = 0
-
-    -- 5 studs right, 6 studs up
-    task.spawn(CreateHoverRig(altHRP, mainHRP, Vector3.new(5, 6, 0)))
-    print("Summoned (hovering)")
+    IsSummoning = true
+    char.Humanoid.WalkSpeed = 0
+    char.Humanoid.JumpPower = 0
+    HoverRig(altHRP, mainHRP, Vector3.new(5, 6, 0))
+    print("[ALT] Summoned – hovering")
 end
 
---------------------------------------------------------------------
---// .vanish  (30 studs under, stays there)
-local function VanishAlt()
-    StopAll()
-    if not SelectedMainAccount or not SelectedMainAccount.Character then
-        warn("No main account selected")
-        return
-    end
+--// .vanish -------------------------------------------------------
+local function Vanish()
+    StopEverything()
+    if not MainAccount or not MainAccount.Character then warn("[ALT] No main selected"); return end
 
-    local altChar = LocalPlayer.Character
-    local mainHRP = SelectedMainAccount.Character:FindFirstChild("HumanoidRootPart")
-    local altHRP  = altChar and altChar:FindFirstChild("HumanoidRootPart")
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local altHRP  = char:FindFirstChild("HumanoidRootPart")
+    local mainHRP = MainAccount.Character:FindFirstChild("HumanoidRootPart")
     if not (altHRP and mainHRP) then return end
 
-    Vanishing = true
-    altChar.Humanoid.WalkSpeed = 0
-    altChar.Humanoid.JumpPower = 0
-    SetCollisions(altChar, false)
-
-    task.spawn(CreateHoverRig(altHRP, mainHRP, Vector3.new(0, -30, 0)))
-    print("Vanished (30 studs under)")
+    IsVanishing = true
+    char.Humanoid.WalkSpeed = 0
+    char.Humanoid.JumpPower = 0
+    NoCollide(char, false)
+    HoverRig(altHRP, mainHRP, Vector3.new(0, -30, 0))
+    print("[ALT] Vanished – 30 studs under")
 end
 
---------------------------------------------------------------------
---// .fling <DisplayName>
-local function FlingTarget()
-    local lpChar = LocalPlayer.Character
-    local lpHRP  = lpChar and lpChar:FindFirstChild("HumanoidRootPart")
-    local tgtChar = TargetFling.Character
-    local tgtHRP  = tgtChar and tgtChar:FindFirstChild("HumanoidRootPart")
-    if not (lpHRP and tgtHRP) then return end
+--// .fling <DisplayName> -----------------------------------------
+local function StartFling(displayName)
+    StopEverything()
+    local target = nil
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p.DisplayName:lower() == displayName:lower() then target = p; break end
+    end
+    if not target then warn("[ALT] Player not found:", displayName); return end
 
-    -- TP spam every 0.1 s
+    FlingTarget = target
+    IsFlinging  = true
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    NoCollide(char, false)
+
+    -- 0.1 s TP spam
     task.spawn(function()
-        while Flinging do
-            lpHRP.CFrame = tgtHRP.CFrame * CFrame.new(0, 0, -1)   -- tiny offset
+        while IsFlinging do
+            local lpHRP = char:FindFirstChild("HumanoidRootPart")
+            local tgtHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+            if lpHRP and tgtHRP then
+                lpHRP.CFrame = tgtHRP.CFrame * CFrame.new(0,0,-1)
+            end
             task.wait(0.1)
         end
     end)
 
-    -- hidden-fling loop (your original code)
-    hiddenfling = true
+    -- hidden‑fling loop (your original code)
     task.spawn(function()
         local c, hrp, vel, movel = nil, nil, nil, 0.1
-        while hiddenfling do
+        while IsFlinging do
             RunService.Heartbeat:Wait()
             c   = LocalPlayer.Character
             hrp = c and c:FindFirstChild("HumanoidRootPart")
@@ -170,74 +164,58 @@ local function FlingTarget()
             end
         end
     end)
+
+    print("[ALT] Flinging ->", target.DisplayName)
 end
 
-local function StartFling(displayName)
-    StopAll()
-    local target = nil
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p.DisplayName:lower() == displayName:lower() then
-            target = p; break
-        end
-    end
-    if not target then
-        warn("Player not found:", displayName)
-        return
-    end
-
-    TargetFling = target
-    Flinging    = true
-    SetCollisions(LocalPlayer.Character, false)
-    print("Flinging ->", target.DisplayName)
-    FlingTarget()
-end
-
---------------------------------------------------------------------
---// Other commands (unchanged, just wrapped in StopAll)
-local function FallAlt()  LocalPlayer.Character:BreakJoints() end
-local function JumpAlt()  if LocalPlayer.Character then LocalPlayer.Character.Humanoid.Jump = true end end
-local function SitAlt()   if LocalPlayer.Character then LocalPlayer.Character.Humanoid.Sit = true end end
-
-local function ShotgunAlt()
-    StopAll()
-    -- (your original shotgun code – left untouched for brevity)
-end
-
-local function TeleportAlt()
-    StopAll()
-    if not SelectedMainAccount or not SelectedMainAccount.Character then return end
-    local mainHRP = SelectedMainAccount.Character:FindFirstChild("HumanoidRootPart")
-    local altHRP  = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if mainHRP and altHRP then
+--// OTHER COMMANDS ------------------------------------------------
+local function Teleport()
+    StopEverything()
+    if not MainAccount or not MainAccount.Character then return end
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local altHRP  = char:FindFirstChild("HumanoidRootPart")
+    local mainHRP = MainAccount.Character:FindFirstChild("HumanoidRootPart")
+    if altHRP and mainHRP then
         altHRP.CFrame = mainHRP.CFrame + Vector3.new(0,5,0)
+        print("[ALT] Teleported")
     end
 end
 
---------------------------------------------------------------------
---// Chat handler
-local function HandleChat(msg)
-    msg = msg:lower()
+local function Jump()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then hum.Jump = true end
+end
 
-    if msg == ".summon" then SummonAlt()
-    elseif msg == ".vanish" then VanishAlt()
-    elseif msg == ".tp" then TeleportAlt()
-    elseif msg == ".stop" then StopAll()
-    elseif msg == ".sit" then SitAlt()
-    elseif msg == ".jump" then JumpAlt()
-    elseif msg == ".fall" then FallAlt()
-    elseif msg == ".shotgun" then ShotgunAlt()
+local function Sit()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then hum.Sit = true end
+end
+
+local function Fall()
+    LocalPlayer.Character:BreakJoints()
+end
+
+--// CHAT HANDLER --------------------------------------------------
+local function OnChat(msg)
+    msg = msg:lower():gsub("^%s*(.-)%s*$", "%1")   -- trim
+
+    if msg == ".summon" then Summon()
+    elseif msg == ".vanish" then Vanish()
+    elseif msg == ".tp" then Teleport()
+    elseif msg == ".stop" then StopEverything()
+    elseif msg == ".jump" then Jump()
+    elseif msg == ".sit" then Sit()
+    elseif msg == ".fall" then Fall()
     elseif msg:find("^%.fling ") then
         local name = msg:match("^%.fling%s+(.+)")
         if name then StartFling(name) end
-    else
-        warn("Unknown command:", msg)
     end
 end
 
---------------------------------------------------------------------
---// UI – select main account
-local function SetupUI()
+--// UI – PICK MAIN ACCOUNT ----------------------------------------
+local function BuildUI()
     local sg = Instance.new("ScreenGui", game:GetService("CoreGui"))
+    sg.Name = "AltControlUI"
     local frame = Instance.new("Frame", sg)
     frame.Size = UDim2.new(0,200,0,300)
     frame.Position = UDim2.new(0,10,0,10)
@@ -245,21 +223,27 @@ local function SetupUI()
 
     local layout = Instance.new("UIListLayout", frame)
 
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= LocalPlayer then
-            local btn = Instance.new("TextButton", frame)
-            btn.Size = UDim2.new(1,0,0,30)
-            btn.Text = pl.Name
-            btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-            btn.TextColor3 = Color3.new(1,1,1)
-            btn.MouseButton1Click:Connect(function()
-                SelectedMainAccount = pl
-                if Connection then Connection:Disconnect() end
-                Connection = pl.Chatted:Connect(HandleChat)
-                print("Main:", pl.Name)
-            end)
-        end
+    local function addBtn(pl)
+        local btn = Instance.new("TextButton", frame)
+        btn.Size = UDim2.new(1,0,0,30)
+        btn.Text = pl.Name
+        btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.MouseButton1Click:Connect(function()
+            MainAccount = pl
+            if ChatConn then ChatConn:Disconnect() end
+            ChatConn = pl.Chatted:Connect(OnChat)
+            print("[ALT] Main set →", pl.Name)
+        end)
     end
+
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= LocalPlayer then addBtn(pl) end
+    end
+
+    Players.PlayerAdded:Connect(function(pl)
+        if pl ~= LocalPlayer then addBtn(pl) end
+    end)
 end
 
-SetupUI()
+BuildUI()
