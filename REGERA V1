@@ -1,0 +1,1737 @@
+--[[
+    Regera V1
+    Minimal C++ Style GUI with Tab Categories
+    Complete Feature Implementation
+]]
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local Mouse = Player:GetMouse()
+local Camera = Workspace.CurrentCamera
+
+-- Character references (will update on respawn)
+local Character
+local Humanoid
+local RootPart
+
+local function UpdateCharacterReferences()
+    Character = Player.Character or Player.CharacterAdded:Wait()
+    Humanoid = Character:WaitForChild("Humanoid")
+    RootPart = Character:WaitForChild("HumanoidRootPart")
+end
+
+UpdateCharacterReferences()
+
+-- Update references when character respawns
+Player.CharacterAdded:Connect(function(char)
+    UpdateCharacterReferences()
+    -- Reapply movement settings if needed
+    if FeatureState.Movement.SpeedBoost then
+        Humanoid.WalkSpeed = FeatureState.Movement.SpeedValue
+    end
+    if FeatureState.Movement.Fly then
+        StopFly()
+        task.wait(0.1)
+        StartFly()
+    end
+end)
+
+-- Handle player leaving to cleanup ESP, Chams, Tracers, and other features
+Players.PlayerRemoving:Connect(function(player)
+    -- Remove ESP
+    if FeatureState.ESP.Drawings[player.UserId] then
+        for _, drawing in pairs(FeatureState.ESP.Drawings[player.UserId]) do
+            drawing:Remove()
+        end
+        FeatureState.ESP.Drawings[player.UserId] = nil
+    end
+    
+    -- Remove Chams
+    if FeatureState.Chams.Highlights[player.UserId] then
+        FeatureState.Chams.Highlights[player.UserId]:Destroy()
+        FeatureState.Chams.Highlights[player.UserId] = nil
+    end
+    
+    -- Remove Tracers
+    if FeatureState.Tracers.Lines[player.UserId] then
+        FeatureState.Tracers.Lines[player.UserId]:Remove()
+        FeatureState.Tracers.Lines[player.UserId] = nil
+    end
+    
+    -- Clear aimlock target if it was this player
+    if FeatureState.Aimlock.Target == player then
+        FeatureState.Aimlock.Target = nil
+    end
+    
+    -- Restore hitbox if expanded
+    if FeatureState.HitboxExpander.OriginalSizes[player.UserId] then
+        FeatureState.HitboxExpander.OriginalSizes[player.UserId] = nil
+    end
+end)
+
+-- Handle character respawns for other players
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        -- Wait for character to fully load
+        task.wait(0.5)
+        
+        -- Reset chams when character respawns
+        if FeatureState.Chams.Highlights[player.UserId] then
+            FeatureState.Chams.Highlights[player.UserId]:Destroy()
+            FeatureState.Chams.Highlights[player.UserId] = nil
+        end
+        
+        -- Reset hitbox size when character respawns
+        if FeatureState.HitboxExpander.OriginalSizes[player.UserId] then
+            FeatureState.HitboxExpander.OriginalSizes[player.UserId] = nil
+        end
+        
+        -- Clear aimlock target if they respawned
+        if FeatureState.Aimlock.Target == player then
+            FeatureState.Aimlock.Target = nil
+        end
+    end)
+end)
+
+-- Setup existing players
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= Player then
+        player.CharacterAdded:Connect(function(character)
+            -- Wait for character to fully load
+            task.wait(0.5)
+            
+            -- Reset chams when character respawns
+            if FeatureState.Chams.Highlights[player.UserId] then
+                FeatureState.Chams.Highlights[player.UserId]:Destroy()
+                FeatureState.Chams.Highlights[player.UserId] = nil
+            end
+            
+            -- Reset hitbox size when character respawns
+            if FeatureState.HitboxExpander.OriginalSizes[player.UserId] then
+                FeatureState.HitboxExpander.OriginalSizes[player.UserId] = nil
+            end
+            
+            -- Clear aimlock target if they respawned
+            if FeatureState.Aimlock.Target == player then
+                FeatureState.Aimlock.Target = nil
+            end
+        end)
+    end
+end
+
+-- ============================================================================
+-- FEATURE STATE
+-- ============================================================================
+
+local FeatureState = {
+    -- Triggerbot
+    Triggerbot = {
+        Enabled = false,
+        Delay = 50,
+        TeamCheck = true,
+        VisibleCheck = true,
+        NPCCheck = true,
+        Keybind = "None",
+        Active = false
+    },
+    
+    -- Aimlock
+    Aimlock = {
+        Enabled = false,
+        Smoothness = 50,
+        FOV = 200,
+        AutoPrediction = false,
+        Prediction = 100,
+        TeamCheck = true,
+        VisibleCheck = true,
+        NPCCheck = true,
+        Sticky = false,
+        Keybind = "None",
+        Active = false,
+        Target = nil
+    },
+    
+    -- Hitbox Expander
+    HitboxExpander = {
+        Enabled = false,
+        Size = 5,
+        Transparency = true,
+        TeamCheck = true,
+        OriginalSizes = {}
+    },
+    
+    -- ESP
+    ESP = {
+        Enabled = false,
+        Boxes = true,
+        Names = true,
+        Distance = true,
+        HealthBars = true,
+        TeamCheck = true,
+        Drawings = {}
+    },
+    
+    -- Chams
+    Chams = {
+        Enabled = false,
+        Fill = true,
+        Outline = true,
+        TeamCheck = true,
+        Highlights = {}
+    },
+    
+    -- Tracers
+    Tracers = {
+        Enabled = false,
+        TeamCheck = true,
+        Lines = {}
+    },
+    
+    -- World
+    World = {
+        Fullbright = false,
+        NoFog = false,
+        FOVChanger = 90,
+        OriginalFOV = 70,
+        OriginalAmbient = nil,
+        OriginalBrightness = nil,
+        OriginalFogEnd = nil
+    },
+    
+    -- Movement
+    Movement = {
+        Fly = false,
+        FlySpeed = 50,
+        Noclip = false,
+        SpeedBoost = false,
+        SpeedValue = 30,
+        InfiniteJump = false,
+        OriginalSpeed = 16,
+        FlyConnection = nil,
+        NoclipConnection = nil
+    },
+    
+    -- Utility
+    Utility = {
+        AntiAFK = false
+    }
+}
+
+-- ============================================================================
+-- THEME
+-- ============================================================================
+
+local Theme = {
+    Background = Color3.fromRGB(255, 255, 255),
+    BackgroundTransparency = 0.15,
+    Text = Color3.fromRGB(0, 0, 0),
+    Divider = Color3.fromRGB(200, 200, 200),
+    TabActive = Color3.fromRGB(220, 220, 220),
+}
+
+-- ============================================================================
+-- UTILITY FUNCTIONS
+-- ============================================================================
+
+local function Tween(object, properties, duration)
+    TweenService:Create(object, TweenInfo.new(duration or 0.2, Enum.EasingStyle.Quad), properties):Play()
+end
+
+local function IsTeamMate(player)
+    if not Player.Team then return false end
+    return player.Team == Player.Team
+end
+
+local function IsNPC(player)
+    -- NPCs in Roblox typically don't have a UserId or have UserId of -1 or 0
+    -- They also won't be in the Players service
+    if not player then return true end
+    if player.UserId <= 0 then return true end
+    if not Players:GetPlayerByUserId(player.UserId) then return true end
+    return false
+end
+
+local function IsVisible(targetPart)
+    local ray = Ray.new(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * 500)
+    local hit = Workspace:FindPartOnRayWithIgnoreList(ray, {Character, Camera})
+    return hit and hit:IsDescendantOf(targetPart.Parent)
+end
+
+local function GetClosestPlayer()
+    -- If sticky is enabled and we have a valid target, ALWAYS keep it
+    if FeatureState.Aimlock.Sticky and FeatureState.Aimlock.Target then
+        local target = FeatureState.Aimlock.Target
+        -- Only clear target if player left the game or character doesn't exist
+        if target and Players:FindFirstChild(target.Name) and target.Character and target.Character:FindFirstChild("Head") then
+            return target
+        else
+            -- Player left or character doesn't exist, clear target
+            FeatureState.Aimlock.Target = nil
+        end
+    end
+    
+    local closestPlayer = nil
+    local shortestDistance = FeatureState.Aimlock.FOV
+    local mousePos = Vector2.new(Mouse.X, Mouse.Y)
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Player and player.Character then
+            local head = player.Character:FindFirstChild("Head")
+            if head then
+                -- NPC check
+                if FeatureState.Aimlock.NPCCheck and IsNPC(player) then
+                    continue
+                end
+                
+                -- Team check
+                if FeatureState.Aimlock.TeamCheck and IsTeamMate(player) then
+                    continue
+                end
+                
+                -- Visible check
+                if FeatureState.Aimlock.VisibleCheck and not IsVisible(head) then
+                    continue
+                end
+                
+                local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    local distance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                    
+                    if distance < shortestDistance then
+                        closestPlayer = player
+                        shortestDistance = distance
+                    end
+                end
+            end
+        end
+    end
+    
+    if closestPlayer and FeatureState.Aimlock.Sticky then
+        FeatureState.Aimlock.Target = closestPlayer
+    end
+    
+    return closestPlayer
+end
+
+-- ============================================================================
+-- FEATURE IMPLEMENTATIONS
+-- ============================================================================
+
+-- TRIGGERBOT
+local function UpdateTriggerbot()
+    if not FeatureState.Triggerbot.Enabled then return end
+    
+    local target = Mouse.Target
+    if target then
+        local player = Players:GetPlayerFromCharacter(target.Parent)
+        if player and player ~= Player then
+            -- NPC check
+            if FeatureState.Triggerbot.NPCCheck and IsNPC(player) then
+                return
+            end
+            
+            if FeatureState.Triggerbot.TeamCheck and IsTeamMate(player) then
+                return
+            end
+            
+            if FeatureState.Triggerbot.VisibleCheck and not IsVisible(target) then
+                return
+            end
+            
+            task.wait(FeatureState.Triggerbot.Delay / 1000)
+            mouse1press()
+            task.wait(0.01)
+            mouse1release()
+        end
+    end
+end
+
+-- AIMLOCK
+local function UpdateAimlock()
+    if not FeatureState.Aimlock.Enabled or not FeatureState.Aimlock.Active then return end
+    
+    local target = GetClosestPlayer()
+    if target and target.Character then
+        local head = target.Character:FindFirstChild("Head")
+        if head then
+            local predictedPos = head.Position
+            
+            if FeatureState.Aimlock.AutoPrediction then
+                -- Calculate velocity
+                local velocity = head.AssemblyLinearVelocity or Vector3.new(0, 0, 0)
+                
+                -- Calculate distance to target
+                local distance = (head.Position - Camera.CFrame.Position).Magnitude
+                
+                -- Calculate time for projectile to reach target (assuming instant for hitscan, or you can adjust)
+                -- For bullet drop games, you'd calculate based on bullet speed
+                -- This is a simplified version assuming around 1000 studs/second projectile speed
+                local projectileSpeed = 1000
+                local timeToHit = distance / projectileSpeed
+                
+                -- Apply prediction
+                predictedPos = head.Position + (velocity * timeToHit)
+            else
+                -- Manual prediction
+                local velocity = head.AssemblyLinearVelocity or Vector3.new(0, 0, 0)
+                predictedPos = head.Position + (velocity * (FeatureState.Aimlock.Prediction / 1000))
+            end
+            
+            local targetCFrame = CFrame.new(Camera.CFrame.Position, predictedPos)
+            local smoothness = FeatureState.Aimlock.Smoothness / 100
+            Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, 1 - smoothness)
+        end
+    end
+end
+
+-- HITBOX EXPANDER
+local function UpdateHitboxExpander()
+    -- First, clean up any stored sizes for players who left
+    for userId, _ in pairs(FeatureState.HitboxExpander.OriginalSizes) do
+        local playerExists = false
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.UserId == userId then
+                playerExists = true
+                break
+            end
+        end
+        if not playerExists then
+            FeatureState.HitboxExpander.OriginalSizes[userId] = nil
+        end
+    end
+    
+    -- Update hitboxes for current players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Player and player.Character then
+            if FeatureState.HitboxExpander.TeamCheck and IsTeamMate(player) then
+                -- Restore original size for teammates
+                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+                if hrp and FeatureState.HitboxExpander.OriginalSizes[player.UserId] then
+                    hrp.Size = FeatureState.HitboxExpander.OriginalSizes[player.UserId]
+                    hrp.Transparency = 1
+                    hrp.CanCollide = true
+                end
+                continue
+            end
+            
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                if FeatureState.HitboxExpander.Enabled then
+                    if not FeatureState.HitboxExpander.OriginalSizes[player.UserId] then
+                        FeatureState.HitboxExpander.OriginalSizes[player.UserId] = hrp.Size
+                    end
+                    
+                    hrp.Size = Vector3.new(
+                        FeatureState.HitboxExpander.Size,
+                        FeatureState.HitboxExpander.Size,
+                        FeatureState.HitboxExpander.Size
+                    )
+                    hrp.Transparency = FeatureState.HitboxExpander.Transparency and 0.5 or 1
+                    hrp.CanCollide = false
+                else
+                    if FeatureState.HitboxExpander.OriginalSizes[player.UserId] then
+                        hrp.Size = FeatureState.HitboxExpander.OriginalSizes[player.UserId]
+                        hrp.Transparency = 1
+                        hrp.CanCollide = true
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- ESP
+local function CreateESP(player)
+    if FeatureState.ESP.Drawings[player.UserId] then return end
+    
+    FeatureState.ESP.Drawings[player.UserId] = {
+        Box = Drawing.new("Square"),
+        Name = Drawing.new("Text"),
+        Distance = Drawing.new("Text"),
+        HealthBar = Drawing.new("Square"),
+        HealthBarOutline = Drawing.new("Square")
+    }
+    
+    local drawings = FeatureState.ESP.Drawings[player.UserId]
+    
+    -- Box
+    drawings.Box.Color = Color3.fromRGB(255, 255, 255)
+    drawings.Box.Thickness = 1
+    drawings.Box.Filled = false
+    drawings.Box.Transparency = 1
+    drawings.Box.Visible = false
+    
+    -- Name
+    drawings.Name.Color = Color3.fromRGB(255, 255, 255)
+    drawings.Name.Size = 13
+    drawings.Name.Center = true
+    drawings.Name.Outline = true
+    drawings.Name.Transparency = 1
+    drawings.Name.Visible = false
+    
+    -- Distance
+    drawings.Distance.Color = Color3.fromRGB(255, 255, 255)
+    drawings.Distance.Size = 13
+    drawings.Distance.Center = true
+    drawings.Distance.Outline = true
+    drawings.Distance.Transparency = 1
+    drawings.Distance.Visible = false
+    
+    -- Health Bar Outline
+    drawings.HealthBarOutline.Color = Color3.fromRGB(0, 0, 0)
+    drawings.HealthBarOutline.Thickness = 1
+    drawings.HealthBarOutline.Filled = true
+    drawings.HealthBarOutline.Transparency = 1
+    drawings.HealthBarOutline.Visible = false
+    
+    -- Health Bar
+    drawings.HealthBar.Color = Color3.fromRGB(0, 255, 0)
+    drawings.HealthBar.Thickness = 1
+    drawings.HealthBar.Filled = true
+    drawings.HealthBar.Transparency = 1
+    drawings.HealthBar.Visible = false
+end
+
+local function RemoveESP(player)
+    if FeatureState.ESP.Drawings[player.UserId] then
+        for _, drawing in pairs(FeatureState.ESP.Drawings[player.UserId]) do
+            drawing:Remove()
+        end
+        FeatureState.ESP.Drawings[player.UserId] = nil
+    end
+end
+
+local function UpdateESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Player then
+            -- Check if player should have ESP
+            local shouldShow = FeatureState.ESP.Enabled
+            if shouldShow and FeatureState.ESP.TeamCheck and IsTeamMate(player) then
+                shouldShow = false
+            end
+            
+            if shouldShow and player.Character then
+                CreateESP(player)
+                
+                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+                local head = player.Character:FindFirstChild("Head")
+                local hum = player.Character:FindFirstChild("Humanoid")
+                
+                if hrp and head then
+                    local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                    local drawings = FeatureState.ESP.Drawings[player.UserId]
+                    
+                    if onScreen then
+                        local headVector = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
+                        local legVector = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3, 0))
+                        
+                        local height = math.abs(headVector.Y - legVector.Y)
+                        local width = height / 2
+                        
+                        -- Box
+                        if FeatureState.ESP.Boxes then
+                            drawings.Box.Size = Vector2.new(width, height)
+                            drawings.Box.Position = Vector2.new(vector.X - width / 2, vector.Y - height / 2)
+                            drawings.Box.Visible = true
+                        else
+                            drawings.Box.Visible = false
+                        end
+                        
+                        -- Name
+                        if FeatureState.ESP.Names then
+                            drawings.Name.Text = player.Name
+                            drawings.Name.Position = Vector2.new(vector.X, headVector.Y - 15)
+                            drawings.Name.Visible = true
+                        else
+                            drawings.Name.Visible = false
+                        end
+                        
+                        -- Distance
+                        if FeatureState.ESP.Distance then
+                            local distance = math.floor((hrp.Position - RootPart.Position).Magnitude)
+                            drawings.Distance.Text = distance .. " studs"
+                            drawings.Distance.Position = Vector2.new(vector.X, legVector.Y + 5)
+                            drawings.Distance.Visible = true
+                        else
+                            drawings.Distance.Visible = false
+                        end
+                        
+                        -- Health Bar
+                        if FeatureState.ESP.HealthBars and hum then
+                            local healthPercent = hum.Health / hum.MaxHealth
+                            local barHeight = height
+                            local barWidth = 4
+                            
+                            drawings.HealthBarOutline.Size = Vector2.new(barWidth + 2, barHeight + 2)
+                            drawings.HealthBarOutline.Position = Vector2.new(vector.X - width / 2 - barWidth - 3, vector.Y - height / 2 - 1)
+                            drawings.HealthBarOutline.Visible = true
+                            
+                            drawings.HealthBar.Size = Vector2.new(barWidth, barHeight * healthPercent)
+                            drawings.HealthBar.Position = Vector2.new(vector.X - width / 2 - barWidth - 2, vector.Y + height / 2 - barHeight * healthPercent)
+                            drawings.HealthBar.Color = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
+                            drawings.HealthBar.Visible = true
+                        else
+                            drawings.HealthBarOutline.Visible = false
+                            drawings.HealthBar.Visible = false
+                        end
+                    else
+                        for _, drawing in pairs(drawings) do
+                            drawing.Visible = false
+                        end
+                    end
+                else
+                    -- Character exists but parts don't, hide ESP
+                    if FeatureState.ESP.Drawings[player.UserId] then
+                        for _, drawing in pairs(FeatureState.ESP.Drawings[player.UserId]) do
+                            drawing.Visible = false
+                        end
+                    end
+                end
+            else
+                -- Hide ESP for this player
+                if FeatureState.ESP.Drawings[player.UserId] then
+                    for _, drawing in pairs(FeatureState.ESP.Drawings[player.UserId]) do
+                        drawing.Visible = false
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- CHAMS
+local function RemoveChams(player)
+    if FeatureState.Chams.Highlights[player.UserId] then
+        FeatureState.Chams.Highlights[player.UserId]:Destroy()
+        FeatureState.Chams.Highlights[player.UserId] = nil
+    end
+end
+
+local function UpdateChams()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Player and player.Character then
+            -- Check if player should have chams
+            local shouldShow = FeatureState.Chams.Enabled
+            if shouldShow and FeatureState.Chams.TeamCheck and IsTeamMate(player) then
+                shouldShow = false
+            end
+            
+            if shouldShow then
+                if not FeatureState.Chams.Highlights[player.UserId] then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Parent = player.Character
+                    highlight.Adornee = player.Character
+                    FeatureState.Chams.Highlights[player.UserId] = highlight
+                end
+                
+                local highlight = FeatureState.Chams.Highlights[player.UserId]
+                if highlight then
+                    highlight.FillTransparency = FeatureState.Chams.Fill and 0.5 or 1
+                    highlight.OutlineTransparency = FeatureState.Chams.Outline and 0 or 1
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                end
+            else
+                RemoveChams(player)
+            end
+        end
+    end
+end
+
+-- TRACERS
+local function RemoveTracer(player)
+    if FeatureState.Tracers.Lines[player.UserId] then
+        FeatureState.Tracers.Lines[player.UserId]:Remove()
+        FeatureState.Tracers.Lines[player.UserId] = nil
+    end
+end
+
+local function UpdateTracers()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Player and player.Character then
+            -- Check if player should have tracers
+            local shouldShow = FeatureState.Tracers.Enabled
+            if shouldShow and FeatureState.Tracers.TeamCheck and IsTeamMate(player) then
+                shouldShow = false
+            end
+            
+            if shouldShow then
+                if not FeatureState.Tracers.Lines[player.UserId] then
+                    FeatureState.Tracers.Lines[player.UserId] = Drawing.new("Line")
+                    FeatureState.Tracers.Lines[player.UserId].Color = Color3.fromRGB(255, 255, 255)
+                    FeatureState.Tracers.Lines[player.UserId].Thickness = 1
+                    FeatureState.Tracers.Lines[player.UserId].Transparency = 1
+                end
+                
+                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                    if onScreen then
+                        local line = FeatureState.Tracers.Lines[player.UserId]
+                        line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                        line.To = Vector2.new(vector.X, vector.Y)
+                        line.Visible = true
+                    else
+                        FeatureState.Tracers.Lines[player.UserId].Visible = false
+                    end
+                else
+                    FeatureState.Tracers.Lines[player.UserId].Visible = false
+                end
+            else
+                if FeatureState.Tracers.Lines[player.UserId] then
+                    FeatureState.Tracers.Lines[player.UserId].Visible = false
+                end
+            end
+        end
+    end
+end
+
+-- WORLD
+local function UpdateWorld()
+    -- Fullbright
+    if FeatureState.World.Fullbright then
+        if not FeatureState.World.OriginalAmbient then
+            FeatureState.World.OriginalAmbient = Lighting.Ambient
+            FeatureState.World.OriginalBrightness = Lighting.Brightness
+        end
+        Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        Lighting.Brightness = 2
+    else
+        if FeatureState.World.OriginalAmbient then
+            Lighting.Ambient = FeatureState.World.OriginalAmbient
+            Lighting.Brightness = FeatureState.World.OriginalBrightness
+        end
+    end
+    
+    -- No Fog
+    if FeatureState.World.NoFog then
+        if not FeatureState.World.OriginalFogEnd then
+            FeatureState.World.OriginalFogEnd = Lighting.FogEnd
+        end
+        Lighting.FogEnd = 100000
+    else
+        if FeatureState.World.OriginalFogEnd then
+            Lighting.FogEnd = FeatureState.World.OriginalFogEnd
+        end
+    end
+    
+    -- FOV Changer
+    Camera.FieldOfView = FeatureState.World.FOVChanger
+end
+
+-- MOVEMENT
+local bodyVelocity = nil
+local bodyGyro = nil
+
+local function StartFly()
+    if bodyVelocity then return end
+    
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.Parent = RootPart
+    
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(100000, 100000, 100000)
+    bodyGyro.P = 10000
+    bodyGyro.Parent = RootPart
+end
+
+local function StopFly()
+    if bodyVelocity then
+        bodyVelocity:Destroy()
+        bodyVelocity = nil
+    end
+    if bodyGyro then
+        bodyGyro:Destroy()
+        bodyGyro = nil
+    end
+end
+
+local function UpdateFly()
+    if not FeatureState.Movement.Fly or not bodyVelocity then return end
+    
+    local speed = FeatureState.Movement.FlySpeed
+    local velocity = Vector3.new(0, 0, 0)
+    
+    if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+        velocity = velocity + (Camera.CFrame.LookVector * speed)
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+        velocity = velocity - (Camera.CFrame.LookVector * speed)
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+        velocity = velocity - (Camera.CFrame.RightVector * speed)
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+        velocity = velocity + (Camera.CFrame.RightVector * speed)
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+        velocity = velocity + Vector3.new(0, speed, 0)
+    end
+    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+        velocity = velocity - Vector3.new(0, speed, 0)
+    end
+    
+    bodyVelocity.Velocity = velocity
+    bodyGyro.CFrame = Camera.CFrame
+end
+
+local function UpdateNoclip()
+    if not FeatureState.Movement.Noclip then return end
+    
+    for _, part in pairs(Character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end
+
+local function UpdateMovement()
+    -- Fly
+    if FeatureState.Movement.Fly then
+        StartFly()
+    else
+        StopFly()
+    end
+    
+    -- Speed Boost
+    if FeatureState.Movement.SpeedBoost then
+        Humanoid.WalkSpeed = FeatureState.Movement.SpeedValue
+    else
+        Humanoid.WalkSpeed = FeatureState.Movement.OriginalSpeed
+    end
+end
+
+-- UTILITY
+local antiAFKConnection = nil
+local function UpdateUtility()
+    -- Anti AFK - moves player slightly every 60 seconds
+    if FeatureState.Utility.AntiAFK then
+        if not antiAFKConnection then
+            antiAFKConnection = RunService.Heartbeat:Connect(function()
+                local VirtualUser = game:GetService("VirtualUser")
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+        end
+    else
+        if antiAFKConnection then
+            antiAFKConnection:Disconnect()
+            antiAFKConnection = nil
+        end
+    end
+end
+
+-- ============================================================================
+-- CREATE GUI
+-- ============================================================================
+
+local function CreateGUI()
+    -- ScreenGui
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "RegeraV1"
+    gui.ResetOnSpawn = false
+    gui.Parent = PlayerGui
+    
+    -- Main Frame
+    local main = Instance.new("Frame")
+    main.Size = UDim2.new(0, 240, 0, 300)
+    main.Position = UDim2.new(0.5, -120, 0.5, -150)
+    main.BackgroundColor3 = Theme.Background
+    main.BackgroundTransparency = Theme.BackgroundTransparency
+    main.BorderSizePixel = 0
+    main.Parent = gui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = main
+    
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 28)
+    title.BackgroundTransparency = 1
+    title.Font = Enum.Font.Code
+    title.TextSize = 14
+    title.TextColor3 = Theme.Text
+    title.Text = "Regera V1"
+    title.Parent = main
+    
+    -- Divider under title
+    local divider1 = Instance.new("Frame")
+    divider1.Size = UDim2.new(1, -16, 0, 1)
+    divider1.Position = UDim2.new(0, 8, 0, 28)
+    divider1.BackgroundColor3 = Theme.Divider
+    divider1.BorderSizePixel = 0
+    divider1.Parent = main
+    
+    -- Tab Container
+    local tabContainer = Instance.new("Frame")
+    tabContainer.Size = UDim2.new(1, -16, 0, 24)
+    tabContainer.Position = UDim2.new(0, 8, 0, 33)
+    tabContainer.BackgroundTransparency = 1
+    tabContainer.Parent = main
+    
+    local tabList = Instance.new("UIListLayout")
+    tabList.FillDirection = Enum.FillDirection.Horizontal
+    tabList.Padding = UDim.new(0, 4)
+    tabList.Parent = tabContainer
+    
+    -- Divider under tabs
+    local divider2 = Instance.new("Frame")
+    divider2.Size = UDim2.new(1, -16, 0, 1)
+    divider2.Position = UDim2.new(0, 8, 0, 60)
+    divider2.BackgroundColor3 = Theme.Divider
+    divider2.BorderSizePixel = 0
+    divider2.Parent = main
+    
+    -- Content Container (ScrollingFrame)
+    local contentContainer = Instance.new("ScrollingFrame")
+    contentContainer.Size = UDim2.new(1, -16, 1, -70)
+    contentContainer.Position = UDim2.new(0, 8, 0, 65)
+    contentContainer.BackgroundTransparency = 1
+    contentContainer.BorderSizePixel = 0
+    contentContainer.ScrollBarThickness = 4
+    contentContainer.ScrollBarImageColor3 = Theme.Text
+    contentContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    contentContainer.Parent = main
+    
+    -- ========================================================================
+    -- TAB SYSTEM
+    -- ========================================================================
+    
+    local tabs = {}
+    local currentTab = nil
+    
+    local function CreateTab(name)
+        -- Tab Button
+        local tabButton = Instance.new("TextButton")
+        tabButton.Size = UDim2.new(0, 70, 1, 0)
+        tabButton.BackgroundColor3 = Theme.Background
+        tabButton.BackgroundTransparency = 0.5
+        tabButton.BorderSizePixel = 0
+        tabButton.Font = Enum.Font.Code
+        tabButton.TextSize = 11
+        tabButton.TextColor3 = Theme.Text
+        tabButton.Text = name
+        tabButton.Parent = tabContainer
+        
+        local tabCorner = Instance.new("UICorner")
+        tabCorner.CornerRadius = UDim.new(0, 4)
+        tabCorner.Parent = tabButton
+        
+        -- Tab Content
+        local tabContent = Instance.new("Frame")
+        tabContent.Size = UDim2.new(1, 0, 1, 0)
+        tabContent.BackgroundTransparency = 1
+        tabContent.Visible = false
+        tabContent.Parent = contentContainer
+        
+        local contentList = Instance.new("UIListLayout")
+        contentList.Padding = UDim.new(0, 4)
+        contentList.Parent = tabContent
+        
+        -- Auto-resize canvas when content changes
+        contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if tabContent.Visible then
+                contentContainer.CanvasSize = UDim2.new(0, 0, 0, contentList.AbsoluteContentSize.Y + 10)
+            end
+        end)
+        
+        tabs[name] = {
+            button = tabButton,
+            content = tabContent
+        }
+        
+        -- Tab Click Handler
+        tabButton.MouseButton1Click:Connect(function()
+            for tabName, tab in pairs(tabs) do
+                tab.button.BackgroundColor3 = Theme.Background
+                tab.button.BackgroundTransparency = 0.5
+                tab.content.Visible = false
+            end
+            
+            tabButton.BackgroundColor3 = Theme.TabActive
+            tabButton.BackgroundTransparency = 0.3
+            tabContent.Visible = true
+            currentTab = name
+            
+            -- Update canvas size when switching tabs
+            task.wait()
+            local contentList = tabContent:FindFirstChildOfClass("UIListLayout")
+            if contentList then
+                contentContainer.CanvasSize = UDim2.new(0, 0, 0, contentList.AbsoluteContentSize.Y + 10)
+            end
+        end)
+        
+        return tabContent
+    end
+    
+    -- ========================================================================
+    -- DROPDOWN COMPONENT
+    -- ========================================================================
+    
+    local function CreateDropdown(parent, name)
+        local container = Instance.new("Frame")
+        container.Size = UDim2.new(1, 0, 0, 22)
+        container.BackgroundTransparency = 1
+        container.Parent = parent
+        
+        -- Header Button
+        local header = Instance.new("TextButton")
+        header.Size = UDim2.new(1, 0, 0, 22)
+        header.BackgroundTransparency = 1
+        header.Font = Enum.Font.Code
+        header.TextSize = 12
+        header.TextColor3 = Theme.Text
+        header.TextXAlignment = Enum.TextXAlignment.Left
+        header.Text = "> " .. name
+        header.Parent = container
+        
+        -- Dropdown Content
+        local dropContent = Instance.new("Frame")
+        dropContent.Size = UDim2.new(1, 0, 0, 0)
+        dropContent.Position = UDim2.new(0, 0, 0, 22)
+        dropContent.BackgroundTransparency = 1
+        dropContent.ClipsDescendants = true
+        dropContent.Parent = container
+        
+        local dropList = Instance.new("UIListLayout")
+        dropList.Padding = UDim.new(0, 3)
+        dropList.Parent = dropContent
+        
+        local dropPadding = Instance.new("UIPadding")
+        dropPadding.PaddingLeft = UDim.new(0, 12)
+        dropPadding.PaddingTop = UDim.new(0, 3)
+        dropPadding.Parent = dropContent
+        
+        local open = false
+        
+        -- Toggle Dropdown
+        header.MouseButton1Click:Connect(function()
+            open = not open
+            header.Text = (open and "v " or "> ") .. name
+            
+            if open then
+                local targetHeight = dropList.AbsoluteContentSize.Y + 3
+                Tween(dropContent, {Size = UDim2.new(1, 0, 0, targetHeight)})
+                Tween(container, {Size = UDim2.new(1, 0, 0, 22 + targetHeight)})
+            else
+                Tween(dropContent, {Size = UDim2.new(1, 0, 0, 0)})
+                Tween(container, {Size = UDim2.new(1, 0, 0, 22)})
+            end
+        end)
+        
+        -- Auto-update size when content changes
+        dropList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if open then
+                local targetHeight = dropList.AbsoluteContentSize.Y + 3
+                dropContent.Size = UDim2.new(1, 0, 0, targetHeight)
+                container.Size = UDim2.new(1, 0, 0, 22 + targetHeight)
+            end
+        end)
+        
+        return dropContent
+    end
+    
+    -- ========================================================================
+    -- OPTION COMPONENTS
+    -- ========================================================================
+    
+    local function AddToggle(parent, text, default, callback)
+        local toggle = Instance.new("TextButton")
+        toggle.Size = UDim2.new(1, 0, 0, 18)
+        toggle.BackgroundTransparency = 1
+        toggle.Font = Enum.Font.Code
+        toggle.TextSize = 11
+        toggle.TextColor3 = Theme.Text
+        toggle.TextXAlignment = Enum.TextXAlignment.Left
+        toggle.Text = (default and "[x] " or "[ ] ") .. text
+        toggle.Parent = parent
+        
+        local state = default
+        
+        toggle.MouseButton1Click:Connect(function()
+            state = not state
+            toggle.Text = (state and "[x] " or "[ ] ") .. text
+            if callback then
+                callback(state)
+            end
+        end)
+        
+        return toggle
+    end
+    
+    local function AddButton(parent, text, callback)
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, 0, 0, 18)
+        button.BackgroundTransparency = 1
+        button.Font = Enum.Font.Code
+        button.TextSize = 11
+        button.TextColor3 = Theme.Text
+        button.TextXAlignment = Enum.TextXAlignment.Left
+        button.Text = "• " .. text
+        button.Parent = parent
+        
+        button.MouseButton1Click:Connect(function()
+            if callback then
+                callback()
+            end
+        end)
+        
+        return button
+    end
+    
+    local function AddSlider(parent, text, min, max, default, callback)
+        local container = Instance.new("Frame")
+        container.Size = UDim2.new(1, 0, 0, 32)
+        container.BackgroundTransparency = 1
+        container.Parent = parent
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 14)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.Code
+        label.TextSize = 10
+        label.TextColor3 = Theme.Text
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Text = text .. ": " .. default
+        label.Parent = container
+        
+        local sliderBg = Instance.new("Frame")
+        sliderBg.Size = UDim2.new(1, 0, 0, 3)
+        sliderBg.Position = UDim2.new(0, 0, 0, 16)
+        sliderBg.BackgroundColor3 = Theme.Divider
+        sliderBg.BorderSizePixel = 0
+        sliderBg.Parent = container
+        
+        local sliderFill = Instance.new("Frame")
+        sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+        sliderFill.BackgroundColor3 = Theme.Text
+        sliderFill.BorderSizePixel = 0
+        sliderFill.Parent = sliderBg
+        
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, 0, 1, 0)
+        button.BackgroundTransparency = 1
+        button.Text = ""
+        button.Parent = sliderBg
+        
+        local dragging = false
+        
+        local function update(input)
+            local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+            local value = math.floor(min + (max - min) * pos)
+            sliderFill.Size = UDim2.new(pos, 0, 1, 0)
+            label.Text = text .. ": " .. value
+            if callback then
+                callback(value)
+            end
+        end
+        
+        button.MouseButton1Down:Connect(function() dragging = true end)
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+        
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                update(input)
+            end
+        end)
+        
+        return container
+    end
+    
+    local function AddLabel(parent, text)
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 16)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.Code
+        label.TextSize = 10
+        label.TextColor3 = Theme.Text
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Text = "  " .. text
+        label.Parent = parent
+        return label
+    end
+    
+    local function AddKeybind(parent, text, defaultKey, callback)
+        local container = Instance.new("Frame")
+        container.Size = UDim2.new(1, 0, 0, 20)
+        container.BackgroundTransparency = 1
+        container.Parent = parent
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.6, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.Code
+        label.TextSize = 10
+        label.TextColor3 = Theme.Text
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Text = "  " .. text
+        label.Parent = container
+        
+        local keyButton = Instance.new("TextButton")
+        keyButton.Size = UDim2.new(0.4, 0, 0, 18)
+        keyButton.Position = UDim2.new(0.6, 0, 0, 1)
+        keyButton.BackgroundColor3 = Theme.Divider
+        keyButton.BackgroundTransparency = 0.3
+        keyButton.BorderSizePixel = 0
+        keyButton.Font = Enum.Font.Code
+        keyButton.TextSize = 9
+        keyButton.TextColor3 = Theme.Text
+        keyButton.Text = defaultKey
+        keyButton.Parent = container
+        
+        local keyCorner = Instance.new("UICorner")
+        keyCorner.CornerRadius = UDim.new(0, 3)
+        keyCorner.Parent = keyButton
+        
+        local listening = false
+        
+        keyButton.MouseButton1Click:Connect(function()
+            listening = true
+            keyButton.Text = "..."
+        end)
+        
+        UserInputService.InputBegan:Connect(function(input, processed)
+            if listening and not processed then
+                if input.KeyCode ~= Enum.KeyCode.Unknown then
+                    keyButton.Text = input.KeyCode.Name
+                    listening = false
+                    if callback then
+                        callback(input.KeyCode.Name)
+                    end
+                end
+            end
+        end)
+        
+        return container
+    end
+    
+    -- ========================================================================
+    -- CREATE TABS
+    -- ========================================================================
+    
+    -- MAIN TAB
+    local mainTab = CreateTab("Main")
+    
+    do
+        local triggerDrop = CreateDropdown(mainTab, "triggerbot")
+        AddToggle(triggerDrop, "enabled", false, function(state)
+            FeatureState.Triggerbot.Enabled = state
+        end)
+        AddSlider(triggerDrop, "delay", 0, 500, 50, function(value)
+            FeatureState.Triggerbot.Delay = value
+        end)
+        AddToggle(triggerDrop, "team check", true, function(state)
+            FeatureState.Triggerbot.TeamCheck = state
+        end)
+        AddToggle(triggerDrop, "visible check", true, function(state)
+            FeatureState.Triggerbot.VisibleCheck = state
+        end)
+        AddToggle(triggerDrop, "npc check", true, function(state)
+            FeatureState.Triggerbot.NPCCheck = state
+        end)
+        AddKeybind(triggerDrop, "keybind:", "None", function(key)
+            FeatureState.Triggerbot.Keybind = key
+        end)
+    end
+    
+    do
+        local aimDrop = CreateDropdown(mainTab, "aimlock")
+        AddToggle(aimDrop, "enabled", false, function(state)
+            FeatureState.Aimlock.Enabled = state
+        end)
+        AddSlider(aimDrop, "smoothness", 1, 100, 50, function(value)
+            FeatureState.Aimlock.Smoothness = value
+        end)
+        AddSlider(aimDrop, "fov", 50, 500, 200, function(value)
+            FeatureState.Aimlock.FOV = value
+        end)
+        AddToggle(aimDrop, "sticky", false, function(state)
+            FeatureState.Aimlock.Sticky = state
+            if not state then
+                FeatureState.Aimlock.Target = nil
+            end
+        end)
+        AddToggle(aimDrop, "auto prediction", false, function(state)
+            FeatureState.Aimlock.AutoPrediction = state
+        end)
+        AddSlider(aimDrop, "prediction", 0, 200, 100, function(value)
+            FeatureState.Aimlock.Prediction = value
+        end)
+        AddToggle(aimDrop, "team check", true, function(state)
+            FeatureState.Aimlock.TeamCheck = state
+        end)
+        AddToggle(aimDrop, "visible check", true, function(state)
+            FeatureState.Aimlock.VisibleCheck = state
+        end)
+        AddToggle(aimDrop, "npc check", true, function(state)
+            FeatureState.Aimlock.NPCCheck = state
+        end)
+        AddKeybind(aimDrop, "keybind:", "None", function(key)
+            FeatureState.Aimlock.Keybind = key
+        end)
+        AddLabel(aimDrop, "target: head")
+    end
+    
+    do
+        local hitboxDrop = CreateDropdown(mainTab, "hitbox expander")
+        AddToggle(hitboxDrop, "enabled", false, function(state)
+            FeatureState.HitboxExpander.Enabled = state
+            UpdateHitboxExpander()
+        end)
+        AddSlider(hitboxDrop, "size", 1, 20, 5, function(value)
+            FeatureState.HitboxExpander.Size = value
+            UpdateHitboxExpander()
+        end)
+        AddToggle(hitboxDrop, "transparency", true, function(state)
+            FeatureState.HitboxExpander.Transparency = state
+            UpdateHitboxExpander()
+        end)
+        AddToggle(hitboxDrop, "team check", true, function(state)
+            FeatureState.HitboxExpander.TeamCheck = state
+            UpdateHitboxExpander()
+        end)
+    end
+    
+    -- VISUALS TAB
+    local visualsTab = CreateTab("Visuals")
+    
+    do
+        local espDrop = CreateDropdown(visualsTab, "esp")
+        AddToggle(espDrop, "enabled", false, function(state)
+            FeatureState.ESP.Enabled = state
+            if not state then
+                -- Hide all ESP when disabled
+                for userId, drawings in pairs(FeatureState.ESP.Drawings) do
+                    for _, drawing in pairs(drawings) do
+                        drawing.Visible = false
+                    end
+                end
+            end
+        end)
+        AddToggle(espDrop, "boxes", true, function(state)
+            FeatureState.ESP.Boxes = state
+        end)
+        AddToggle(espDrop, "names", true, function(state)
+            FeatureState.ESP.Names = state
+        end)
+        AddToggle(espDrop, "distance", true, function(state)
+            FeatureState.ESP.Distance = state
+        end)
+        AddToggle(espDrop, "health bars", true, function(state)
+            FeatureState.ESP.HealthBars = state
+        end)
+        AddToggle(espDrop, "team check", true, function(state)
+            FeatureState.ESP.TeamCheck = state
+        end)
+    end
+    
+    do
+        local chamsDrop = CreateDropdown(visualsTab, "chams")
+        AddToggle(chamsDrop, "enabled", false, function(state)
+            FeatureState.Chams.Enabled = state
+            if not state then
+                -- Remove all chams when disabled
+                for userId, highlight in pairs(FeatureState.Chams.Highlights) do
+                    highlight:Destroy()
+                end
+                FeatureState.Chams.Highlights = {}
+            else
+                UpdateChams()
+            end
+        end)
+        AddToggle(chamsDrop, "fill", true, function(state)
+            FeatureState.Chams.Fill = state
+            UpdateChams()
+        end)
+        AddToggle(chamsDrop, "outline", true, function(state)
+            FeatureState.Chams.Outline = state
+            UpdateChams()
+        end)
+        AddToggle(chamsDrop, "team check", true, function(state)
+            FeatureState.Chams.TeamCheck = state
+            UpdateChams()
+        end)
+    end
+    
+    do
+        local tracersDrop = CreateDropdown(visualsTab, "tracers")
+        AddToggle(tracersDrop, "enabled", false, function(state)
+            FeatureState.Tracers.Enabled = state
+            if not state then
+                -- Hide all tracers when disabled
+                for userId, line in pairs(FeatureState.Tracers.Lines) do
+                    line.Visible = false
+                end
+            end
+        end)
+        AddLabel(tracersDrop, "from: bottom")
+        AddToggle(tracersDrop, "team check", true, function(state)
+            FeatureState.Tracers.TeamCheck = state
+        end)
+    end
+    
+    do
+        local worldDrop = CreateDropdown(visualsTab, "world")
+        AddToggle(worldDrop, "fullbright", false, function(state)
+            FeatureState.World.Fullbright = state
+            UpdateWorld()
+        end)
+        AddToggle(worldDrop, "no fog", false, function(state)
+            FeatureState.World.NoFog = state
+            UpdateWorld()
+        end)
+        AddSlider(worldDrop, "fov changer", 70, 120, 90, function(value)
+            FeatureState.World.FOVChanger = value
+            UpdateWorld()
+        end)
+    end
+    
+    -- OTHER TAB
+    local otherTab = CreateTab("Other")
+    
+    do
+        local movementDrop = CreateDropdown(otherTab, "movement")
+        AddToggle(movementDrop, "fly", false, function(state)
+            FeatureState.Movement.Fly = state
+            UpdateMovement()
+        end)
+        AddSlider(movementDrop, "fly speed", 16, 200, 50, function(value)
+            FeatureState.Movement.FlySpeed = value
+        end)
+        AddToggle(movementDrop, "noclip", false, function(state)
+            FeatureState.Movement.Noclip = state
+            UpdateMovement()
+        end)
+        AddToggle(movementDrop, "speed boost", false, function(state)
+            FeatureState.Movement.SpeedBoost = state
+            UpdateMovement()
+        end)
+        AddSlider(movementDrop, "speed value", 16, 100, 30, function(value)
+            FeatureState.Movement.SpeedValue = value
+            if FeatureState.Movement.SpeedBoost then
+                Humanoid.WalkSpeed = value
+            end
+        end)
+        AddToggle(movementDrop, "infinite jump", false, function(state)
+            FeatureState.Movement.InfiniteJump = state
+        end)
+    end
+    
+    do
+        local utilityDrop = CreateDropdown(otherTab, "utility")
+        AddButton(utilityDrop, "reset character", function()
+            if Character and Character:FindFirstChild("Humanoid") then
+                Character.Humanoid.Health = 0
+            end
+        end)
+        AddButton(utilityDrop, "rejoin server", function()
+            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, Player)
+        end)
+        AddToggle(utilityDrop, "anti afk", false, function(state)
+            FeatureState.Utility.AntiAFK = state
+            UpdateUtility()
+        end)
+    end
+    
+    do
+        local miscDrop = CreateDropdown(otherTab, "misc")
+        AddKeybind(miscDrop, "toggle gui:", "RightShift", function(key)
+            local success, keyCode = pcall(function()
+                return Enum.KeyCode[key]
+            end)
+            if success then
+                toggleKey = keyCode
+            end
+        end)
+        AddButton(miscDrop, "check updates", function()
+            print("You are on the latest version: 1.0.0")
+        end)
+        AddLabel(miscDrop, "version: 1.0.0")
+    end
+    
+    -- ========================================================================
+    -- ACTIVATE DEFAULT TAB
+    -- ========================================================================
+    
+    tabs["Main"].button.BackgroundColor3 = Theme.TabActive
+    tabs["Main"].button.BackgroundTransparency = 0.3
+    tabs["Main"].content.Visible = true
+    currentTab = "Main"
+    
+    -- Set initial canvas size
+    task.wait()
+    local mainContentList = tabs["Main"].content:FindFirstChildOfClass("UIListLayout")
+    if mainContentList then
+        contentContainer.CanvasSize = UDim2.new(0, 0, 0, mainContentList.AbsoluteContentSize.Y + 10)
+    end
+    
+    -- ========================================================================
+    -- DRAGGING
+    -- ========================================================================
+    
+    local dragging = false
+    local dragInput, mousePos, framePos
+    
+    title.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            mousePos = input.Position
+            framePos = main.Position
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - mousePos
+            main.Position = UDim2.new(
+                framePos.X.Scale, framePos.X.Offset + delta.X,
+                framePos.Y.Scale, framePos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    -- ========================================================================
+    -- GUI TOGGLE FUNCTIONALITY
+    -- ========================================================================
+    
+    local guiVisible = true
+    toggleKey = Enum.KeyCode.RightShift
+    
+    -- Toggle GUI visibility with keybind
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if not processed and input.KeyCode == toggleKey then
+            guiVisible = not guiVisible
+            main.Visible = guiVisible
+        end
+        
+        -- Aimlock keybind
+        if FeatureState.Aimlock.Enabled and FeatureState.Aimlock.Keybind ~= "None" then
+            local success, keyCode = pcall(function()
+                return Enum.KeyCode[FeatureState.Aimlock.Keybind]
+            end)
+            if success and input.KeyCode == keyCode then
+                FeatureState.Aimlock.Active = true
+            end
+        end
+        
+        -- Triggerbot keybind
+        if FeatureState.Triggerbot.Enabled and FeatureState.Triggerbot.Keybind ~= "None" then
+            local success, keyCode = pcall(function()
+                return Enum.KeyCode[FeatureState.Triggerbot.Keybind]
+            end)
+            if success and input.KeyCode == keyCode then
+                FeatureState.Triggerbot.Active = true
+            end
+        end
+        
+        -- Infinite Jump
+        if FeatureState.Movement.InfiniteJump and input.KeyCode == Enum.KeyCode.Space then
+            Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input, processed)
+        -- Aimlock keybind release - clear sticky target when key is released
+        if FeatureState.Aimlock.Keybind ~= "None" then
+            local success, keyCode = pcall(function()
+                return Enum.KeyCode[FeatureState.Aimlock.Keybind]
+            end)
+            if success and input.KeyCode == keyCode then
+                FeatureState.Aimlock.Active = false
+                -- Clear sticky target when keybind is released
+                if FeatureState.Aimlock.Sticky then
+                    FeatureState.Aimlock.Target = nil
+                end
+            end
+        end
+        
+        -- Triggerbot keybind release
+        if FeatureState.Triggerbot.Keybind ~= "None" then
+            local success, keyCode = pcall(function()
+                return Enum.KeyCode[FeatureState.Triggerbot.Keybind]
+            end)
+            if success and input.KeyCode == keyCode then
+                FeatureState.Triggerbot.Active = false
+            end
+        end
+    end)
+    
+    return gui
+end
+
+-- ============================================================================
+-- LOADING ANIMATION
+-- ============================================================================
+
+local function ShowLoadingScreen(callback)
+    local loadingGui = Instance.new("ScreenGui")
+    loadingGui.Name = "LoadingScreen"
+    loadingGui.Parent = PlayerGui
+    
+    -- Container for the text with glow effect
+    local loadingContainer = Instance.new("Frame")
+    loadingContainer.Size = UDim2.new(0, 500, 0, 150)
+    loadingContainer.Position = UDim2.new(0.5, -250, 0.5, -75)
+    loadingContainer.BackgroundTransparency = 1
+    loadingContainer.BorderSizePixel = 0
+    loadingContainer.Parent = loadingGui
+    
+    -- Glow effect background
+    local glowFrame = Instance.new("Frame")
+    glowFrame.Size = UDim2.new(1, 40, 1, 40)
+    glowFrame.Position = UDim2.new(0.5, -20, 0.5, -20)
+    glowFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    glowFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    glowFrame.BackgroundTransparency = 1
+    glowFrame.BorderSizePixel = 0
+    glowFrame.Parent = loadingContainer
+    
+    local glowCorner = Instance.new("UICorner")
+    glowCorner.CornerRadius = UDim.new(0, 20)
+    glowCorner.Parent = glowFrame
+    
+    -- Main text
+    local loadingText = Instance.new("TextLabel")
+    loadingText.Size = UDim2.new(1, 0, 1, 0)
+    loadingText.Position = UDim2.new(0.5, 0, 0.5, 0)
+    loadingText.AnchorPoint = Vector2.new(0.5, 0.5)
+    loadingText.BackgroundTransparency = 1
+    loadingText.Font = Enum.Font.Code
+    loadingText.TextSize = 52
+    loadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    loadingText.TextTransparency = 1
+    loadingText.TextStrokeTransparency = 1
+    loadingText.TextStrokeColor3 = Color3.fromRGB(200, 200, 200)
+    loadingText.Text = "Regera V1"
+    loadingText.Parent = loadingContainer
+    
+    -- Shadow text for depth
+    local shadowText = Instance.new("TextLabel")
+    shadowText.Size = UDim2.new(1, 0, 1, 0)
+    shadowText.Position = UDim2.new(0.5, 3, 0.5, 3)
+    shadowText.AnchorPoint = Vector2.new(0.5, 0.5)
+    shadowText.BackgroundTransparency = 1
+    shadowText.Font = Enum.Font.Code
+    shadowText.TextSize = 52
+    shadowText.TextColor3 = Color3.fromRGB(0, 0, 0)
+    shadowText.TextTransparency = 1
+    shadowText.Text = "Regera V1"
+    shadowText.ZIndex = 0
+    shadowText.Parent = loadingContainer
+    
+    -- Fade in glow
+    Tween(glowFrame, {BackgroundTransparency = 0.85}, 0.6)
+    
+    -- Fade in shadow
+    Tween(shadowText, {TextTransparency = 0.7}, 0.8)
+    
+    -- Fade in text
+    Tween(loadingText, {TextTransparency = 0, TextStrokeTransparency = 0.5}, 0.8)
+    
+    -- Scale effect
+    loadingContainer.Size = UDim2.new(0, 400, 0, 120)
+    loadingContainer.Position = UDim2.new(0.5, -200, 0.5, -60)
+    Tween(loadingContainer, {
+        Size = UDim2.new(0, 500, 0, 150),
+        Position = UDim2.new(0.5, -250, 0.5, -75)
+    }, 0.8)
+    
+    task.wait(1.8)
+    
+    -- Fade out text
+    Tween(loadingText, {TextTransparency = 1, TextStrokeTransparency = 1}, 0.6)
+    Tween(shadowText, {TextTransparency = 1}, 0.6)
+    Tween(glowFrame, {BackgroundTransparency = 1}, 0.6)
+    
+    -- Scale down
+    Tween(loadingContainer, {
+        Size = UDim2.new(0, 400, 0, 120),
+        Position = UDim2.new(0.5, -200, 0.5, -60)
+    }, 0.6)
+    
+    task.wait(0.7)
+    
+    loadingGui:Destroy()
+    
+    if callback then
+        callback()
+    end
+end
+
+-- ============================================================================
+-- MAIN LOOP
+-- ============================================================================
+
+local function MainLoop()
+    RunService.RenderStepped:Connect(function()
+        -- Triggerbot
+        if FeatureState.Triggerbot.Enabled and FeatureState.Triggerbot.Active then
+            UpdateTriggerbot()
+        end
+        
+        -- Aimlock
+        if FeatureState.Aimlock.Enabled then
+            UpdateAimlock()
+        end
+        
+        -- Hitbox Expander
+        if FeatureState.HitboxExpander.Enabled then
+            UpdateHitboxExpander()
+        end
+        
+        -- ESP
+        if FeatureState.ESP.Enabled then
+            UpdateESP()
+        end
+        
+        -- Chams
+        if FeatureState.Chams.Enabled then
+            UpdateChams()
+        end
+        
+        -- Tracers
+        if FeatureState.Tracers.Enabled then
+            UpdateTracers()
+        end
+        
+        -- Fly
+        if FeatureState.Movement.Fly then
+            UpdateFly()
+        end
+        
+        -- Noclip
+        if FeatureState.Movement.Noclip then
+            UpdateNoclip()
+        end
+    end)
+end
+
+-- ============================================================================
+-- INIT
+-- ============================================================================
+
+ShowLoadingScreen(function()
+    CreateGUI()
+    MainLoop()
+    print("Regera V1 loaded with all features enabled")
+end)
